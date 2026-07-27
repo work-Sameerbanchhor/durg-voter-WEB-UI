@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Durg Voter Production Analytics Studio & API Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #070a12;
+            --bg-card: #0e1526;
+            --card-border: #1e2d4a;
+            --card-border-hover: #334b7a;
+            
+            --accent-blue: #38bdf8;
+            --accent-blue-glow: rgba(56, 189, 248, 0.25);
+            --accent-emerald: #34d399;
+            --accent-emerald-glow: rgba(52, 211, 153, 0.25);
+            --accent-purple: #c084fc;
+            --accent-purple-glow: rgba(192, 132, 252, 0.25);
+            --accent-rose: #f43f5e;
+            --accent-rose-glow: rgba(244, 63, 94, 0.25);
+            --accent-amber: #fbbf24;
+            --accent-amber-glow: rgba(251, 191, 36, 0.25);
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 1.5rem;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(192, 132, 252, 0.05) 0%, transparent 40%);
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* Top Header & Branding */
+        header {
+            background: linear-gradient(135deg, rgba(14, 21, 38, 0.8), rgba(19, 27, 46, 0.9));
+            border: 1px solid var(--card-border);
+            border-radius: 1.25rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 0 20px var(--accent-blue-glow);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #38bdf8, #c084fc, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Settings & Auth Config Bar */
+        .config-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            background: rgba(7, 10, 18, 0.6);
+            border: 1px solid var(--card-border);
+            padding: 0.75rem 1.25rem;
+            border-radius: 1rem;
+        }
+
+        .config-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .input-sm {
+            background: var(--bg-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 0.5rem;
+            padding: 0.4rem 0.75rem;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .input-sm:focus { border-color: var(--accent-blue); }
+
+        .role-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+        }
+        .role-admin { background: var(--accent-rose-glow); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.4); }
+        .role-guest { background: var(--accent-amber-glow); color: var(--accent-amber); border: 1px solid rgba(251, 191, 36, 0.4); }
+
+        .btn-auth {
+            border: none;
+            padding: 0.45rem 0.9rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-auth-admin { background: var(--accent-rose); color: #fff; }
+        .btn-auth-guest { background: var(--accent-amber); color: #070a12; }
+        .btn-auth:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.85rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            border-color: var(--card-border-hover);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(192, 132, 252, 0.15));
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            box-shadow: 0 0 15px var(--accent-blue-glow);
+        }
+
+        /* Tab Content Container */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Metric Cards Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+        }
+
+        .metric-meta {
+            font-size: 0.8rem;
+            color: var(--accent-emerald);
+            font-weight: 500;
+        }
+
+        /* Layout Grids */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .grid-full {
+            margin-bottom: 1.5rem;
+        }
+
+        .panel-card {
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Form Controls */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .form-control {
+            background: var(--bg-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 0.6rem;
+            padding: 0.75rem 1rem;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus { border-color: var(--accent-blue); }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-action {
+            background: var(--accent-blue);
+            color: #070a12;
+            font-weight: 700;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.65rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-action:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-rose { background: var(--accent-rose); color: #fff; }
+        .btn-purple { background: var(--accent-purple); color: #070a12; }
+        .btn-emerald { background: var(--accent-emerald); color: #070a12; }
+
+        .preset-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.4rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preset-chip:hover { background: rgba(56,189,248,0.15); color: var(--accent-blue); border-color: var(--accent-blue); }
+
+        /* Data Tables */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            border: 1px solid var(--card-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(14, 21, 38, 0.95);
+            color: var(--text-secondary);
+            font-weight: 700;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--card-border);
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--card-border);
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+        }
+
+        tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+        tr:hover { background: rgba(56,189,248,0.05); }
+
+        /* Distribution Progress Bar */
+        .bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
+            border-radius: 4px;
+        }
+
+        /* Response Viewer */
+        .response-viewer {
+            background: #04060c;
+            border: 1px solid var(--card-border);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+        }
+
+        .status-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 0.4rem;
+            background: rgba(52, 211, 153, 0.2);
+            color: var(--accent-emerald);
+        }
+
+        pre.json-output {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            max-height: 450px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--card-border);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand-title">
+                <div class="logo-icon">🗳️</div>
+                <div>
+                    <h1>Durg Voter Analytics Studio</h1>
+                    <p class="subtitle">Standalone Analytics UI for Go 1.24 & DuckDB 1.5 REST Backend (Port 8080)</p>
+                </div>
+            </div>
+
+            <!-- Configuration & Role Switcher -->
+            <div class="config-bar">
+                <div class="config-item">
+                    <span style="font-weight: 600;">📡 API Endpoint:</span>
+                    <input type="text" id="apiEndpoint" class="input-sm" value="http://localhost:8080" style="width: 180px;">
+                </div>
+                <div class="config-item">
+                    <span style="font-weight: 600;">🔐 Auth Role:</span>
+                    <span id="roleBadge" class="role-pill role-admin">ADMIN</span>
+                </div>
+                <div style="display: flex; gap: 0.4rem;">
+                    <button class="btn-auth btn-auth-admin" onclick="setRole('admin')">ADMIN</button>
+                    <button class="btn-auth btn-auth-guest" onclick="setRole('guest')">GUEST</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="openTab('tabOverview')">📊 Overview & Demographics</button>
+            <button class="tab-btn" onclick="openTab('tabSQL')">⚡ Admin SQL Studio</button>
+            <button class="tab-btn" onclick="openTab('tabGroupBy')">📈 Group-By Analytics</button>
+            <button class="tab-btn" onclick="openTab('tabGeo')">📍 Spatial Geo-Location</button>
+            <button class="tab-btn" onclick="openTab('tabSearch')">🔍 Voter Search & Directory</button>
+            <button class="tab-btn" onclick="openTab('tabAPI')">📡 API Endpoint Explorer</button>
+        </div>
+
+        <!-- TAB 1: OVERVIEW & DEMOGRAPHICS -->
+        <div id="tabOverview" class="tab-content active">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-label">Total Electorate</span>
+                    <span class="metric-value" id="mTotalVoters">1,045,426</span>
+                    <span class="metric-meta">Vectorized DuckDB Dataset</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Male Voters</span>
+                    <span class="metric-value" id="mMaleVoters">519,448</span>
+                    <span class="metric-meta">~49.7% Ratio</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Female Voters</span>
+                    <span class="metric-value" id="mFemaleVoters">524,804</span>
+                    <span class="metric-meta">~50.2% Ratio</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Polling Station Booths</span>
+                    <span class="metric-value" id="mBooths">1,513</span>
+                    <span class="metric-meta">6 Assembly Constituencies</span>
+                </div>
+            </div>
+
+            <div class="panel-card grid-full">
+                <div class="panel-header">
+                    <span class="panel-title">🏛️ Assembly Constituency Electorate Breakdown</span>
+                    <button class="preset-chip" onclick="loadOverviewStats()">Refresh Data</button>
+                </div>
+                <div id="constituenciesContainer" class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Assembly Constituency</th>
+                                <th>Total Voters</th>
+                                <th>Male Voters</th>
+                                <th>Female Voters</th>
+                                <th>Booths</th>
+                                <th>Distribution Share</th>
+                            </tr>
+                        </thead>
+                        <tbody id="constituenciesTableBody">
+                            <tr><td colspan="6" style="text-align: center;">Loading constituency breakdown...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ADMIN SQL STUDIO -->
+        <div id="tabSQL" class="tab-content">
+            <div class="panel-card grid-full">
+                <div class="panel-header">
+                    <span class="panel-title">⚡ DuckDB Admin SQL Query Studio <span style="font-size: 0.75rem; color: var(--accent-rose); border: 1px solid rgba(244,63,94,0.4); padding: 0.15rem 0.5rem; border-radius: 0.4rem;">ADMIN PRIVILEGE REQUIRED</span></span>
+                    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                        <button class="preset-chip" onclick="setSQLPreset('gender')">Gender Breakdown</button>
+                        <button class="preset-chip" onclick="setSQLPreset('towns')">Top 10 Towns</button>
+                        <button class="preset-chip" onclick="setSQLPreset('age')">Age Groups</button>
+                        <button class="preset-chip" onclick="setSQLPreset('booths')">Booths Per Assembly</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <textarea id="sqlInput" class="form-control" rows="4">SELECT gender_english, count(*) AS total_voters FROM voters GROUP BY 1 ORDER BY 2 DESC;</textarea>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Only read-only SELECT queries are permitted. Guest role execution will trigger HTTP 403 Forbidden.</span>
+                    <button class="btn-action btn-rose" onclick="executeSQLQuery()">Execute SQL Query &rarr;</button>
+                </div>
+
+                <div class="panel-header" style="margin-top: 1.5rem;">
+                    <span class="panel-title">📋 Query Results Output</span>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <span id="sqlExecutionTime" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary);">0 ms</span>
+                        <span id="sqlRowCount" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent-blue);">0 rows</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive" id="sqlTableContainer">
+                    <table id="sqlDataTable">
+                        <thead id="sqlTableHead"><tr><th>Status</th></tr></thead>
+                        <tbody id="sqlTableBody"><tr><td>Execute a query above to display output rows.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: GROUP-BY ANALYTICS -->
+        <div id="tabGroupBy" class="tab-content">
+            <div class="grid-2col">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">📈 Group-By Query Builder</span>
+                        <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 700;">ADMIN & GUEST</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Grouping Dimension / Field:</label>
+                        <select id="gbField" class="form-control">
+                            <option value="full_name">Full Name (Voter Name)</option>
+                            <option value="relative_name">Relative Name</option>
+                            <option value="gender">Gender</option>
+                            <option value="assembly_constituency">Assembly Constituency</option>
+                            <option value="town_village">Town / Village</option>
+                            <option value="age_group">Age Group Bracket</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Group Records (Limit):</label>
+                        <select id="gbLimit" class="form-control">
+                            <option value="10">10 Groups</option>
+                            <option value="20" selected>20 Groups</option>
+                            <option value="50">50 Groups</option>
+                            <option value="100">100 Groups</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sort Order:</label>
+                        <select id="gbSort" class="form-control">
+                            <option value="desc">Highest Count to Lowest (DESC)</option>
+                            <option value="asc">Lowest Count to Highest (ASC)</option>
+                        </select>
+                    </div>
+                    <button class="btn-action btn-purple" onclick="executeGroupBy()" style="width: 100%;">Run Group-By Aggregation &rarr;</button>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">📊 Aggregated Distribution Breakdown</span>
+                        <span id="gbTotalCount" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent-purple);">1.04M Voters</span>
+                    </div>
+                    <div id="groupByResults" style="display: flex; flex-direction: column; gap: 0.85rem; max-height: 400px; overflow-y: auto;">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Select parameters and click "Run Group-By Aggregation" to generate distribution breakdown.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: SPATIAL GEO-LOCATION -->
+        <div id="tabGeo" class="tab-content">
+            <div class="grid-2col">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">📍 Spatial Coordinates & Proximity Radius</span>
+                        <div style="display: flex; gap: 0.3rem;">
+                            <button class="preset-chip" onclick="setGeoPreset(21.19, 81.28)">Durg Center</button>
+                            <button class="preset-chip" onclick="setGeoPreset(21.21, 81.38)">Bhilai</button>
+                            <button class="preset-chip" onclick="setGeoPreset(21.03, 81.53)">Patan</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Latitude:</label>
+                        <input type="number" step="0.0001" id="geoLat" class="form-control" value="21.19">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude:</label>
+                        <input type="number" step="0.0001" id="geoLng" class="form-control" value="81.28">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Search Radius (Kilometers):</label>
+                        <input type="number" step="0.5" id="geoRadius" class="form-control" value="5.0">
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn-action btn-emerald" onclick="executeGeoBooths()" style="flex: 1;">Find Nearby Booths</button>
+                        <button class="btn-action btn-purple" onclick="executeGeoVoters()" style="flex: 1;">Find Nearby Voters</button>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">🧭 Distance Calculator Between Coordinates</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Point 1 (Lat, Lng):</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" step="0.0001" id="distLat1" class="form-control" value="21.19" placeholder="Lat 1">
+                            <input type="number" step="0.0001" id="distLng1" class="form-control" value="81.28" placeholder="Lng 1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Point 2 (Lat, Lng):</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" step="0.0001" id="distLat2" class="form-control" value="21.21" placeholder="Lat 2">
+                            <input type="number" step="0.0001" id="distLng2" class="form-control" value="81.38" placeholder="Lng 2">
+                        </div>
+                    </div>
+                    <button class="btn-action" onclick="executeDistance()" style="width: 100%; margin-bottom: 1rem;">Calculate Straight-Line Distance</button>
+                    <div id="distanceOutput" style="background: var(--bg-dark); padding: 1rem; border-radius: 0.75rem; border: 1px solid var(--card-border); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; text-align: center;">
+                        Distance: -- km
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-card grid-full">
+                <div class="panel-header">
+                    <span class="panel-title">📍 Nearby Spatial Search Results</span>
+                </div>
+                <div class="table-responsive">
+                    <table id="geoResultsTable">
+                        <thead>
+                            <tr>
+                                <th>Name / Booth</th>
+                                <th>Assembly</th>
+                                <th>Town / Village</th>
+                                <th>Coordinates (Lat, Lng)</th>
+                                <th>Calculated Distance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="geoTableBody">
+                            <tr><td colspan="5" style="text-align: center;">Run a spatial query above to view nearby booths or voters.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: VOTER DIRECTORY & SEARCH -->
+        <div id="tabSearch" class="tab-content">
+            <div class="panel-card grid-full">
+                <div class="panel-header">
+                    <span class="panel-title">🔍 Multi-Criteria Voter Search Engine</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                    <div>
+                        <label class="form-label">Search Query (Name/EPIC/House):</label>
+                        <input type="text" id="srchQuery" class="form-control" placeholder="e.g. Patel, IXG1482629..." value="Patel">
+                    </div>
+                    <div>
+                        <label class="form-label">Assembly Constituency:</label>
+                        <select id="srchAssembly" class="form-control">
+                            <option value="">All Assemblies</option>
+                            <option value="durg-city">Durg City</option>
+                            <option value="durg-gramin">Durg Gramin</option>
+                            <option value="bhilai-nagar">Bhilai Nagar</option>
+                            <option value="vaishali-nagar">Vaishali Nagar</option>
+                            <option value="patan">Patan</option>
+                            <option value="Ahiwara">Ahiwara</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Gender:</label>
+                        <select id="srchGender" class="form-control">
+                            <option value="">All Genders</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Min Age:</label>
+                        <input type="number" id="srchMinAge" class="form-control" placeholder="18" value="18">
+                    </div>
+                    <div>
+                        <label class="form-label">Max Age:</label>
+                        <input type="number" id="srchMaxAge" class="form-control" placeholder="100" value="45">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 1.25rem;">
+                    <button class="btn-action" onclick="executeVoterSearch()">Execute Multi-Criteria Search &rarr;</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>EPIC No</th>
+                                <th>Voter Name</th>
+                                <th>Relative Name</th>
+                                <th>Gender</th>
+                                <th>Age</th>
+                                <th>Assembly</th>
+                                <th>Town / Village</th>
+                                <th>Booth No</th>
+                            </tr>
+                        </thead>
+                        <tbody id="voterSearchTableBody">
+                            <tr><td colspan="8" style="text-align: center;">Click "Execute Multi-Criteria Search" to fetch voter records.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: API ENDPOINT EXPLORER & LOGS -->
+        <div id="tabAPI" class="tab-content">
+            <div class="grid-2col" style="margin-bottom: 1.5rem;">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">⚡ REST API Quick-Fire Tester</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/health')">GET /api/v1/health</button>
+                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/stats')">GET /api/v1/stats</button>
+                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/voters?limit=5')">GET /api/v1/voters?limit=5</button>
+                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/polling-stations?limit=5')">GET /api/v1/polling-stations?limit=5</button>
+                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/constituencies')">GET /api/v1/constituencies</button>
+                        <button class="btn-action btn-purple" onclick="callAPI('/api/v1/auth/me')">GET /api/v1/auth/me (Check Token Role)</button>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">🔒 Auth Login Tester</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Username:</label>
+                        <input type="text" id="loginUser" class="form-control" value="admin">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password:</label>
+                        <input type="password" id="loginPass" class="form-control" value="adminpass">
+                    </div>
+                    <button class="btn-action btn-rose" onclick="executeLogin()" style="width: 100%;">Authenticate & Issue Token &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Live Response Log Viewer -->
+            <div class="response-viewer">
+                <div class="panel-header" style="border: none; margin-bottom: 0.5rem;">
+                    <span class="panel-title">📡 Live Response Payload Log</span>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <span id="logLatency" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary);">0 ms</span>
+                        <span id="logStatus" class="status-badge">HTTP 200 OK</span>
+                    </div>
+                </div>
+                <pre class="json-output" id="jsonLog">Click any quick-fire endpoint button above to inspect JSON response payload.</pre>
+            </div>
+        </div>
+
+        <footer>
+            <p>Durg Voter Production Analytics Studio &bull; Powered by <strong>Go 1.24</strong> &amp; <strong>DuckDB 1.5 Engine</strong> (Endpoint: http://localhost:8080)</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let activeToken = "admin-token-secret-key-12345";
+        let activeRole = "admin";
+
+        function getBaseURL() {
+            return document.getElementById('apiEndpoint').value.replace(/\/+$/, '');
+        }
+
+        function setRole(role) {
+            if (role === 'admin') {
+                activeToken = "admin-token-secret-key-12345";
+                activeRole = "admin";
+                document.getElementById('roleBadge').className = "role-pill role-admin";
+                document.getElementById('roleBadge').innerText = "ADMIN";
+            } else {
+                activeToken = "guest-token-secret-key-67890";
+                activeRole = "guest";
+                document.getElementById('roleBadge').className = "role-pill role-guest";
+                document.getElementById('roleBadge').innerText = "GUEST";
+            }
+        }
+
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        async function fetchAPI(path, options = {}) {
+            const baseUrl = getBaseURL();
+            const url = baseUrl + path;
+            const t0 = performance.now();
+
+            const headers = {
+                'Authorization': 'Bearer ' + activeToken,
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            };
+
+            try {
+                const res = await fetch(url, { ...options, headers });
+                const t1 = performance.now();
+                const latency = (t1 - t0).toFixed(1);
+                const data = await res.json();
+
+                updateResponseLog(res.status, latency, data);
+                return { status: res.status, latency, data };
+            } catch (err) {
+                const t1 = performance.now();
+                const latency = (t1 - t0).toFixed(1);
+                const errData = { success: false, error: err.message };
+                updateResponseLog(500, latency, errData);
+                return { status: 500, latency, data: errData };
+            }
+        }
+
+        function updateResponseLog(status, latency, data) {
+            document.getElementById('logLatency').innerText = latency + ' ms';
+            document.getElementById('logStatus').innerText = 'HTTP ' + status;
+            if (status >= 400) {
+                document.getElementById('logStatus').style.background = 'var(--accent-rose-glow)';
+                document.getElementById('logStatus').style.color = 'var(--accent-rose)';
+            } else {
+                document.getElementById('logStatus').style.background = 'var(--accent-emerald-glow)';
+                document.getElementById('logStatus').style.color = 'var(--accent-emerald)';
+            }
+            document.getElementById('jsonLog').innerText = JSON.stringify(data, null, 2);
+        }
+
+        async function callAPI(path) {
+            await fetchAPI(path);
+        }
+
+        // TAB 1: OVERVIEW
+        async function loadOverviewStats() {
+            const res = await fetchAPI('/api/v1/stats');
+            if (res.data && res.data.success && res.data.data) {
+                const d = res.data.data;
+                document.getElementById('mTotalVoters').innerText = Number(d.total_voters).toLocaleString();
+                document.getElementById('mMaleVoters').innerText = Number(d.male_voters).toLocaleString();
+                document.getElementById('mFemaleVoters').innerText = Number(d.female_voters).toLocaleString();
+                document.getElementById('mBooths').innerText = Number(d.total_booths).toLocaleString();
+
+                const cRes = await fetchAPI('/api/v1/constituencies');
+                if (cRes.data && cRes.data.success && cRes.data.data) {
+                    const tbody = document.getElementById('constituenciesTableBody');
+                    tbody.innerHTML = '';
+                    const totalVoters = d.total_voters || 1;
+
+                    cRes.data.data.forEach(item => {
+                        const pct = ((item.total_voters / totalVoters) * 100).toFixed(1);
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td style="font-weight: 700; color: var(--accent-blue);">${item.assembly_constituency}</td>
+                            <td>${Number(item.total_voters).toLocaleString()}</td>
+                            <td>${Number(item.male_voters).toLocaleString()}</td>
+                            <td>${Number(item.female_voters).toLocaleString()}</td>
+                            <td>${Number(item.total_booths).toLocaleString()}</td>
+                            <td>
+                                <div>${pct}%</div>
+                                <div class="bar-container"><div class="bar-fill" style="width: ${pct}%;"></div></div>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+        }
+
+        // TAB 2: ADMIN SQL
+        function setSQLPreset(type) {
+            if (type === 'gender') {
+                document.getElementById('sqlInput').value = "SELECT gender_english, count(*) AS total_voters FROM voters GROUP BY 1 ORDER BY 2 DESC;";
+            } else if (type === 'towns') {
+                document.getElementById('sqlInput').value = "SELECT town_village, count(*) AS total_voters FROM polling_stations GROUP BY 1 ORDER BY 2 DESC LIMIT 10;";
+            } else if (type === 'age') {
+                document.getElementById('sqlInput').value = "SELECT CASE WHEN age < 25 THEN '18-24' WHEN age < 40 THEN '25-39' WHEN age < 60 THEN '40-59' ELSE '60+' END AS age_group, count(*) AS total FROM voters GROUP BY 1 ORDER BY 1;";
+            } else if (type === 'booths') {
+                document.getElementById('sqlInput').value = "SELECT assembly_constituency, count(DISTINCT part_number) AS total_booths FROM voters GROUP BY 1 ORDER BY 2 DESC;";
+            }
+        }
+
+        async function executeSQLQuery() {
+            const sql = document.getElementById('sqlInput').value.trim();
+            if (!sql) return;
+
+            const res = await fetchAPI('/api/v1/admin/sql', {
+                method: 'POST',
+                body: JSON.stringify({ sql: sql })
+            });
+
+            const head = document.getElementById('sqlTableHead');
+            const body = document.getElementById('sqlTableBody');
+            head.innerHTML = '';
+            body.innerHTML = '';
+
+            if (res.data && res.data.success && res.data.data) {
+                const d = res.data.data;
+                document.getElementById('sqlExecutionTime').innerText = (d.execution_time_ms || 0) + ' ms';
+                document.getElementById('sqlRowCount').innerText = (d.row_count || 0) + ' rows';
+
+                // Render Header
+                const trH = document.createElement('tr');
+                d.columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.innerText = col;
+                    trH.appendChild(th);
+                });
+                head.appendChild(trH);
+
+                // Render Rows
+                d.rows.forEach(row => {
+                    const trB = document.createElement('tr');
+                    row.forEach(val => {
+                        const td = document.createElement('td');
+                        td.innerText = val !== null ? val : 'NULL';
+                        trB.appendChild(td);
+                    });
+                    body.appendChild(trB);
+                });
+            } else {
+                document.getElementById('sqlExecutionTime').innerText = res.latency + ' ms';
+                document.getElementById('sqlRowCount').innerText = '0 rows';
+                head.innerHTML = '<tr><th>Error Output</th></tr>';
+                body.innerHTML = `<tr><td style="color: var(--accent-rose);">${res.data.error || 'Failed to execute query'}</td></tr>`;
+            }
+        }
+
+        // TAB 3: GROUP BY
+        async function executeGroupBy() {
+            const field = document.getElementById('gbField').value;
+            const limit = document.getElementById('gbLimit').value;
+            const sort = document.getElementById('gbSort').value;
+
+            const res = await fetchAPI(`/api/v1/voters/group-by?field=${field}&limit=${limit}&sort=${sort}`);
+            const container = document.getElementById('groupByResults');
+            container.innerHTML = '';
+
+            if (res.data && res.data.success && res.data.data) {
+                const d = res.data.data;
+                document.getElementById('gbTotalCount').innerText = Number(d.total_items).toLocaleString() + ' Total Voters';
+
+                d.groups.forEach(item => {
+                    const div = document.createElement('div');
+                    div.style.background = 'var(--bg-dark)';
+                    div.style.padding = '0.75rem 1rem';
+                    div.style.borderRadius = '0.75rem';
+                    div.style.border = '1px solid var(--card-border)';
+
+                    div.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem;">
+                            <span>${item.value || 'Unknown'}</span>
+                            <span style="color: var(--accent-purple); font-family: 'JetBrains Mono', monospace;">${Number(item.count).toLocaleString()} (${item.percentage}%)</span>
+                        </div>
+                        <div class="bar-container"><div class="bar-fill" style="width: ${Math.min(item.percentage * 2, 100)}%;"></div></div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        // TAB 4: SPATIAL GEO
+        function setGeoPreset(lat, lng) {
+            document.getElementById('geoLat').value = lat;
+            document.getElementById('geoLng').value = lng;
+        }
+
+        async function executeGeoBooths() {
+            const lat = document.getElementById('geoLat').value;
+            const lng = document.getElementById('geoLng').value;
+            const radius = document.getElementById('geoRadius').value;
+
+            const res = await fetchAPI(`/api/v1/geo/nearby-polling-stations?lat=${lat}&lng=${lng}&radius_km=${radius}&limit=10`);
+            renderGeoResults(res, 'booth');
+        }
+
+        async function executeGeoVoters() {
+            const lat = document.getElementById('geoLat').value;
+            const lng = document.getElementById('geoLng').value;
+            const radius = document.getElementById('geoRadius').value;
+
+            const res = await fetchAPI(`/api/v1/geo/nearby-voters?lat=${lat}&lng=${lng}&radius_km=${radius}&limit=10`);
+            renderGeoResults(res, 'voter');
+        }
+
+        function renderGeoResults(res, type) {
+            const tbody = document.getElementById('geoTableBody');
+            tbody.innerHTML = '';
+
+            if (res.data && res.data.success && Array.isArray(res.data.data)) {
+                if (res.data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No results found within specified radius.</td></tr>';
+                    return;
+                }
+
+                res.data.data.forEach(item => {
+                    const tr = document.createElement('tr');
+                    if (type === 'booth') {
+                        const ps = item.polling_station;
+                        tr.innerHTML = `
+                            <td style="font-weight: 700; color: var(--accent-blue);">${ps.polling_station_name}</td>
+                            <td>${ps.assembly_constituency}</td>
+                            <td>${ps.town_village || 'N/A'}</td>
+                            <td>${ps.latitude}, ${ps.longitude}</td>
+                            <td style="color: var(--accent-emerald); font-weight: 700;">${item.distance_km} km (${item.distance_meters} m)</td>
+                        `;
+                    } else {
+                        const v = item.voter;
+                        tr.innerHTML = `
+                            <td style="font-weight: 700; color: var(--accent-purple);">${v.full_name || 'Voter Profile'} (${v.epic_no})</td>
+                            <td>${v.assembly_constituency}</td>
+                            <td>${v.town_village || 'N/A'}</td>
+                            <td>${v.latitude}, ${v.longitude}</td>
+                            <td style="color: var(--accent-emerald); font-weight: 700;">${item.distance_km} km (${item.distance_meters} m)</td>
+                        `;
+                    }
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        async function executeDistance() {
+            const lat1 = document.getElementById('distLat1').value;
+            const lng1 = document.getElementById('distLng1').value;
+            const lat2 = document.getElementById('distLat2').value;
+            const lng2 = document.getElementById('distLng2').value;
+
+            const res = await fetchAPI(`/api/v1/geo/distance?lat1=${lat1}&lng1=${lng1}&lat2=${lat2}&lng2=${lng2}`);
+            if (res.data && res.data.success && res.data.data) {
+                const d = res.data.data;
+                document.getElementById('distanceOutput').innerText = `Distance: ${d.distance_km} km (${d.distance_miles} miles / ${d.distance_meters} meters)`;
+            }
+        }
+
+        // TAB 5: VOTER SEARCH
+        async function executeVoterSearch() {
+            const query = document.getElementById('srchQuery').value.trim();
+            const assembly = document.getElementById('srchAssembly').value;
+            const gender = document.getElementById('srchGender').value;
+            const minAge = parseInt(document.getElementById('srchMinAge').value) || 18;
+            const maxAge = parseInt(document.getElementById('srchMaxAge').value) || 100;
+
+            const res = await fetchAPI('/api/v1/voters/search', {
+                method: 'POST',
+                body: JSON.stringify({
+                    query,
+                    assembly_constituency: assembly,
+                    gender,
+                    min_age: minAge,
+                    max_age: maxAge,
+                    limit: 10
+                })
+            });
+
+            const tbody = document.getElementById('voterSearchTableBody');
+            tbody.innerHTML = '';
+
+            if (res.data && res.data.success && Array.isArray(res.data.data)) {
+                if (res.data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No voter records found matching search filters.</td></tr>';
+                    return;
+                }
+
+                res.data.data.forEach(v => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color: var(--accent-blue); font-weight: 700;">${v.epic_no}</td>
+                        <td>${v.full_name || 'N/A'}</td>
+                        <td>${v.relative_name || 'N/A'}</td>
+                        <td>${v.gender}</td>
+                        <td>${v.age}</td>
+                        <td>${v.assembly_constituency}</td>
+                        <td>${v.town_village || 'N/A'}</td>
+                        <td>${v.part_number}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        // TAB 6: AUTH LOGIN
+        async function executeLogin() {
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value.trim();
+
+            const res = await fetchAPI('/api/v1/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+
+            if (res.data && res.data.success && res.data.data) {
+                const token = res.data.data.token;
+                const role = res.data.data.role;
+                activeToken = token;
+                setRole(role);
+                alert(`Login Successful! Logged in as ${role.toUpperCase()}. Active Token attached to requests.`);
+            }
+        }
+
+        // Initial Load
+        window.onload = function() {
+            loadOverviewStats();
+        };
+    </script>
+</body>
+</html>
