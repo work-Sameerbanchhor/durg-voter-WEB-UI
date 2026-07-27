@@ -301,26 +301,33 @@
             letter-spacing: 0.12em;
         }
 
-        /* Navigation Tabs Bar */
+        /* Navigation Tabs (3 Big Clean Tabs) */
         .tabs-bar {
-            display: flex;
-            gap: 8px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
             margin-bottom: 2rem;
-            overflow-x: auto;
             width: 100%;
         }
 
+        @media (max-width: 640px) {
+            .tabs-bar { grid-template-columns: 1fr; }
+        }
+
         .tab-btn {
-            background: transparent;
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
-            padding: 8px 16px;
-            font-size: 0.75rem;
+            padding: 12px 16px;
+            font-size: 0.82rem;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.08em;
+            font-weight: 600;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             transition: all 0.2s ease;
             white-space: nowrap;
         }
@@ -334,7 +341,7 @@
             background: var(--border-dark);
             color: var(--bg-main);
             border-color: var(--border-dark);
-            font-weight: 600;
+            font-weight: 700;
         }
 
         /* Tab Content */
@@ -669,21 +676,13 @@
     <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer(false)">
         <aside class="navigation-drawer" onclick="event.stopPropagation()">
             <div class="drawer-header">
-                <h3>System Controls</h3>
+                <h3>System Configuration</h3>
                 <button class="icon-btn" onclick="toggleDrawer(false)">Close</button>
             </div>
 
             <div class="setting-group">
                 <label for="apiEndpoint">📡 API Endpoint Base</label>
                 <input type="text" id="apiEndpoint" class="input-sm" value="http://localhost:7860">
-            </div>
-
-            <div class="setting-group">
-                <label>🔐 Active Authorization Role</label>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn-action" style="flex:1;" onclick="setRole('admin')">Admin</button>
-                    <button class="btn-action" style="flex:1; background: transparent; color: var(--text-main);" onclick="setRole('guest')">Guest</button>
-                </div>
             </div>
 
             <div class="setting-group">
@@ -703,7 +702,6 @@
             <button id="menuBtn" class="icon-btn" onclick="toggleDrawer(true)">
                 Controls & Config
             </button>
-            <span id="roleBadge" class="badge badge-success" style="margin-left: 10px;">ROLE: ADMIN</span>
         </div>
 
         <!-- Header -->
@@ -712,14 +710,11 @@
             <p class="subtitle">Standalone Analytics UI for Go 1.24 & DuckDB 1.5 REST Backend</p>
         </header>
 
-        <!-- Navigation Tabs Bar -->
+        <!-- Navigation Tabs Bar (3 Big Clean Tabs) -->
         <div class="tabs-bar">
-            <button class="tab-btn active" onclick="openTab(this, 'tabOverview')">📊 Overview & Demographics</button>
-            <button class="tab-btn" onclick="openTab(this, 'tabSQL')">⚡ Admin SQL Studio</button>
-            <button class="tab-btn" onclick="openTab(this, 'tabGroupBy')">📈 Group-By Analytics</button>
-            <button class="tab-btn" onclick="openTab(this, 'tabGeo')">📍 Spatial Geo-Location</button>
-            <button class="tab-btn" onclick="openTab(this, 'tabSearch')">🔍 Voter Search Directory</button>
-            <button class="tab-btn" onclick="openTab(this, 'tabAPI')">📡 API Endpoint Explorer</button>
+            <button class="tab-btn active" onclick="openTab(this, 'tabOverview')">📊 Overview</button>
+            <button class="tab-btn" onclick="openTab(this, 'tabSearch')">🔍 Voter Search</button>
+            <button class="tab-btn" onclick="openTab(this, 'tabMap')">🗺️ Map & Polling</button>
         </div>
 
         <!-- TAB 1: OVERVIEW & DEMOGRAPHICS -->
@@ -772,174 +767,7 @@
             </div>
         </div>
 
-        <!-- TAB 2: ADMIN SQL STUDIO -->
-        <div id="tabSQL" class="tab-content">
-            <div class="panel-card">
-                <div class="panel-header">
-                    <span class="panel-title">⚡ Admin SQL Query Studio <span class="badge badge-danger">ADMIN REQUIRED</span></span>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <button class="preset-chip" onclick="setSQLPreset('gender')">Gender</button>
-                        <button class="preset-chip" onclick="setSQLPreset('towns')">Top Towns</button>
-                        <button class="preset-chip" onclick="setSQLPreset('age')">Age Groups</button>
-                        <button class="preset-chip" onclick="setSQLPreset('booths')">Booths/Assembly</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <textarea id="sqlInput" class="form-control" rows="4">SELECT gender_english, count(*) AS total_voters FROM voters GROUP BY 1 ORDER BY 2 DESC;</textarea>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
-                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Read-only SELECT queries permitted.</span>
-                    <button class="btn-action" onclick="executeSQLQuery()">Execute Query &rarr;</button>
-                </div>
-
-                <div class="panel-header">
-                    <span class="panel-title">📋 Query Results Output</span>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <span id="sqlExecutionTime" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted);">0 ms</span>
-                        <span id="sqlRowCount" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--accent-info);">0 rows</span>
-                    </div>
-                </div>
-
-                <div class="responsive-table">
-                    <table>
-                        <thead id="sqlTableHead"><tr><th>Status</th></tr></thead>
-                        <tbody id="sqlTableBody"><tr><td style="color: var(--text-muted);">Execute a query above to display output rows.</td></tr></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 3: GROUP-BY ANALYTICS -->
-        <div id="tabGroupBy" class="tab-content">
-            <div class="grid-2col">
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">📈 Group-By Query Builder</span>
-                        <span class="badge badge-info">ALL ROLES</span>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Grouping Dimension / Field:</label>
-                        <select id="gbField" class="form-control">
-                            <option value="full_name">Full Name (Voter Name)</option>
-                            <option value="relative_name">Relative Name</option>
-                            <option value="gender">Gender</option>
-                            <option value="assembly_constituency">Assembly Constituency</option>
-                            <option value="town_village">Town / Village</option>
-                            <option value="age_group">Age Group Bracket</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Max Group Records (Limit):</label>
-                        <select id="gbLimit" class="form-control">
-                            <option value="10">10 Groups</option>
-                            <option value="20" selected>20 Groups</option>
-                            <option value="50">50 Groups</option>
-                            <option value="100">100 Groups</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Sort Order:</label>
-                        <select id="gbSort" class="form-control">
-                            <option value="desc">Highest Count to Lowest (DESC)</option>
-                            <option value="asc">Lowest Count to Highest (ASC)</option>
-                        </select>
-                    </div>
-                    <button class="btn-action" onclick="executeGroupBy()" style="width: 100%;">Run Aggregation &rarr;</button>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">📊 Aggregated Distribution</span>
-                        <span id="gbTotalCount" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent-info);">1.04M Voters</span>
-                    </div>
-                    <div id="groupByResults" style="display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto;">
-                        <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Select parameters to generate breakdown.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 4: SPATIAL GEO-LOCATION -->
-        <div id="tabGeo" class="tab-content">
-            <div class="grid-2col">
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">📍 Spatial Coordinates & Radius</span>
-                        <div style="display: flex; gap: 4px;">
-                            <button class="preset-chip" onclick="setGeoPreset(21.19, 81.28)">Durg</button>
-                            <button class="preset-chip" onclick="setGeoPreset(21.21, 81.38)">Bhilai</button>
-                            <button class="preset-chip" onclick="setGeoPreset(21.03, 81.53)">Patan</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Latitude:</label>
-                        <input type="number" step="0.0001" id="geoLat" class="form-control" value="21.19">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Longitude:</label>
-                        <input type="number" step="0.0001" id="geoLng" class="form-control" value="81.28">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Search Radius (Kilometers):</label>
-                        <input type="number" step="0.5" id="geoRadius" class="form-control" value="5.0">
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-action" onclick="executeGeoBooths()" style="flex: 1;">Find Booths</button>
-                        <button class="btn-action" onclick="executeGeoVoters()" style="flex: 1; background: transparent; color: var(--text-main);">Find Voters</button>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">🧭 Distance Calculator</span>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Point 1 (Lat, Lng):</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="number" step="0.0001" id="distLat1" class="form-control" value="21.19">
-                            <input type="number" step="0.0001" id="distLng1" class="form-control" value="81.28">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Point 2 (Lat, Lng):</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="number" step="0.0001" id="distLat2" class="form-control" value="21.21">
-                            <input type="number" step="0.0001" id="distLng2" class="form-control" value="81.38">
-                        </div>
-                    </div>
-                    <button class="btn-action" onclick="executeDistance()" style="width: 100%; margin-bottom: 1rem;">Calculate Distance</button>
-                    <div id="distanceOutput" style="background: var(--subtle-bg); padding: 1rem; border: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: center;">
-                        Distance: -- km
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel-card">
-                <div class="panel-header">
-                    <span class="panel-title">📍 Nearby Spatial Search Results</span>
-                </div>
-                <div class="responsive-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name / Booth</th>
-                                <th>Assembly</th>
-                                <th>Town / Village</th>
-                                <th>Coordinates</th>
-                                <th>Calculated Distance</th>
-                            </tr>
-                        </thead>
-                        <tbody id="geoTableBody">
-                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Run a spatial query above to view nearby records.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 5: VOTER DIRECTORY & SEARCH -->
+        <!-- TAB 2: VOTER SEARCH ENGINE -->
         <div id="tabSearch" class="tab-content">
             <div class="panel-card">
                 <div class="panel-header">
@@ -1024,48 +852,81 @@
             </div>
         </div>
 
-        <!-- TAB 6: API ENDPOINT EXPLORER & LOGS -->
-        <div id="tabAPI" class="tab-content">
+        <!-- TAB 3: MAP & POLLING LOCATIONS -->
+        <div id="tabMap" class="tab-content">
             <div class="grid-2col">
                 <div class="panel-card">
                     <div class="panel-header">
-                        <span class="panel-title">⚡ REST API Quick-Fire Tester</span>
+                        <span class="panel-title">🗺️ Spatial Coordinates & Radius Finder</span>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="preset-chip" onclick="setGeoPreset(21.19, 81.28)">Durg</button>
+                            <button class="preset-chip" onclick="setGeoPreset(21.21, 81.38)">Bhilai</button>
+                            <button class="preset-chip" onclick="setGeoPreset(21.03, 81.53)">Patan</button>
+                        </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/health')">GET /api/v1/health</button>
-                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/stats')">GET /api/v1/stats</button>
-                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/voters?limit=5')">GET /api/v1/voters?limit=5</button>
-                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/polling-stations?limit=5')">GET /api/v1/polling-stations?limit=5</button>
-                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/constituencies')">GET /api/v1/constituencies</button>
-                        <button class="btn-action" onclick="callAPI('/api/v1/auth/me')">GET /api/v1/auth/me (Check Token Role)</button>
+                    <div class="form-group">
+                        <label class="form-label">Latitude:</label>
+                        <input type="number" step="0.0001" id="geoLat" class="form-control" value="21.19">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude:</label>
+                        <input type="number" step="0.0001" id="geoLng" class="form-control" value="81.28">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Search Radius (Kilometers):</label>
+                        <input type="number" step="0.5" id="geoRadius" class="form-control" value="5.0">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-action" onclick="executeGeoBooths()" style="flex: 1;">Find Booths</button>
+                        <button class="btn-action" onclick="executeGeoVoters()" style="flex: 1; background: transparent; color: var(--text-main);">Find Voters</button>
                     </div>
                 </div>
 
                 <div class="panel-card">
                     <div class="panel-header">
-                        <span class="panel-title">🔒 Auth Login Tester</span>
+                        <span class="panel-title">🧭 Distance Calculator</span>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Username:</label>
-                        <input type="text" id="loginUser" class="form-control" value="admin">
+                        <label class="form-label">Point 1 (Lat, Lng):</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="number" step="0.0001" id="distLat1" class="form-control" value="21.19">
+                            <input type="number" step="0.0001" id="distLng1" class="form-control" value="81.28">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Password:</label>
-                        <input type="password" id="loginPass" class="form-control" value="adminpass">
+                        <label class="form-label">Point 2 (Lat, Lng):</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="number" step="0.0001" id="distLat2" class="form-control" value="21.21">
+                            <input type="number" step="0.0001" id="distLng2" class="form-control" value="81.38">
+                        </div>
                     </div>
-                    <button class="btn-action" onclick="executeLogin()" style="width: 100%;">Authenticate & Issue Token &rarr;</button>
+                    <button class="btn-action" onclick="executeDistance()" style="width: 100%; margin-bottom: 1rem;">Calculate Distance</button>
+                    <div id="distanceOutput" style="background: var(--subtle-bg); padding: 1rem; border: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: center;">
+                        Distance: -- km
+                    </div>
                 </div>
             </div>
 
-            <div class="response-viewer">
-                <div class="panel-header" style="border: none; margin-bottom: 0.5rem;">
-                    <span class="panel-title">📡 Live Response Payload Log</span>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <span id="logLatency" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-muted);">0 ms</span>
-                        <span id="logStatus" class="badge badge-success">HTTP 200 OK</span>
-                    </div>
+            <div class="panel-card">
+                <div class="panel-header">
+                    <span class="panel-title">📍 Nearby Spatial Search Results</span>
                 </div>
-                <pre class="json-output" id="jsonLog">Click any quick-fire endpoint button above to inspect JSON response payload.</pre>
+                <div class="responsive-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name / Booth</th>
+                                <th>Assembly</th>
+                                <th>Town / Village</th>
+                                <th>Coordinates</th>
+                                <th>Distance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="geoTableBody">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Run a spatial query above to view nearby booths or voters.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1143,31 +1004,14 @@
                 const t1 = performance.now();
                 const latency = (t1 - t0).toFixed(1);
                 const data = await res.json();
-
-                updateResponseLog(res.status, latency, data);
                 return { status: res.status, latency, data };
             } catch (err) {
                 const t1 = performance.now();
                 const latency = (t1 - t0).toFixed(1);
                 const errData = { success: false, error: err.message };
-                updateResponseLog(500, latency, errData);
                 return { status: 500, latency, data: errData };
             }
         }
-
-        function updateResponseLog(status, latency, data) {
-            document.getElementById('logLatency').innerText = latency + ' ms';
-            const logStatus = document.getElementById('logStatus');
-            logStatus.innerText = 'HTTP ' + status;
-            if (status >= 400) {
-                logStatus.className = 'badge badge-danger';
-            } else {
-                logStatus.className = 'badge badge-success';
-            }
-            document.getElementById('jsonLog').innerText = JSON.stringify(data, null, 2);
-        }
-
-        async function callAPI(path) { await fetchAPI(path); }
 
         /* OVERVIEW STATS */
         async function loadOverviewStats() {
@@ -1202,94 +1046,6 @@
                         tbody.appendChild(tr);
                     });
                 }
-            }
-        }
-
-        /* ADMIN SQL */
-        function setSQLPreset(type) {
-            if (type === 'gender') {
-                document.getElementById('sqlInput').value = "SELECT gender_english, count(*) AS total_voters FROM voters GROUP BY 1 ORDER BY 2 DESC;";
-            } else if (type === 'towns') {
-                document.getElementById('sqlInput').value = "SELECT town_village, count(*) AS total_voters FROM polling_stations GROUP BY 1 ORDER BY 2 DESC LIMIT 10;";
-            } else if (type === 'age') {
-                document.getElementById('sqlInput').value = "SELECT CASE WHEN age < 25 THEN '18-24' WHEN age < 40 THEN '25-39' WHEN age < 60 THEN '40-59' ELSE '60+' END AS age_group, count(*) AS total FROM voters GROUP BY 1 ORDER BY 1;";
-            } else if (type === 'booths') {
-                document.getElementById('sqlInput').value = "SELECT assembly_constituency, count(DISTINCT part_number) AS total_booths FROM voters GROUP BY 1 ORDER BY 2 DESC;";
-            }
-        }
-
-        async function executeSQLQuery() {
-            const sql = document.getElementById('sqlInput').value.trim();
-            if (!sql) return;
-
-            const res = await fetchAPI('/api/v1/admin/sql', {
-                method: 'POST',
-                body: JSON.stringify({ sql: sql })
-            });
-
-            const head = document.getElementById('sqlTableHead');
-            const body = document.getElementById('sqlTableBody');
-            head.innerHTML = ''; body.innerHTML = '';
-
-            if (res.data && res.data.success && res.data.data) {
-                const d = res.data.data;
-                document.getElementById('sqlExecutionTime').innerText = (d.execution_time_ms || 0) + ' ms';
-                document.getElementById('sqlRowCount').innerText = (d.row_count || 0) + ' rows';
-
-                const trH = document.createElement('tr');
-                d.columns.forEach(col => {
-                    const th = document.createElement('th');
-                    th.innerText = col;
-                    trH.appendChild(th);
-                });
-                head.appendChild(trH);
-
-                d.rows.forEach(row => {
-                    const trB = document.createElement('tr');
-                    row.forEach(val => {
-                        const td = document.createElement('td');
-                        td.innerText = val !== null ? val : 'NULL';
-                        trB.appendChild(td);
-                    });
-                    body.appendChild(trB);
-                });
-            } else {
-                document.getElementById('sqlExecutionTime').innerText = res.latency + ' ms';
-                document.getElementById('sqlRowCount').innerText = '0 rows';
-                head.innerHTML = '<tr><th>Error Output</th></tr>';
-                body.innerHTML = `<tr><td style="color: var(--accent-err);">${res.data.error || 'Failed to execute query'}</td></tr>`;
-            }
-        }
-
-        /* GROUP BY */
-        async function executeGroupBy() {
-            const field = document.getElementById('gbField').value;
-            const limit = document.getElementById('gbLimit').value;
-            const sort = document.getElementById('gbSort').value;
-
-            const res = await fetchAPI(`/api/v1/voters/group-by?field=${field}&limit=${limit}&sort=${sort}`);
-            const container = document.getElementById('groupByResults');
-            container.innerHTML = '';
-
-            if (res.data && res.data.success && res.data.data) {
-                const d = res.data.data;
-                document.getElementById('gbTotalCount').innerText = Number(d.total_items).toLocaleString() + ' Total Voters';
-
-                d.groups.forEach(item => {
-                    const div = document.createElement('div');
-                    div.style.background = 'var(--subtle-bg)';
-                    div.style.padding = '0.75rem 1rem';
-                    div.style.border = '1px solid var(--border-color)';
-
-                    div.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem;">
-                            <span>${item.value || 'Unknown'}</span>
-                            <span style="font-family: 'JetBrains Mono', monospace;">${Number(item.count).toLocaleString()} (${item.percentage}%)</span>
-                        </div>
-                        <div class="bar-container"><div class="bar-fill" style="width: ${Math.min(item.percentage * 2, 100)}%;"></div></div>
-                    `;
-                    container.appendChild(div);
-                });
             }
         }
 
