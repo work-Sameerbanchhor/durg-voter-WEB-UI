@@ -913,10 +913,16 @@
             <div class="panel-card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1rem;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="panel-title" style="margin: 0; font-size: 1rem;">🗺️ Polling Station Parts & School Heatmap</span>
-                        <span id="osmMapStatus" class="badge badge-info" style="font-size: 0.72rem; text-transform: uppercase;">Loading Map Data...</span>
+                        <span class="panel-title" style="margin: 0; font-size: 1rem;">🇮🇳 Chhattisgarh State Animated Boundary &amp; Durg Polling Parts</span>
+                        <span id="osmMapStatus" class="badge badge-info" style="font-size: 0.72rem; text-transform: uppercase;">Loading Map...</span>
                     </div>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <button class="btn-action" onclick="playCinematicTour()" style="padding: 6px 14px; font-size: 0.78rem;">🚀 Play Tour</button>
+                        <div class="theme-segmented">
+                            <button id="viewIndia" class="segment-opt" onclick="flyToView('india')">🇮🇳 India</button>
+                            <button id="viewCG" class="segment-opt" onclick="flyToView('cg')">🏛️ Chhattisgarh</button>
+                            <button id="viewDurg" class="segment-opt active" onclick="flyToView('durg')">🎯 Durg District</button>
+                        </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <label class="form-label" style="margin: 0; font-size: 0.78rem;">Assembly:</label>
                             <select id="mapAssemblyFilter" class="form-control" style="width: auto; min-width: 140px; padding: 5px 10px; font-size: 0.8rem;" onchange="filterMapByAssembly()">
@@ -929,14 +935,6 @@
                                 <option value="Ahiwara">Ahiwara</option>
                             </select>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <label class="form-label" style="margin: 0; font-size: 0.78rem;">Layer Mode:</label>
-                            <div class="theme-segmented">
-                                <button id="mapModeBoth" class="segment-opt active" onclick="setMapLayerMode('both')">Pins &amp; Heatmap</button>
-                                <button id="mapModePins" class="segment-opt" onclick="setMapLayerMode('pins')">Dropped Pins</button>
-                                <button id="mapModeHeat" class="segment-opt" onclick="setMapLayerMode('heat')">School Heatmap</button>
-                            </div>
-                        </div>
                         <button class="preset-chip" onclick="resetMapView()">Reset View</button>
                         <button class="preset-chip" onclick="toggleMapTiles()">Dark / Light Map</button>
                     </div>
@@ -944,7 +942,7 @@
                 <div style="margin-bottom: 1rem;">
                     <input type="text" id="mapSearchInput" class="form-control" placeholder="Search school name, part number, building address, or locality..." onkeyup="filterMapBySearch()">
                 </div>
-                <div id="osmMap" style="width: 100%; height: 650px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--subtle-bg); position: relative; z-index: 1;"></div>
+                <div id="osmMap" style="width: 100%; height: 660px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--subtle-bg); position: relative; z-index: 1;"></div>
             </div>
         </div>
 
@@ -1169,15 +1167,43 @@
             }
         }
 
-        /* LEAFLET OPENSTREETMAP & SCHOOL HEATMAP INTEGRATION */
+        /* LEAFLET OPENSTREETMAP & CHHATTISGARH STATE ANIMATED BOUNDARY */
+        const cgBoundaryGeoJSON = {
+            "type": "Feature",
+            "properties": { "name": "Chhattisgarh State" },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [80.40, 21.30], [80.25, 21.75], [80.20, 22.15], [80.45, 22.65],
+                    [80.30, 23.35], [80.75, 23.90], [81.45, 24.12], [82.20, 23.85],
+                    [83.15, 23.75], [84.35, 23.10], [84.15, 22.35], [83.60, 21.70],
+                    [83.20, 20.85], [82.65, 19.85], [81.85, 18.55], [81.25, 17.78],
+                    [81.05, 18.15], [80.75, 19.35], [80.95, 20.15], [80.65, 20.85],
+                    [80.40, 21.30]
+                ]]
+            }
+        };
+
+        const durgBoundaryGeoJSON = {
+            "type": "Feature",
+            "properties": { "name": "Durg District" },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [81.05, 21.38], [81.28, 21.48], [81.58, 21.32], [81.65, 21.12],
+                    [81.48, 20.92], [81.20, 20.88], [81.04, 21.10], [81.05, 21.38]
+                ]]
+            }
+        };
+
         let osmMap = null;
         let allPollingStations = [];
         let schoolLocationGroups = [];
         let mapPinsLayerGroup = null;
-        let mapHeatLayer = null;
+        let cgOutlineLayer = null;
+        let durgOutlineLayer = null;
         let currentTileLayer = null;
         let isDarkTileMode = false;
-        let currentMapLayerMode = 'both'; // 'both', 'pins', 'heat'
 
         async function initOSMMap() {
             if (osmMap) return;
@@ -1194,7 +1220,71 @@
 
             mapPinsLayerGroup = L.layerGroup().addTo(osmMap);
 
+            renderAnimatedBoundaries();
             await fetchAndRenderAllPollingStations();
+        }
+
+        function renderAnimatedBoundaries() {
+            if (!osmMap) return;
+
+            if (cgOutlineLayer) osmMap.removeLayer(cgOutlineLayer);
+            if (durgOutlineLayer) osmMap.removeLayer(durgOutlineLayer);
+
+            // Chhattisgarh State Glowing Boundary
+            cgOutlineLayer = L.geoJSON(cgBoundaryGeoJSON, {
+                style: {
+                    className: 'animated-cg-boundary',
+                    fillColor: '#38bdf8',
+                    fillOpacity: 0.08,
+                    weight: 3.5
+                }
+            }).addTo(osmMap).bindTooltip("<b>🏛️ Chhattisgarh State Boundary</b>", { sticky: true, className: 'map-tooltip-dark' });
+
+            // Durg District Glowing Boundary
+            durgOutlineLayer = L.geoJSON(durgBoundaryGeoJSON, {
+                style: {
+                    className: 'animated-durg-boundary',
+                    fillColor: '#fbbf24',
+                    fillOpacity: 0.12,
+                    weight: 3
+                }
+            }).addTo(osmMap).bindTooltip("<b>🎯 Durg District Boundary</b>", { sticky: true, className: 'map-tooltip-dark' });
+        }
+
+        function flyToView(viewTarget) {
+            if (!osmMap) initOSMMap();
+
+            document.querySelectorAll('.theme-segmented button').forEach(b => {
+                if (b.id && b.id.startsWith('view')) b.classList.remove('active');
+            });
+
+            if (viewTarget === 'india') {
+                document.getElementById('viewIndia')?.classList.add('active');
+                osmMap.flyTo([20.5937, 78.9629], 5, { duration: 2.2, easeLinearity: 0.25 });
+                document.getElementById('osmMapStatus').innerText = '🇮🇳 India View - Chhattisgarh Boundary Highlighted';
+            } else if (viewTarget === 'cg') {
+                document.getElementById('viewCG')?.classList.add('active');
+                osmMap.flyTo([21.2787, 81.8661], 7, { duration: 2.0, easeLinearity: 0.25 });
+                document.getElementById('osmMapStatus').innerText = '🏛️ Chhattisgarh State Boundary Outline';
+            } else if (viewTarget === 'durg') {
+                document.getElementById('viewDurg')?.classList.add('active');
+                osmMap.flyTo([21.19, 81.28], 12, { duration: 1.8, easeLinearity: 0.25 });
+                document.getElementById('osmMapStatus').innerText = `${allPollingStations.length || 1513} Parts in Durg District`;
+            }
+        }
+
+        function playCinematicTour() {
+            if (!osmMap) initOSMMap();
+
+            flyToView('india');
+
+            setTimeout(() => {
+                flyToView('cg');
+            }, 2500);
+
+            setTimeout(() => {
+                flyToView('durg');
+            }, 5000);
         }
 
         async function fetchAndRenderAllPollingStations() {
@@ -1223,7 +1313,6 @@
                 const lng = parseFloat(ps.longitude) || 0;
                 if (!lat || !lng) return;
 
-                // Key grouped by coordinates
                 const key = `${lat.toFixed(5)}_${lng.toFixed(5)}`;
 
                 if (!locationMap.has(key)) {
@@ -1255,10 +1344,6 @@
             if (!osmMap) return;
 
             if (mapPinsLayerGroup) mapPinsLayerGroup.clearLayers();
-            if (mapHeatLayer) {
-                osmMap.removeLayer(mapHeatLayer);
-                mapHeatLayer = null;
-            }
 
             const selectedAssembly = document.getElementById('mapAssemblyFilter')?.value?.toLowerCase() || "";
             const searchQuery = document.getElementById('mapSearchInput')?.value?.trim()?.toLowerCase() || "";
@@ -1283,71 +1368,36 @@
                 statusBadge.innerText = `${totalPartsCount} Parts Across ${filteredLocations.length} School Locations`;
             }
 
-            const heatPoints = [];
-            const bounds = L.latLngBounds();
-
             filteredLocations.forEach(loc => {
-                bounds.extend([loc.lat, loc.lng]);
-
                 const partCount = loc.parts.length;
-                // Heatmap point intensity weighted by number of parts co-located at this school
-                const intensity = Math.min(1.0, 0.25 + (partCount * 0.25));
-                heatPoints.push([loc.lat, loc.lng, intensity]);
+                const marker = L.marker([loc.lat, loc.lng], {
+                    title: `${loc.buildingName} (${partCount} Parts)`
+                });
 
-                if (currentMapLayerMode === 'both' || currentMapLayerMode === 'pins') {
-                    const marker = L.marker([loc.lat, loc.lng], {
-                        title: `${loc.buildingName} (${partCount} Parts)`
-                    });
+                let partsListHTML = loc.parts.map(p => `
+                    <div style="background: rgba(0,0,0,0.04); border-left: 3px solid #3b82f6; padding: 4px 8px; margin-top: 4px; border-radius: 4px;">
+                        <strong style="color: #1e293b;">Part #${p.part_number} &bull; ${p.polling_station_name || 'Booth'}</strong><br/>
+                        <span style="font-size: 0.74rem; color: #64748b;">Electors: ${Number(p.total_voters || 0).toLocaleString()} (Male: ${p.total_male_voters || 0}, Female: ${p.total_female_voters || 0})</span>
+                    </div>
+                `).join('');
 
-                    let partsListHTML = loc.parts.map(p => `
-                        <div style="background: rgba(0,0,0,0.04); border-left: 3px solid #3b82f6; padding: 4px 8px; margin-top: 4px; border-radius: 4px;">
-                            <strong style="color: #1e293b;">Part #${p.part_number} &bull; ${p.polling_station_name || 'Booth'}</strong><br/>
-                            <span style="font-size: 0.74rem; color: #64748b;">Electors: ${Number(p.total_voters || 0).toLocaleString()} (Male: ${p.total_male_voters || 0}, Female: ${p.total_female_voters || 0})</span>
+                const popupHTML = `
+                    <div style="font-family: system-ui, sans-serif; font-size: 0.82rem; max-width: 320px; padding: 2px;">
+                        <strong style="color: #0284c7; font-size: 0.9rem; display: block;">🏫 ${loc.buildingName}</strong>
+                        <div style="color: #475569; font-size: 0.78rem; margin-top: 2px;"><b>Assembly:</b> ${loc.assembly} &bull; <b>Town:</b> ${loc.town || 'N/A'}</div>
+                        <div style="color: #64748b; font-size: 0.76rem; margin-top: 2px; margin-bottom: 6px;"><b>Address:</b> ${loc.address}</div>
+                        <div style="background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.78rem; display: inline-block; margin-bottom: 6px;">
+                            📍 ${partCount} Polling ${partCount === 1 ? 'Part' : 'Parts'} Co-located (${Number(loc.totalVoters).toLocaleString()} Total Voters)
                         </div>
-                    `).join('');
-
-                    const popupHTML = `
-                        <div style="font-family: system-ui, sans-serif; font-size: 0.82rem; max-width: 320px; padding: 2px;">
-                            <strong style="color: #0284c7; font-size: 0.9rem; display: block;">🏫 ${loc.buildingName}</strong>
-                            <div style="color: #475569; font-size: 0.78rem; margin-top: 2px;"><b>Assembly:</b> ${loc.assembly} &bull; <b>Town:</b> ${loc.town || 'N/A'}</div>
-                            <div style="color: #64748b; font-size: 0.76rem; margin-top: 2px; margin-bottom: 6px;"><b>Address:</b> ${loc.address}</div>
-                            <div style="background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.78rem; display: inline-block; margin-bottom: 6px;">
-                                📍 ${partCount} Polling ${partCount === 1 ? 'Part' : 'Parts'} Co-located (${Number(loc.totalVoters).toLocaleString()} Total Voters)
-                            </div>
-                            <div style="max-height: 180px; overflow-y: auto;">
-                                ${partsListHTML}
-                            </div>
+                        <div style="max-height: 180px; overflow-y: auto;">
+                            ${partsListHTML}
                         </div>
-                    `;
+                    </div>
+                `;
 
-                    marker.bindPopup(popupHTML);
-                    mapPinsLayerGroup.addLayer(marker);
-                }
+                marker.bindPopup(popupHTML);
+                mapPinsLayerGroup.addLayer(marker);
             });
-
-            if ((currentMapLayerMode === 'both' || currentMapLayerMode === 'heat') && heatPoints.length > 0 && typeof L.heatLayer === 'function') {
-                mapHeatLayer = L.heatLayer(heatPoints, {
-                    radius: 30,
-                    blur: 20,
-                    maxZoom: 15,
-                    gradient: { 0.2: '#3b82f6', 0.4: '#06b6d4', 0.6: '#10b981', 0.8: '#f59e0b', 1.0: '#ef4444' }
-                }).addTo(osmMap);
-            }
-
-            if (osmMap && !bounds.isEmpty()) {
-                osmMap.fitBounds(bounds, { padding: [30, 30] });
-            }
-        }
-
-        function setMapLayerMode(mode) {
-            currentMapLayerMode = mode;
-            document.querySelectorAll('.theme-segmented button').forEach(b => {
-                if (b.id && b.id.startsWith('mapMode')) b.classList.remove('active');
-            });
-            if (mode === 'both') document.getElementById('mapModeBoth')?.classList.add('active');
-            if (mode === 'pins') document.getElementById('mapModePins')?.classList.add('active');
-            if (mode === 'heat') document.getElementById('mapModeHeat')?.classList.add('active');
-            renderMapLayers();
         }
 
         function filterMapByAssembly() {
@@ -1386,7 +1436,7 @@
             const searchInput = document.getElementById('mapSearchInput');
             if (assemblySelect) assemblySelect.value = "";
             if (searchInput) searchInput.value = "";
-            setMapLayerMode('both');
+            flyToView('durg');
             renderMapLayers();
         }
 
