@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Durg Voter Production Analytics Studio & API Dashboard</title>
-    <!-- Google Fonts -->
+    <!-- Google Fonts & Chart.js -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root {
@@ -742,6 +743,27 @@
                 </div>
             </div>
 
+            <!-- Charts & Analytics Grid -->
+            <div class="grid-2col" style="margin-bottom: 2rem;">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">Assembly Constituency Male vs Female Breakdown</span>
+                    </div>
+                    <div style="height: 260px; position: relative;">
+                        <canvas id="assemblyChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">District Electorate Gender Distribution</span>
+                    </div>
+                    <div style="height: 260px; position: relative; display: flex; align-items: center; justify-content: center;">
+                        <canvas id="genderChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <div class="panel-card">
                 <div class="panel-header">
                     <span class="panel-title">Assembly Constituency Breakdown</span>
@@ -956,6 +978,7 @@
                 document.getElementById(`theme-${mode}`)?.classList.add('active');
                 localStorage.setItem('sc-theme-choice', mode);
             }
+            setTimeout(() => { if (typeof renderOverviewCharts === 'function') renderOverviewCharts(); }, 50);
         }
 
         function toggleDrawer(open) {
@@ -1045,7 +1068,101 @@
                         `;
                         tbody.appendChild(tr);
                     });
+
+                    renderOverviewCharts(cRes.data.data, d);
                 }
+            }
+        }
+
+        let assemblyChartInstance = null;
+        let genderChartInstance = null;
+        let cachedConstituencies = null;
+        let cachedStats = null;
+
+        function renderOverviewCharts(constituenciesData, statsData) {
+            if (typeof Chart === 'undefined') return;
+            if (constituenciesData) cachedConstituencies = constituenciesData;
+            if (statsData) cachedStats = statsData;
+
+            const cData = cachedConstituencies;
+            const sData = cachedStats;
+            if (!cData || !sData) return;
+
+            const labels = cData.map(c => c.assembly_constituency.toUpperCase());
+            const maleData = cData.map(c => c.male_voters);
+            const femaleData = cData.map(c => c.female_voters);
+
+            const mode = document.documentElement.getAttribute('data-color-mode');
+            const isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+            const textColor = isDark ? '#e2e8f0' : '#1e293b';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+
+            // 1. Assembly Bar Chart
+            const ctxA = document.getElementById('assemblyChart')?.getContext('2d');
+            if (ctxA) {
+                if (assemblyChartInstance) assemblyChartInstance.destroy();
+                assemblyChartInstance = new Chart(ctxA, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Male Voters',
+                                data: maleData,
+                                backgroundColor: isDark ? 'rgba(56, 189, 248, 0.85)' : 'rgba(14, 165, 233, 0.85)',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Female Voters',
+                                data: femaleData,
+                                backgroundColor: isDark ? 'rgba(244, 114, 182, 0.85)' : 'rgba(236, 72, 153, 0.85)',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { color: textColor, font: { family: 'Outfit', size: 12, weight: '600' } } },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                            x: { ticks: { color: textColor, font: { family: 'Outfit', size: 11 } }, grid: { color: gridColor } },
+                            y: { ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 11 } }, grid: { color: gridColor } }
+                        }
+                    }
+                });
+            }
+
+            // 2. Gender Doughnut Chart
+            const ctxG = document.getElementById('genderChart')?.getContext('2d');
+            if (ctxG) {
+                if (genderChartInstance) genderChartInstance.destroy();
+                genderChartInstance = new Chart(ctxG, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Male Voters', 'Female Voters'],
+                        datasets: [{
+                            data: [sData.male_voters || 519448, sData.female_voters || 524804],
+                            backgroundColor: [
+                                isDark ? 'rgba(56, 189, 248, 0.85)' : 'rgba(14, 165, 233, 0.85)',
+                                isDark ? 'rgba(244, 114, 182, 0.85)' : 'rgba(236, 72, 153, 0.85)'
+                            ],
+                            borderColor: isDark ? '#0a0a0a' : '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Outfit', size: 12, weight: '600' } } }
+                        },
+                        cutout: '68%'
+                    }
+                });
             }
         }
 
