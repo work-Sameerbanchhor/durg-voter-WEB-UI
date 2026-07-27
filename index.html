@@ -459,6 +459,53 @@
             cursor: not-allowed;
         }
 
+        /* Polling Station Booth Area Chips */
+        .booth-chip-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            align-items: flex-start;
+            max-width: 280px;
+        }
+
+        .booth-chip-header {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .booth-chip-part {
+            background: rgba(56, 189, 248, 0.18);
+            border: 1px solid var(--accent-blue);
+            color: var(--accent-blue);
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        .booth-chip-area {
+            background: rgba(52, 211, 153, 0.15);
+            border: 1px solid rgba(52, 211, 153, 0.4);
+            color: var(--accent-emerald);
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .booth-chip-name {
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+
         .bar-fill {
             height: 100%;
             background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
@@ -819,7 +866,7 @@
                                 <th>Age</th>
                                 <th>Assembly</th>
                                 <th>Town / Village</th>
-                                <th>Booth No</th>
+                                <th>Polling Station Booth & Area</th>
                             </tr>
                         </thead>
                         <tbody id="voterSearchTableBody">
@@ -1234,6 +1281,10 @@
 
                 res.data.data.forEach(v => {
                     const tr = document.createElement('tr');
+                    const boothName = v.polling_station_name || ('Booth #' + v.part_number);
+                    const boothAddress = v.polling_station_address || boothName;
+                    const areaTag = v.town_village || v.assembly_constituency || 'Durg';
+
                     tr.innerHTML = `
                         <td style="color: var(--accent-blue); font-weight: 700;">${v.epic_no}</td>
                         <td>${v.full_name || 'N/A'}</td>
@@ -1242,7 +1293,15 @@
                         <td>${v.age}</td>
                         <td>${v.assembly_constituency}</td>
                         <td>${v.town_village || 'N/A'}</td>
-                        <td>${v.part_number}</td>
+                        <td>
+                            <div class="booth-chip-wrapper">
+                                <div class="booth-chip-header">
+                                    <span class="booth-chip-part">Booth #${v.part_number}</span>
+                                    <span class="booth-chip-area">📍 ${areaTag}</span>
+                                </div>
+                                <div class="booth-chip-name" title="${boothAddress}">🏫 ${boothName}</div>
+                            </div>
+                        </td>
                     `;
                     tbody.appendChild(tr);
                 });
