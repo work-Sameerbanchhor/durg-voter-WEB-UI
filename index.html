@@ -1095,8 +1095,11 @@
             const mode = document.documentElement.getAttribute('data-color-mode');
             const isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-            const textColor = isDark ? '#e2e8f0' : '#1e293b';
-            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const textColor = isDark ? '#ffffff' : '#111111';
+            const gridColor = isDark ? '#262626' : '#e5e5e5';
+            const maleColor = isDark ? '#ffffff' : '#111111';
+            const femaleColor = isDark ? '#666666' : '#767676';
+            const chartBgBorder = isDark ? '#0a0a0a' : '#ffffff';
 
             // 1. Assembly Bar Chart
             const ctxA = document.getElementById('assemblyChart')?.getContext('2d');
@@ -1110,14 +1113,14 @@
                             {
                                 label: 'Male Voters',
                                 data: maleData,
-                                backgroundColor: isDark ? 'rgba(56, 189, 248, 0.85)' : 'rgba(14, 165, 233, 0.85)',
-                                borderRadius: 4
+                                backgroundColor: maleColor,
+                                borderRadius: 2
                             },
                             {
                                 label: 'Female Voters',
                                 data: femaleData,
-                                backgroundColor: isDark ? 'rgba(244, 114, 182, 0.85)' : 'rgba(236, 72, 153, 0.85)',
-                                borderRadius: 4
+                                backgroundColor: femaleColor,
+                                borderRadius: 2
                             }
                         ]
                     },
@@ -1129,7 +1132,7 @@
                             tooltip: { mode: 'index', intersect: false }
                         },
                         scales: {
-                            x: { ticks: { color: textColor, font: { family: 'Outfit', size: 11 } }, grid: { color: gridColor } },
+                            x: { ticks: { color: textColor, font: { family: 'Outfit', size: 11, weight: '500' } }, grid: { color: gridColor } },
                             y: { ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 11 } }, grid: { color: gridColor } }
                         }
                     }
@@ -1146,11 +1149,8 @@
                         labels: ['Male Voters', 'Female Voters'],
                         datasets: [{
                             data: [sData.male_voters || 519448, sData.female_voters || 524804],
-                            backgroundColor: [
-                                isDark ? 'rgba(56, 189, 248, 0.85)' : 'rgba(14, 165, 233, 0.85)',
-                                isDark ? 'rgba(244, 114, 182, 0.85)' : 'rgba(236, 72, 153, 0.85)'
-                            ],
-                            borderColor: isDark ? '#0a0a0a' : '#ffffff',
+                            backgroundColor: [maleColor, femaleColor],
+                            borderColor: chartBgBorder,
                             borderWidth: 2
                         }]
                     },
