@@ -1,59 +1,58 @@
-# 🗳️ Durg Voter Web UI & REST API
+# 🗳️ Durg Voter Production REST API & Embedded Dashboard
 
-A high-performance, lightweight **Go Web Application & RESTful API** with an embedded **Interactive Dashboard UI** for managing and querying Durg Electoral Roll dataset. Built with **Go 1.22**, utilizing standard library `net/http` routing, custom middleware architecture, and containerized with Docker.
+A high-performance, production-grade **Go RESTful API & Interactive Dashboard Backend** powered by **Go 1.24** and the **DuckDB 1.5 Vectorized Analytics Engine**, serving **1,045,426 voter records** and **1,513 polling station booths**.
 
 ---
 
 ## 🌟 Key Features
 
-1. **Embedded Web UI Dashboard**:
-   - Built-in interactive API documentation and testing dashboard served directly at `/`.
-   - Sleek glassmorphism UI design with dark mode aesthetic, Google Fonts (*Outfit* & *JetBrains Mono*), and direct endpoint quick-test actions.
+1. **Vectorized Analytics Engine (DuckDB 1.5)**:
+   - Direct integration with `dataset/durg_voters.duckdb` using Go `database/sql` driver (`github.com/marcboeker/go-duckdb`).
+   - Query latency under 15ms across 1.04M records.
+   - Vectorized SQL aggregations for instant electorate demography calculations.
 
-2. **Comprehensive RESTful Endpoints**:
-   - **Health & Metrics**: `/api/v1/health` for uptime, Go runtime info, and application status.
-   - **Electoral Demographics**: `/api/v1/stats` for total voter counts, gender distribution (Male/Female/Other), and assembly constituency breakdowns.
-   - **Paginated Voter Directory**: `/api/v1/voters` with query parameter filtering by search term, assembly constituency, and gender.
-   - **EPIC Lookup**: `/api/v1/voters/{epic_no}` for instant fetching of specific voter profile details using Go 1.22 path parameter matching.
-   - **Advanced Search POST API**: `/api/v1/voters/search` supporting JSON payloads for complex multi-field filtering (age ranges, constituency, EPIC/Name search).
+2. **Full RESTful Endpoints**:
+   - **Health & Metrics**: `/api/v1/health` (DuckDB connection status, ping latency, memory alloc, uptime, goroutine count).
+   - **Electorate Demographics**: `/api/v1/stats` (Total voters: 1.04M+, male/female/other ratios, booth breakdown).
+   - **Voter Directory & Pagination**: `/api/v1/voters` (Filtering by search term, assembly constituency, gender, age range, town/village, part number).
+   - **EPIC Lookup**: `/api/v1/voters/{epic_no}` (Instant fetching of specific voter profile details).
+   - **Advanced Search POST API**: `/api/v1/voters/search` (Structured multi-criteria JSON body search).
+   - **Polling Stations Directory**: `/api/v1/polling-stations` (List 1,513 booths with address & GPS coordinates).
+   - **Constituencies Summary**: `/api/v1/constituencies` (Voter distribution per assembly constituency).
+   - **OpenAPI 3.0 Specification**: `/api/v1/openapi.json` (OpenAPI standard API schema).
 
 3. **Enterprise Middleware Architecture**:
-   - **Request Logger**: Tracks incoming HTTP method, route, status code, request duration, and remote IP.
-   - **CORS Support**: Enforces cross-origin headers (`Access-Control-Allow-Origin: *`) for seamless frontend integrations.
-   - **Security Headers**: Standard HTTP security headers (`X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`).
-   - **Panic Recovery**: Middleware wrapper preventing server crashes by recovering from runtime panics and returning HTTP 500 cleanly.
+   - **Request ID Middleware**: Attaches unique `X-Request-ID` to all HTTP requests and contexts for distributed tracing.
+   - **Token Bucket Rate Limiting**: IP-based throttling preventing DDoS & API abuse (HTTP 429 with `Retry-After`).
+   - **Structured Logger**: Tracks HTTP method, route, status code, execution duration, IP, and Request ID.
+   - **Configurable CORS**: Supports environment-configurable allowed origin headers.
+   - **Security Headers**: Injects `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, and `Referrer-Policy`.
+   - **Panic Recovery**: Recovers from panics gracefully without leaking sensitive stack traces.
 
-4. **Production-Ready Operations**:
-   - **Graceful Shutdown**: Intercepts OS signals (`SIGINT`, `SIGTERM`, `SIGHUP`, `SIGQUIT`) with a 30-second context shutdown timeout.
-   - **Ultra-Minimal Docker Container**: Multi-stage Docker build producing a minimal deployment container using `scratch` base image (~10MB size).
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend**: Go 1.22 (`net/http`, standard library only)
-- **Frontend / Dashboard**: HTML5, CSS3 (Vanilla Glassmorphism UI)
-- **Containerization**: Docker (Multi-stage build: `golang:1.22-alpine` -> `scratch`)
-- **Data Model**: Structured Go structs with JSON tags & pagination metadata
+4. **Embedded Glassmorphism UI Dashboard**:
+   - Interactive UI served at `/` featuring live dataset stat counters, quick EPIC voter profile lookup widget, and interactive endpoint execution tester with JSON syntax highlighting and real-time response timer.
 
 ---
 
-## 📁 Repository Structure
+## 🛠️ Architecture & Tech Stack
 
 ```
 durg-voter-WEB-UI/
-├── main.go               # Server entry point, Go 1.22 ServeMux routes, graceful shutdown
+├── main.go                     # Server entrypoint, Go 1.24 ServeMux routes, graceful signal shutdown
 ├── pkg/
-│   ├── handlers/         # HTTP handler functions & embedded HTML dashboard UI
-│   │   └── handlers.go
-│   ├── middleware/       # Logger, CORS, Panic Recovery, & Security Headers middleware
-│   │   └── middleware.go
-│   └── models/           # Voter, SearchFilter, StatsSummary, & APIResponse data structures
-│       └── models.go
-├── Dockerfile            # Multi-stage minimal Docker build definition
-├── .dockerignore         # Excludes build artifacts and local dataset from Docker contexts
-├── .gitignore            # Excludes compiled binary (server) and database files (dataset/)
-└── README.md             # Project documentation
+│   ├── config/                 # Environment configuration loader (PORT, DB_PATH, RATE_LIMIT)
+│   ├── db/                     # DuckDB connection pool manager with health ping
+│   ├── models/                 # Voter, PollingStation, StatsSummary, APIResponse models
+│   ├── repository/             # DuckDB SQL data access layer (VoterRepository)
+│   ├── service/                # Business logic, input validation, and in-memory TTL caching
+│   ├── middleware/             # RequestID, RateLimiting, Logger, CORS, Security, Panic Recovery
+│   └── handlers/               # HTTP endpoints, OpenAPI spec, embedded UI dashboard
+├── dataset/
+│   └── durg_voters.duckdb      # 1.04 Million Voters DuckDB Database (~131 MB)
+├── Dockerfile                  # Production CGO multi-stage build container with healthcheck
+├── Makefile                    # Developer workflow automation
+├── go.mod                      # Go 1.24 module definition
+└── README.md                   # Comprehensive documentation
 ```
 
 ---
@@ -61,156 +60,54 @@ durg-voter-WEB-UI/
 ## 🚀 Getting Started
 
 ### 1. Prerequisites
-- **Go 1.22** or higher installed on your machine.
-- Optional: **Docker** for containerized execution.
+- **Go 1.24+**
+- **DuckDB 1.5** dataset at `dataset/durg_voters.duckdb`
 
-### 2. Running Locally
+### 2. Environment Variables
 
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `PORT` | HTTP Listening Port | `8080` |
+| `DB_PATH` | Path to DuckDB file | `dataset/durg_voters.duckdb` |
+| `ENVIRONMENT` | Execution mode (`production`/`development`) | `production` |
+| `RATE_LIMIT_RPS` | Allowed requests per second per IP | `50` |
+| `RATE_LIMIT_BURST` | Max burst requests allowed per IP | `100` |
+| `CORS_ALLOWED_ORIGINS` | Allowed CORS origins | `*` |
+
+### 3. Run Tests
 ```bash
-# Clone the repository
-git clone https://github.com/work-Sameerbanchhor/durg-voter-WEB-UI.git
-cd durg-voter-WEB-UI
-
-# Run the Go Web Server
-go run main.go
+make test
+# Or: go test -v ./...
 ```
 
-The server will start at `http://localhost:8080`. Open your browser and navigate to:
-- **Interactive Dashboard**: `http://localhost:8080/`
-- **Health Check**: `http://localhost:8080/api/v1/health`
-
-### 3. Building & Running the Binary
-
+### 4. Build & Run
 ```bash
-# Build the production executable
-go build -o server main.go
+# Build binary
+make build
 
-# Execute binary
-./server
+# Start server
+make run
 ```
 
-### 4. Running with Docker
-
-```bash
-# Build Docker image
-docker build -t durg-voter-api .
-
-# Run Docker container
-docker run -d -p 8080:8080 --name durg-voter-server durg-voter-api
-```
+Access Dashboard at: `http://localhost:8080/`
 
 ---
 
-## 📡 API Documentation & Reference
-
-### Endpoints Overview
+## 📡 API Reference
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/` | Web Dashboard & Interactive API Documentation UI |
-| `GET` | `/api/v1/health` | Health check, server uptime, and Go runtime information |
-| `GET` | `/api/v1/stats` | Demographic statistics, total voters, gender ratios, booth counts |
-| `GET` | `/api/v1/voters` | Paginated list of voters with query/assembly/gender filter support |
-| `GET` | `/api/v1/voters/{epic_no}` | Fetch details of a specific voter by EPIC Number |
-| `POST` | `/api/v1/voters/search` | Advanced multi-field voter search using JSON request body |
-
----
-
-### Request & Response Examples
-
-#### 1. Health Check (`GET /api/v1/health`)
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Server is operating normally",
-  "data": {
-    "status": "healthy",
-    "uptime": "2m14s",
-    "timestamp": "2026-07-27T15:00:00Z",
-    "go_version": "go1.22.5",
-    "app_name": "Durg Voter API",
-    "version": "1.0.0"
-  }
-}
-```
-
-#### 2. Electorate Statistics (`GET /api/v1/stats`)
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "total_voters": 8,
-    "male_voters": 4,
-    "female_voters": 4,
-    "other_voters": 0,
-    "total_booths": 142,
-    "assembly_breakdown": {
-      "Bhilai Nagar": 2,
-      "Durg City": 2,
-      "Durg Rural": 1,
-      "Patan": 1,
-      "Vaishali Nagar": 2
-    }
-  }
-}
-```
-
-#### 3. Paginated Voter Listing (`GET /api/v1/voters?search=Rajesh&page=1&limit=5`)
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "epic_no": "DRG1029384",
-      "full_name": "Rajesh Sharma",
-      "relative_name": "Ramesh Sharma",
-      "relation_type": "Father",
-      "gender": "Male",
-      "age": 38,
-      "house_no": "12-B",
-      "polling_station_name": "Govt School Durg Central",
-      "polling_station_no": 14,
-      "assembly_constituency": "Durg City",
-      "assembly_no": 64,
-      "district": "Durg",
-      "state": "Chhattisgarh"
-    }
-  ],
-  "meta": {
-    "current_page": 1,
-    "page_size": 5,
-    "total_items": 1,
-    "total_pages": 1
-  }
-}
-```
-
-#### 4. Advanced Search (`POST /api/v1/voters/search`)
-**Request Body:**
-```json
-{
-  "query": "Thakur",
-  "assembly_constituency": "Durg City",
-  "gender": "Female",
-  "min_age": 18,
-  "max_age": 50
-}
-```
-
----
-
-## 🔒 Security & Environment Configuration
-
-- **Environment Variables**:
-  - `PORT`: Sets the HTTP listening port (Default: `8080`).
-- **Data Privacy Note**:
-  - Database files (e.g. `dataset/durg_voters.duckdb`) and binary executables are strictly ignored via `.gitignore` and `.dockerignore` to keep the repository lightweight, performant, and secure.
+| `GET` | `/` | Interactive Glassmorphism Dashboard UI |
+| `GET` | `/api/v1/health` | Health check, DuckDB ping, Go runtime memory |
+| `GET` | `/api/v1/stats` | Electorate demographic statistics |
+| `GET` | `/api/v1/voters` | Paginated voters list with search/age/assembly filters |
+| `GET` | `/api/v1/voters/{epic_no}` | Specific voter profile by EPIC Card Number |
+| `POST` | `/api/v1/voters/search` | Advanced JSON multi-criteria voter query |
+| `GET` | `/api/v1/polling-stations` | Polling station booths listing |
+| `GET` | `/api/v1/constituencies` | Electorate breakdown by assembly constituency |
+| `GET` | `/api/v1/openapi.json` | OpenAPI 3.0 specification |
 
 ---
 
 ## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for details.
+MIT License
