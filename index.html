@@ -855,7 +855,7 @@
                     <!-- Covered Areas & Sections List -->
                     <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
                         <div style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
-                            Covered Areas &amp; Neighborhoods (<span id="pmSecCount">0</span> Sections):
+                            Covered Areas, Wards &amp; Neighborhoods (<span id="pmSecCount">0</span> Wards/Sections):
                         </div>
                         <div id="pmSectionsChips" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
                     </div>
@@ -876,7 +876,7 @@
                                 <th>Age</th>
                                 <th>Assembly</th>
                                 <th>Town / Village</th>
-                                <th>Polling Station Booth & Area</th>
+                                <th>Polling Station Booth</th>
                             </tr>
                         </thead>
                         <tbody id="voterSearchTableBody">
@@ -1412,7 +1412,6 @@
                                     <span class="booth-chip-area">${areaTag}</span>
                                 </div>
                                 <div style="font-size: 0.78rem; word-break: break-word;" title="${boothAddress}">${boothName}</div>
-                                ${v.section_number_and_name ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Sec: ${v.section_number_and_name}</div>` : ''}
                             </div>
                         </td>
                     `;
