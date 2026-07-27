@@ -1330,17 +1330,50 @@
                     const chipsContainer = document.getElementById('pmSectionsChips');
                     if (chipsContainer) {
                         chipsContainer.innerHTML = '';
+
+                        // Smart Neighborhood & Section resolution
+                        let displayItems = [];
                         if (Array.isArray(pd.sections) && pd.sections.length > 0) {
-                            document.getElementById('pmSecCount').innerText = pd.sections.length;
-                            pd.sections.forEach(sec => {
+                            pd.sections.forEach(sec => displayItems.push({ label: sec, value: sec }));
+                        }
+
+                        // Extract specific neighborhood/locality from building address if present
+                        if (pd.polling_station_address) {
+                            const addr = pd.polling_station_address;
+                            let nbr = "";
+                            if (addr.includes("इंदिरापारा")) nbr = "इंदिरापारा";
+                            else if (addr.includes("चटाईशीट")) nbr = "चटाईशीट";
+                            else if (addr.includes("नंदनीनगर")) nbr = "नंदनीनगर";
+                            else {
+                                const match = addr.match(/([\u0900-\u097F]+पारा)/);
+                                if (match) nbr = match[1];
+                            }
+
+                            if (nbr && !displayItems.some(i => i.label.includes(nbr))) {
+                                displayItems.push({ label: `Area / Locality: ${nbr}`, value: nbr });
+                            }
+                        }
+
+                        if (displayItems.length > 0) {
+                            document.getElementById('pmSecCount').innerText = displayItems.length;
+                            displayItems.forEach(item => {
                                 const chip = document.createElement('span');
                                 chip.className = 'preset-chip';
                                 chip.style.cursor = 'pointer';
                                 chip.style.fontSize = '0.75rem';
-                                chip.style.padding = '3px 8px';
-                                chip.innerText = sec;
+                                chip.style.padding = '4px 10px';
+                                chip.innerText = item.label;
                                 chip.onclick = () => {
-                                    if (secSelect) secSelect.value = sec;
+                                    if (secSelect) {
+                                        // If section select has exact option match select it, else use search query
+                                        let matched = false;
+                                        for (let opt of secSelect.options) {
+                                            if (opt.value === item.value) { opt.selected = true; matched = true; break; }
+                                        }
+                                        if (!matched) {
+                                            document.getElementById('srchQuery').value = item.value;
+                                        }
+                                    }
                                     executeVoterSearch(1);
                                 };
                                 chipsContainer.appendChild(chip);
