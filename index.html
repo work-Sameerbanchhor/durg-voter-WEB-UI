@@ -845,11 +845,13 @@
                             </select>
                         </div>
                     </div>
-                    <div id="partMetaGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem;">
-                        <div><strong>Building:</strong> <span id="pmStation" style="color: var(--text-main);">--</span></div>
+                    <div id="partMetaGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        <div><strong>Polling Station:</strong> <span id="pmStation" style="color: var(--text-main); font-weight: 600;">--</span></div>
+                        <div><strong>Address &amp; Locality:</strong> <span id="pmAddress" style="color: var(--text-main);">--</span></div>
+                        <div><strong>Town / Tehsil:</strong> <span id="pmTown" style="color: var(--text-main);">--</span></div>
                         <div><strong>Post Office:</strong> <span id="pmPost" style="color: var(--text-main);">--</span></div>
                         <div><strong>Police Station:</strong> <span id="pmPolice" style="color: var(--text-main);">--</span></div>
-                        <div><strong>Total Booth Voters:</strong> <span id="pmVoters" style="color: var(--text-main); font-weight: 600;">--</span></div>
+                        <div><strong>Total Voters:</strong> <span id="pmVoters" style="color: var(--text-main); font-weight: 700;">--</span></div>
                     </div>
 
                     <!-- Covered Areas & Sections List -->
@@ -1305,6 +1307,8 @@
                     if (card) card.style.display = 'block';
                     document.getElementById('partTitle').innerText = `Part #${pd.part_number} (${pd.assembly_constituency.toUpperCase()}) Complete Details`;
                     document.getElementById('pmStation').innerText = pd.polling_station_name || 'N/A';
+                    if (document.getElementById('pmAddress')) document.getElementById('pmAddress').innerText = pd.polling_station_address || pd.polling_station_name || 'N/A';
+                    if (document.getElementById('pmTown')) document.getElementById('pmTown').innerText = (pd.town_village || '') + (pd.tehsil ? ` (${pd.tehsil})` : '');
                     document.getElementById('pmPost').innerText = pd.post_office || 'N/A';
                     document.getElementById('pmPolice').innerText = pd.police_station || 'N/A';
                     document.getElementById('pmVoters').innerText = Number(pd.total_voters || 0).toLocaleString();
