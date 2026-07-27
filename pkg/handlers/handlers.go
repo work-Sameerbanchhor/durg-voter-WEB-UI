@@ -104,8 +104,12 @@ func (h *Handler) ListVotersHandler(w http.ResponseWriter, r *http.Request) {
 		AssemblyConstituency: strings.TrimSpace(r.URL.Query().Get("assembly")),
 		Gender:               strings.TrimSpace(r.URL.Query().Get("gender")),
 		TownVillage:          strings.TrimSpace(r.URL.Query().Get("town")),
+		SectionNumberAndName: strings.TrimSpace(r.URL.Query().Get("section")),
 		SortBy:               strings.TrimSpace(r.URL.Query().Get("sort_by")),
 		SortOrder:            strings.TrimSpace(r.URL.Query().Get("sort_order")),
+	}
+	if filter.SectionNumberAndName == "" {
+		filter.SectionNumberAndName = strings.TrimSpace(r.URL.Query().Get("section_number_and_name"))
 	}
 
 	if minAgeStr := r.URL.Query().Get("min_age"); minAgeStr != "" {

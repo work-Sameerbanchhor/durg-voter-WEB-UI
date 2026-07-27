@@ -93,6 +93,7 @@ type PartDetails struct {
 	PoliceStation         string   `json:"police_station,omitempty"`
 	TotalVoters           int64    `json:"total_voters"`
 	Sections              []string `json:"sections"`
+	SectionNumberAndName  string   `json:"section_number_and_name,omitempty"`
 }
 
 // ConstituencySummary details for assembly constituencies

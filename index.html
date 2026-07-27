@@ -859,6 +859,7 @@
                         <div style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
                             Covered Areas, Wards &amp; Neighborhoods (<span id="pmSecCount">0</span> Wards/Sections):
                         </div>
+                        <div id="pmFullSectionsList" style="display: none; margin-bottom: 0.75rem; font-size: 0.84rem; line-height: 1.5; color: var(--text-main); background: rgba(255, 255, 255, 0.03); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);"></div>
                         <div id="pmSectionsChips" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
                     </div>
                 </div>
@@ -1284,111 +1285,121 @@
                 partInput.placeholder = "Select Assembly First";
             }
             onPartNumberChange();
-            executeVoterSearch(1);
         }
 
-        async function onPartNumberChange() {
-            const assembly = document.getElementById('srchAssembly').value;
-            const partVal = document.getElementById('srchPartNumber').value.trim();
-            const partNum = parseInt(partVal) || 0;
-            const card = document.getElementById('partDetailsCard');
-            const secSelect = document.getElementById('srchSection');
+        let partNumDebounceTimer = null;
+        function onPartNumberChange() {
+            if (partNumDebounceTimer) clearTimeout(partNumDebounceTimer);
+            partNumDebounceTimer = setTimeout(async () => {
+                const assembly = document.getElementById('srchAssembly').value;
+                const partVal = document.getElementById('srchPartNumber').value.trim();
+                const partNum = parseInt(partVal) || 0;
+                const card = document.getElementById('partDetailsCard');
+                const secSelect = document.getElementById('srchSection');
 
-            if (!assembly || partNum <= 0) {
-                if (card) card.style.display = 'none';
-                if (secSelect) secSelect.innerHTML = '<option value="">All Sections</option>';
-                return;
-            }
+                if (!assembly || partNum <= 0) {
+                    if (card) card.style.display = 'none';
+                    if (secSelect) secSelect.innerHTML = '<option value="">All Sections</option>';
+                    executeVoterSearch(1);
+                    return;
+                }
 
-            try {
-                const res = await fetchAPI(`/api/v1/polling-stations/part-details?assembly=${assembly}&part_number=${partNum}`);
-                if (res.data && res.data.success && res.data.data) {
-                    const pd = res.data.data;
-                    if (card) card.style.display = 'block';
-                    document.getElementById('partTitle').innerText = `Part #${pd.part_number} (${pd.assembly_constituency.toUpperCase()}) Complete Details`;
-                    document.getElementById('pmStation').innerText = pd.polling_station_name || 'N/A';
-                    if (document.getElementById('pmAddress')) document.getElementById('pmAddress').innerText = pd.polling_station_address || pd.polling_station_name || 'N/A';
-                    if (document.getElementById('pmTown')) document.getElementById('pmTown').innerText = (pd.town_village || '') + (pd.tehsil ? ` (${pd.tehsil})` : '');
-                    document.getElementById('pmPost').innerText = pd.post_office || 'N/A';
-                    document.getElementById('pmPolice').innerText = pd.police_station || 'N/A';
-                    document.getElementById('pmVoters').innerText = Number(pd.total_voters || 0).toLocaleString();
+                try {
+                    const res = await fetchAPI(`/api/v1/polling-stations/part-details?assembly=${assembly}&part_number=${partNum}`);
+                    if (res.data && res.data.success && res.data.data) {
+                        const pd = res.data.data;
+                        if (card) card.style.display = 'block';
+                        document.getElementById('partTitle').innerText = `Part #${pd.part_number} (${pd.assembly_constituency.toUpperCase()}) Complete Details`;
+                        document.getElementById('pmStation').innerText = pd.polling_station_name || 'N/A';
+                        if (document.getElementById('pmAddress')) document.getElementById('pmAddress').innerText = pd.polling_station_address || pd.polling_station_name || 'N/A';
+                        if (document.getElementById('pmTown')) document.getElementById('pmTown').innerText = (pd.town_village || '') + (pd.tehsil ? ` (${pd.tehsil})` : '');
+                        document.getElementById('pmPost').innerText = pd.post_office || 'N/A';
+                        document.getElementById('pmPolice').innerText = pd.police_station || 'N/A';
+                        document.getElementById('pmVoters').innerText = Number(pd.total_voters || 0).toLocaleString();
 
-                    if (secSelect) {
-                        const curSec = secSelect.value;
-                        secSelect.innerHTML = '<option value="">All Sections in Part #' + pd.part_number + '</option>';
-                        if (Array.isArray(pd.sections)) {
-                            pd.sections.forEach(sec => {
-                                const opt = document.createElement('option');
-                                opt.value = sec;
-                                opt.innerText = sec;
-                                if (sec === curSec) opt.selected = true;
-                                secSelect.appendChild(opt);
-                            });
-                        }
-                    }
-
-                    const chipsContainer = document.getElementById('pmSectionsChips');
-                    if (chipsContainer) {
-                        chipsContainer.innerHTML = '';
-
-                        // Smart Neighborhood & Section resolution
-                        let displayItems = [];
-                        if (Array.isArray(pd.sections) && pd.sections.length > 0) {
-                            pd.sections.forEach(sec => displayItems.push({ label: sec, value: sec }));
-                        }
-
-                        // Extract specific neighborhood/locality from building address if present
-                        if (pd.polling_station_address) {
-                            const addr = pd.polling_station_address;
-                            let nbr = "";
-                            if (addr.includes("इंदिरापारा")) nbr = "इंदिरापारा";
-                            else if (addr.includes("चटाईशीट")) nbr = "चटाईशीट";
-                            else if (addr.includes("नंदनीनगर")) nbr = "नंदनीनगर";
-                            else {
-                                const match = addr.match(/([\u0900-\u097F]+पारा)/);
-                                if (match) nbr = match[1];
-                            }
-
-                            if (nbr && !displayItems.some(i => i.label.includes(nbr))) {
-                                displayItems.push({ label: `Area / Locality: ${nbr}`, value: nbr });
+                        if (secSelect) {
+                            const curSec = secSelect.value;
+                            secSelect.innerHTML = '<option value="">All Sections in Part #' + pd.part_number + '</option>';
+                            if (Array.isArray(pd.sections)) {
+                                pd.sections.forEach(sec => {
+                                    const opt = document.createElement('option');
+                                    opt.value = sec;
+                                    opt.innerText = sec;
+                                    if (sec === curSec) opt.selected = true;
+                                    secSelect.appendChild(opt);
+                                });
                             }
                         }
 
-                        if (displayItems.length > 0) {
-                            document.getElementById('pmSecCount').innerText = displayItems.length;
-                            displayItems.forEach(item => {
-                                const chip = document.createElement('span');
-                                chip.className = 'preset-chip';
-                                chip.style.cursor = 'pointer';
-                                chip.style.fontSize = '0.75rem';
-                                chip.style.padding = '4px 10px';
-                                chip.innerText = item.label;
-                                chip.onclick = () => {
-                                    if (secSelect) {
-                                        // If section select has exact option match select it, else use search query
-                                        let matched = false;
-                                        for (let opt of secSelect.options) {
-                                            if (opt.value === item.value) { opt.selected = true; matched = true; break; }
-                                        }
-                                        if (!matched) {
-                                            document.getElementById('srchQuery').value = item.value;
-                                        }
-                                    }
-                                    executeVoterSearch(1);
-                                };
-                                chipsContainer.appendChild(chip);
-                            });
-                        } else {
-                            document.getElementById('pmSecCount').innerText = '0';
-                            chipsContainer.innerHTML = '<span style="font-size: 0.75rem; color: var(--text-muted);">No specific area sections recorded for this part.</span>';
+                        const chipsContainer = document.getElementById('pmSectionsChips');
+                        const fullListContainer = document.getElementById('pmFullSectionsList');
+
+                        if (fullListContainer) {
+                            fullListContainer.style.display = 'none';
                         }
+
+                        if (chipsContainer) {
+                            chipsContainer.innerHTML = '';
+
+                            // Smart Neighborhood & Section resolution
+                            let displayItems = [];
+                            if (Array.isArray(pd.sections) && pd.sections.length > 0) {
+                                pd.sections.forEach(sec => displayItems.push({ label: sec, value: sec }));
+                            }
+
+                            // Extract specific neighborhood/locality from building address if present
+                            if (pd.polling_station_address) {
+                                const addr = pd.polling_station_address;
+                                let nbr = "";
+                                if (addr.includes("इंदिरापारा")) nbr = "इंदिरापारा";
+                                else if (addr.includes("चटाईशीट")) nbr = "चटाईशीट";
+                                else if (addr.includes("नंदनीनगर")) nbr = "नंदनीनगर";
+                                else {
+                                    const match = addr.match(/([\u0900-\u097F]+पारा)/);
+                                    if (match) nbr = match[1];
+                                }
+
+                                if (nbr && !displayItems.some(i => i.label.includes(nbr))) {
+                                    displayItems.push({ label: `Area / Locality: ${nbr}`, value: nbr });
+                                }
+                            }
+
+                            if (displayItems.length > 0) {
+                                document.getElementById('pmSecCount').innerText = displayItems.length;
+                                displayItems.forEach(item => {
+                                    const chip = document.createElement('span');
+                                    chip.className = 'preset-chip';
+                                    chip.style.cursor = 'pointer';
+                                    chip.style.fontSize = '0.75rem';
+                                    chip.style.padding = '4px 10px';
+                                    chip.innerText = item.label;
+                                    chip.onclick = () => {
+                                        if (secSelect) {
+                                            let matched = false;
+                                            for (let opt of secSelect.options) {
+                                                if (opt.value === item.value) { opt.selected = true; matched = true; break; }
+                                            }
+                                            if (!matched) {
+                                                document.getElementById('srchQuery').value = item.value;
+                                            }
+                                        }
+                                        executeVoterSearch(1);
+                                    };
+                                    chipsContainer.appendChild(chip);
+                                });
+                            } else {
+                                document.getElementById('pmSecCount').innerText = '0';
+                                chipsContainer.innerHTML = '<span style="font-size: 0.75rem; color: var(--text-muted);">No specific area sections recorded for this part.</span>';
+                            }
+                        }
+                    } else {
+                        if (card) card.style.display = 'none';
                     }
-                } else {
+                } catch (err) {
                     if (card) card.style.display = 'none';
                 }
-            } catch (err) {
-                if (card) card.style.display = 'none';
-            }
+                executeVoterSearch(1);
+            }, 250);
         }
 
         async function executeVoterSearch(page = 1) {
@@ -1402,7 +1413,7 @@
             const section = document.getElementById('srchSection')?.value || "";
             const minAge = minAgeVal !== '' ? (parseInt(minAgeVal) || 0) : 0;
             const maxAge = maxAgeVal !== '' ? (parseInt(maxAgeVal) || 0) : 0;
-            const partNumber = (assembly && partNumVal !== '') ? (parseInt(partNumVal) || 0) : 0;
+            const partNumber = partNumVal !== '' ? (parseInt(partNumVal) || 0) : 0;
             const limit = parseInt(document.getElementById('srchLimit')?.value) || 25;
 
             const tbody = document.getElementById('voterSearchTableBody');
@@ -1435,12 +1446,12 @@
                     const areaTag = v.town_village || v.assembly_constituency || 'Durg';
 
                     tr.innerHTML = `
-                        <td style="font-weight: 700;">${v.epic_no}</td>
-                        <td>${v.full_name || 'N/A'}</td>
-                        <td>${v.relative_name || 'N/A'}</td>
-                        <td>${v.gender}</td>
-                        <td>${v.age}</td>
-                        <td>${v.assembly_constituency}</td>
+                        <td style="font-weight: 700;">${v.epic_no || 'N/A'}</td>
+                        <td>${v.full_name || v.full_name_hindi || 'N/A'}</td>
+                        <td>${v.relative_name || v.relative_name_hindi || 'N/A'}</td>
+                        <td>${v.gender || 'N/A'}</td>
+                        <td>${v.age || 'N/A'}</td>
+                        <td>${v.assembly_constituency || 'N/A'}</td>
                         <td>${v.town_village || 'N/A'}</td>
                         <td>
                             <div class="booth-chip-wrapper">

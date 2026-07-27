@@ -516,7 +516,7 @@ func (r *duckDBVoterRepository) GetPartDetails(ctx context.Context, assembly str
 	}
 
 	secQuery := `
-		SELECT DISTINCT UNNEST(STRING_SPLIT(section_number_and_name, ';')) AS sec
+		SELECT DISTINCT section_number_and_name
 		FROM voters
 		WHERE LOWER(assembly_constituency) LIKE ? AND part_number = ?
 		  AND section_number_and_name IS NOT NULL AND section_number_and_name != '';
@@ -526,13 +526,20 @@ func (r *duckDBVoterRepository) GetPartDetails(ctx context.Context, assembly str
 		defer rows.Close()
 		secMap := make(map[string]bool)
 		sections := make([]string, 0)
+		var fullSecStr string
 		for rows.Next() {
 			var rawSec string
 			if err := rows.Scan(&rawSec); err == nil {
-				subParts := strings.Split(rawSec, ":")
-				for _, sp := range subParts {
-					cleanSec := strings.TrimSpace(sp)
-					if cleanSec != "" && !secMap[cleanSec] {
+				if fullSecStr == "" {
+					fullSecStr = rawSec
+				}
+				parts := strings.Split(rawSec, ";")
+				for _, p := range parts {
+					cleanSec := strings.TrimSpace(p)
+					cleanSec = strings.TrimSuffix(cleanSec, ":")
+					cleanSec = strings.TrimSuffix(cleanSec, ";")
+					cleanSec = strings.TrimSpace(cleanSec)
+					if cleanSec != "" && cleanSec != "0" && !secMap[cleanSec] {
 						secMap[cleanSec] = true
 						sections = append(sections, cleanSec)
 					}
@@ -540,6 +547,7 @@ func (r *duckDBVoterRepository) GetPartDetails(ctx context.Context, assembly str
 			}
 		}
 		pd.Sections = sections
+		pd.SectionNumberAndName = fullSecStr
 	}
 
 	return &pd, nil

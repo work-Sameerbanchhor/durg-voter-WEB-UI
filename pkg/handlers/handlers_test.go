@@ -254,3 +254,25 @@ func TestSearchVoters(t *testing.T) {
 
 	t.Logf("Search returned %d voters", len(resp.Data))
 }
+
+func TestGetPartDetails(t *testing.T) {
+	duckDB, _ := setupTestServer(t)
+	defer duckDB.Close()
+
+	ctx := context.Background()
+	repo := repository.NewVoterRepository(duckDB)
+	svc := service.NewVoterService(repo)
+
+	pd, err := svc.GetPartDetails(ctx, "vaishali-nagar", 293)
+	if err != nil {
+		t.Fatalf("expected GetPartDetails success, got err: %v", err)
+	}
+	if pd == nil {
+		t.Fatalf("expected non-nil PartDetails")
+	}
+
+	if len(pd.Sections) < 5 {
+		t.Errorf("expected at least 5 sections for vaishali-nagar part 293, got %d", len(pd.Sections))
+	}
+}
+

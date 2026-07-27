@@ -35,3 +35,8 @@ go.work.sum
 .vscode/
 .DS_Store
 
+# JSON datasets & schema documentation
+*.json
+database/*.json
+database/schema.md
+schema.md
