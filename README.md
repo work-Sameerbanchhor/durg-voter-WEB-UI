@@ -7,7 +7,7 @@ A high-performance, production-grade **Go RESTful API & Interactive Dashboard Ba
 ## 🌟 Key Features
 
 1. **Vectorized Analytics Engine (DuckDB 1.5)**:
-   - Direct integration with `dataset/durg_voters.duckdb` using Go `database/sql` driver (`github.com/marcboeker/go-duckdb`).
+   - Direct integration with `database/durg_voters.duckdb` using Go `database/sql` driver (`github.com/marcboeker/go-duckdb`).
    - Query latency under 15ms across 1.04M records.
    - Vectorized SQL aggregations for instant electorate demography calculations.
 
@@ -47,7 +47,7 @@ durg-voter-WEB-UI/
 │   ├── service/                # Business logic, input validation, and in-memory TTL caching
 │   ├── middleware/             # RequestID, RateLimiting, Logger, CORS, Security, Panic Recovery
 │   └── handlers/               # HTTP endpoints, OpenAPI spec, embedded UI dashboard
-├── dataset/
+├── database/
 │   └── durg_voters.duckdb      # 1.04 Million Voters DuckDB Database (~131 MB)
 ├── Dockerfile                  # Production CGO multi-stage build container with healthcheck
 ├── Makefile                    # Developer workflow automation
@@ -61,14 +61,14 @@ durg-voter-WEB-UI/
 
 ### 1. Prerequisites
 - **Go 1.24+**
-- **DuckDB 1.5** dataset at `dataset/durg_voters.duckdb`
+- **DuckDB 1.5** dataset at `database/durg_voters.duckdb`
 
 ### 2. Environment Variables
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
 | `PORT` | HTTP Listening Port | `8080` |
-| `DB_PATH` | Path to DuckDB file | `dataset/durg_voters.duckdb` |
+| `DB_PATH` | Path to DuckDB file | `database/durg_voters.duckdb` |
 | `ENVIRONMENT` | Execution mode (`production`/`development`) | `production` |
 | `RATE_LIMIT_RPS` | Allowed requests per second per IP | `50` |
 | `RATE_LIMIT_BURST` | Max burst requests allowed per IP | `100` |

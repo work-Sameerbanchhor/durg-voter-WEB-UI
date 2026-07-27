@@ -26,7 +26,7 @@ func LoadConfig() *Config {
 
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = "dataset/durg_voters.duckdb"
+		dbPath = "database/durg_voters.duckdb"
 	}
 
 	env := os.Getenv("ENVIRONMENT")

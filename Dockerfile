@@ -32,13 +32,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy binary from builder
 COPY --from=builder /app/server /app/server
+COPY database/ /app/database/
 
 # Expose HTTP port
 EXPOSE 8080
 
 ENV PORT=8080
 ENV ENVIRONMENT=production
-ENV DB_PATH=/app/dataset/durg_voters.duckdb
+ENV DB_PATH=/app/database/durg_voters.duckdb
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8080/api/v1/health || exit 1

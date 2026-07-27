@@ -2,7 +2,7 @@
 
 APP_NAME = server
 PORT ?= 8080
-DB_PATH ?= dataset/durg_voters.duckdb
+DB_PATH ?= database/durg_voters.duckdb
 
 build:
 	@echo "Building production Go binary..."
@@ -14,7 +14,7 @@ test:
 
 run: build
 	@echo "Starting Durg Voter REST API server..."
-	PORT=$(PORT) DB_PATH=$(DB_PATH) ./\$(APP_NAME)
+	PORT=$(PORT) DB_PATH=$(DB_PATH) ./$(APP_NAME)
 
 docker-build:
 	@echo "Building production Docker image..."

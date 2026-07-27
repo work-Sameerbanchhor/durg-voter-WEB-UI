@@ -16,9 +16,9 @@ import (
 )
 
 func setupTestServer(t *testing.T) (*db.DuckDB, http.Handler) {
-	dbPath := "../../dataset/durg_voters.duckdb"
+	dbPath := "../../database/durg_voters.duckdb"
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		dbPath = "dataset/durg_voters.duckdb"
+		dbPath = "database/durg_voters.duckdb"
 	}
 
 	duckDB, err := db.NewDuckDB(dbPath)
