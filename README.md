@@ -67,7 +67,7 @@ durg-voter-WEB-UI/
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `PORT` | HTTP Listening Port | `8080` |
+| `PORT` | HTTP Listening Port | `7860` |
 | `DB_PATH` | Path to DuckDB file | `database/durg_voters.duckdb` |
 | `ENVIRONMENT` | Execution mode (`production`/`development`) | `production` |
 | `RATE_LIMIT_RPS` | Allowed requests per second per IP | `50` |
@@ -89,7 +89,7 @@ make build
 make run
 ```
 
-Access Dashboard at: `http://localhost:8080/`
+Access Dashboard at: `http://localhost:7860/`
 
 ---
 

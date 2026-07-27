@@ -35,13 +35,13 @@ COPY --from=builder /app/server /app/server
 COPY database/ /app/database/
 
 # Expose HTTP port
-EXPOSE 8080
+EXPOSE 7860
 
-ENV PORT=8080
+ENV PORT=7860
 ENV ENVIRONMENT=production
 ENV DB_PATH=/app/database/durg_voters.duckdb
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/api/v1/health || exit 1
+  CMD curl -f http://localhost:7860/api/v1/health || exit 1
 
 CMD ["/app/server"]

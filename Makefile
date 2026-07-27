@@ -1,7 +1,7 @@
 .PHONY: build test run clean docker-build
 
 APP_NAME = server
-PORT ?= 8080
+PORT ?= 7860
 DB_PATH ?= database/durg_voters.duckdb
 
 build:

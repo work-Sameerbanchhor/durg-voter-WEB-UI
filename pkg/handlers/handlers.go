@@ -465,7 +465,7 @@ const openAPISpec = `{
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://localhost:7860",
       "description": "Local production server"
     }
   ],
