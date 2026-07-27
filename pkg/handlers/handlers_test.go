@@ -35,6 +35,7 @@ func setupTestServer(t *testing.T) (*db.DuckDB, http.Handler) {
 	mux.HandleFunc("GET /api/v1/stats", h.GetStatsHandler)
 	mux.HandleFunc("GET /api/v1/voters", h.ListVotersHandler)
 	mux.HandleFunc("GET /api/v1/voters/{epic_no}", h.GetVoterByIDHandler)
+	mux.HandleFunc("GET /api/v1/constituencies", h.ListConstituenciesHandler)
 
 	return duckDB, mux
 }
@@ -193,5 +194,33 @@ func TestGeoNearby(t *testing.T) {
 	dist := svc.CalculateDistance(21.19, 81.28, 21.21, 81.38)
 	if dist.DistanceKM <= 0 {
 		t.Errorf("expected calculated distance > 0, got %f", dist.DistanceKM)
+	}
+}
+
+func TestListConstituencies(t *testing.T) {
+	duckDB, handler := setupTestServer(t)
+	defer duckDB.Close()
+
+	req := httptest.NewRequest("GET", "/api/v1/constituencies", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rr.Code)
+	}
+
+	var resp struct {
+		Success bool                       `json:"success"`
+		Data    []models.ConstituencySummary `json:"data"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if !resp.Success {
+		t.Errorf("expected success true, got false")
+	}
+	if len(resp.Data) == 0 {
+		t.Errorf("expected constituencies list to be non-empty")
 	}
 }
