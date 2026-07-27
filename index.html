@@ -398,6 +398,67 @@
             margin-top: 4px;
         }
 
+        /* Pagination Controls */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            border-radius: 0.75rem;
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: var(--accent-blue-glow);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .page-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #070a12;
+            font-weight: 700;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         .bar-fill {
             height: 100%;
             background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
@@ -708,11 +769,11 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
                     <div>
                         <label class="form-label">Search Query (Name/EPIC/House):</label>
-                        <input type="text" id="srchQuery" class="form-control" placeholder="e.g. Patel, IXG1482629..." value="">
+                        <input type="text" id="srchQuery" class="form-control" placeholder="e.g. Patel, IXG1482629..." value="" onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
                     </div>
                     <div>
                         <label class="form-label">Assembly Constituency:</label>
-                        <select id="srchAssembly" class="form-control">
+                        <select id="srchAssembly" class="form-control" onchange="executeVoterSearch(1)">
                             <option value="">All Assemblies</option>
                             <option value="durg-city">Durg City</option>
                             <option value="durg-gramin">Durg Gramin</option>
@@ -724,7 +785,7 @@
                     </div>
                     <div>
                         <label class="form-label">Gender:</label>
-                        <select id="srchGender" class="form-control">
+                        <select id="srchGender" class="form-control" onchange="executeVoterSearch(1)">
                             <option value="">All Genders</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
@@ -732,15 +793,15 @@
                     </div>
                     <div>
                         <label class="form-label">Min Age:</label>
-                        <input type="number" id="srchMinAge" class="form-control" placeholder="18" value="">
+                        <input type="number" id="srchMinAge" class="form-control" placeholder="18" value="" onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
                     </div>
                     <div>
                         <label class="form-label">Max Age:</label>
-                        <input type="number" id="srchMaxAge" class="form-control" placeholder="100" value="">
+                        <input type="number" id="srchMaxAge" class="form-control" placeholder="100" value="" onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
                     </div>
                 </div>
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 1.25rem;">
-                    <button class="btn-action" onclick="executeVoterSearch()">Execute Multi-Criteria Search &rarr;</button>
+                    <button class="btn-action" onclick="executeVoterSearch(1)">Execute Multi-Criteria Search &rarr;</button>
                 </div>
 
                 <div class="table-responsive">
@@ -761,6 +822,24 @@
                             <tr><td colspan="8" style="text-align: center;">Click "Execute Multi-Criteria Search" to fetch voter records.</td></tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Pagination Container -->
+                <div class="pagination-container" id="voterSearchPagination" style="display: none;">
+                    <div class="pagination-info">
+                        <span id="voterSearchMetaCount" style="color: var(--accent-blue); font-weight: 700;">Showing 0-0 of 0 records</span>
+                        <span>|</span>
+                        <label for="srchLimit" style="font-size: 0.8rem; color: var(--text-muted);">Rows per page:</label>
+                        <select id="srchLimit" class="input-sm" style="width: 70px;" onchange="executeVoterSearch(1)">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="pagination-controls" id="voterSearchPaginationControls">
+                        <!-- Rendered dynamically by JS -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -1093,7 +1172,10 @@
         }
 
         // TAB 5: VOTER SEARCH
-        async function executeVoterSearch() {
+        let currentSearchPage = 1;
+
+        async function executeVoterSearch(page = 1) {
+            currentSearchPage = page;
             const query = document.getElementById('srchQuery').value.trim();
             const assembly = document.getElementById('srchAssembly').value;
             const gender = document.getElementById('srchGender').value;
@@ -1101,6 +1183,7 @@
             const maxAgeVal = document.getElementById('srchMaxAge').value.trim();
             const minAge = minAgeVal !== '' ? (parseInt(minAgeVal) || 0) : 0;
             const maxAge = maxAgeVal !== '' ? (parseInt(maxAgeVal) || 0) : 0;
+            const limit = parseInt(document.getElementById('srchLimit')?.value) || 25;
 
             const tbody = document.getElementById('voterSearchTableBody');
             tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Searching voter records...</td></tr>';
@@ -1113,15 +1196,18 @@
                     gender,
                     min_age: minAge,
                     max_age: maxAge,
-                    limit: 20
+                    page: currentSearchPage,
+                    limit: limit
                 })
             });
 
             tbody.innerHTML = '';
+            const paginationBar = document.getElementById('voterSearchPagination');
 
             if (res.data && res.data.success && Array.isArray(res.data.data)) {
                 if (res.data.data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No voter records found matching search filters.</td></tr>';
+                    if (paginationBar) paginationBar.style.display = 'none';
                     return;
                 }
 
@@ -1139,10 +1225,80 @@
                     `;
                     tbody.appendChild(tr);
                 });
+
+                if (res.data.meta && paginationBar) {
+                    renderSearchPagination(res.data.meta);
+                }
             } else {
                 const errMsg = (res.data && res.data.error) ? res.data.error : 'Failed to execute search. Ensure backend server is running.';
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-rose);">⚠️ ${errMsg}</td></tr>`;
+                if (paginationBar) paginationBar.style.display = 'none';
             }
+        }
+
+        function renderSearchPagination(meta) {
+            const paginationBar = document.getElementById('voterSearchPagination');
+            const metaCount = document.getElementById('voterSearchMetaCount');
+            const controls = document.getElementById('voterSearchPaginationControls');
+            if (!paginationBar || !metaCount || !controls) return;
+
+            paginationBar.style.display = 'flex';
+
+            const startItem = (meta.current_page - 1) * meta.page_size + 1;
+            const endItem = Math.min(meta.current_page * meta.page_size, meta.total_items);
+            metaCount.innerText = `Showing ${startItem.toLocaleString()}-${endItem.toLocaleString()} of ${meta.total_items.toLocaleString()} records`;
+
+            controls.innerHTML = '';
+
+            const totalPages = meta.total_pages || 1;
+            const curPage = meta.current_page;
+
+            // First Page
+            const btnFirst = document.createElement('button');
+            btnFirst.className = 'page-btn';
+            btnFirst.innerText = '« First';
+            btnFirst.disabled = curPage <= 1;
+            btnFirst.onclick = () => executeVoterSearch(1);
+            controls.appendChild(btnFirst);
+
+            // Previous Page
+            const btnPrev = document.createElement('button');
+            btnPrev.className = 'page-btn';
+            btnPrev.innerText = '‹ Prev';
+            btnPrev.disabled = curPage <= 1;
+            btnPrev.onclick = () => executeVoterSearch(curPage - 1);
+            controls.appendChild(btnPrev);
+
+            // Numeric Page Buttons (window of +/- 2)
+            let startPage = Math.max(1, curPage - 2);
+            let endPage = Math.min(totalPages, curPage + 2);
+
+            if (curPage <= 3) endPage = Math.min(5, totalPages);
+            if (curPage >= totalPages - 2) startPage = Math.max(1, totalPages - 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btnPage = document.createElement('button');
+                btnPage.className = 'page-btn' + (i === curPage ? ' active' : '');
+                btnPage.innerText = i;
+                btnPage.onclick = () => executeVoterSearch(i);
+                controls.appendChild(btnPage);
+            }
+
+            // Next Page
+            const btnNext = document.createElement('button');
+            btnNext.className = 'page-btn';
+            btnNext.innerText = 'Next ›';
+            btnNext.disabled = curPage >= totalPages;
+            btnNext.onclick = () => executeVoterSearch(curPage + 1);
+            controls.appendChild(btnNext);
+
+            // Last Page
+            const btnLast = document.createElement('button');
+            btnLast.className = 'page-btn';
+            btnLast.innerText = 'Last »';
+            btnLast.disabled = curPage >= totalPages;
+            btnLast.onclick = () => executeVoterSearch(totalPages);
+            controls.appendChild(btnLast);
         }
 
         // TAB 6: AUTH LOGIN
