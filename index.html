@@ -773,7 +773,7 @@
                     </div>
                     <div>
                         <label class="form-label">Assembly Constituency:</label>
-                        <select id="srchAssembly" class="form-control" onchange="executeVoterSearch(1)">
+                        <select id="srchAssembly" class="form-control" onchange="onAssemblyChange()">
                             <option value="">All Assemblies</option>
                             <option value="durg-city">Durg City</option>
                             <option value="durg-gramin">Durg Gramin</option>
@@ -782,6 +782,10 @@
                             <option value="patan">Patan</option>
                             <option value="Ahiwara">Ahiwara</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Booth No (Part Number):</label>
+                        <input type="number" id="srchPartNumber" class="form-control" placeholder="Select Assembly First" value="" disabled onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
                     </div>
                     <div>
                         <label class="form-label">Gender:</label>
@@ -1174,6 +1178,20 @@
         // TAB 5: VOTER SEARCH
         let currentSearchPage = 1;
 
+        function onAssemblyChange() {
+            const assembly = document.getElementById('srchAssembly').value;
+            const partInput = document.getElementById('srchPartNumber');
+            if (assembly) {
+                partInput.disabled = false;
+                partInput.placeholder = "e.g. 80, 201...";
+            } else {
+                partInput.disabled = true;
+                partInput.value = "";
+                partInput.placeholder = "Select Assembly First";
+            }
+            executeVoterSearch(1);
+        }
+
         async function executeVoterSearch(page = 1) {
             currentSearchPage = page;
             const query = document.getElementById('srchQuery').value.trim();
@@ -1181,8 +1199,10 @@
             const gender = document.getElementById('srchGender').value;
             const minAgeVal = document.getElementById('srchMinAge').value.trim();
             const maxAgeVal = document.getElementById('srchMaxAge').value.trim();
+            const partNumVal = document.getElementById('srchPartNumber').value.trim();
             const minAge = minAgeVal !== '' ? (parseInt(minAgeVal) || 0) : 0;
             const maxAge = maxAgeVal !== '' ? (parseInt(maxAgeVal) || 0) : 0;
+            const partNumber = (assembly && partNumVal !== '') ? (parseInt(partNumVal) || 0) : 0;
             const limit = parseInt(document.getElementById('srchLimit')?.value) || 25;
 
             const tbody = document.getElementById('voterSearchTableBody');
@@ -1196,6 +1216,7 @@
                     gender,
                     min_age: minAge,
                     max_age: maxAge,
+                    part_number: partNumber,
                     page: currentSearchPage,
                     limit: limit
                 })
