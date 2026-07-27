@@ -46,15 +46,31 @@ func main() {
 	mux.HandleFunc("GET /api/v1/voters", h.ListVotersHandler)
 	mux.HandleFunc("GET /api/v1/voters/{epic_no}", h.GetVoterByIDHandler)
 	mux.HandleFunc("POST /api/v1/voters/search", h.SearchVotersHandler)
+	mux.HandleFunc("GET /api/v1/voters/group-by", h.GroupByHandler)
+	mux.HandleFunc("POST /api/v1/voters/group-by", h.GroupByHandler)
 	mux.HandleFunc("GET /api/v1/polling-stations", h.ListPollingStationsHandler)
 	mux.HandleFunc("GET /api/v1/polling-stations/detail", h.GetPollingStationHandler)
 	mux.HandleFunc("GET /api/v1/constituencies", h.ListConstituenciesHandler)
 	mux.HandleFunc("GET /api/v1/openapi.json", h.OpenAPIHandler)
 
-	// 5. Build Middleware Stack: RequestID -> RateLimiter -> Logger -> SecurityHeaders -> CORS -> Recovery
+	// Auth & Role-based Access Endpoints
+	mux.HandleFunc("POST /api/v1/auth/login", h.LoginHandler)
+	mux.HandleFunc("GET /api/v1/auth/me", h.MeHandler)
+
+	// Admin-Only Raw SQL Execution
+	mux.HandleFunc("POST /api/v1/admin/sql", h.ExecuteSQLHandler)
+	mux.HandleFunc("POST /api/v1/sql", h.ExecuteSQLHandler)
+
+	// Geolocation & Spatial Proximity Endpoints
+	mux.HandleFunc("GET /api/v1/geo/nearby-polling-stations", h.GeoNearbyPollingStationsHandler)
+	mux.HandleFunc("GET /api/v1/geo/nearby-voters", h.GeoNearbyVotersHandler)
+	mux.HandleFunc("GET /api/v1/geo/distance", h.GeoDistanceHandler)
+
+	// 5. Build Middleware Stack: RequestID -> Recovery -> CORS -> SecurityHeaders -> Authenticate -> Logger -> RateLimiter
 	rateLimiter := middleware.NewIPRateLimiter(cfg.RateLimitRPS, cfg.RateLimitBurst)
 
 	var handler http.Handler = mux
+	handler = middleware.Authenticate(handler)
 	handler = middleware.RateLimit(rateLimiter)(handler)
 	handler = middleware.Logger(handler)
 	handler = middleware.SecurityHeaders(handler)

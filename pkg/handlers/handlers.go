@@ -283,6 +283,167 @@ func (h *Handler) ListConstituenciesHandler(w http.ResponseWriter, r *http.Reque
 	})
 }
 
+func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		SendJSON(w, r, http.StatusMethodNotAllowed, models.APIResponse{Success: false, Error: "Method not allowed"})
+		return
+	}
+	var req models.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{Success: false, Error: "Invalid JSON payload"})
+		return
+	}
+	resp, err := h.voterService.AuthenticateUser(req.Username, req.Password)
+	if err != nil {
+		SendJSON(w, r, http.StatusUnauthorized, models.APIResponse{Success: false, Error: err.Error()})
+		return
+	}
+	SendJSON(w, r, http.StatusOK, models.APIResponse{Success: true, Message: "Authentication successful", Data: resp})
+}
+
+func (h *Handler) MeHandler(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		SendJSON(w, r, http.StatusUnauthorized, models.APIResponse{Success: false, Error: "Unauthorized"})
+		return
+	}
+	SendJSON(w, r, http.StatusOK, models.APIResponse{Success: true, Data: user})
+}
+
+func (h *Handler) ExecuteSQLHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		SendJSON(w, r, http.StatusMethodNotAllowed, models.APIResponse{Success: false, Error: "Method not allowed"})
+		return
+	}
+
+	user, _ := middleware.GetUserFromContext(r.Context())
+	if user.Role != models.RoleAdmin {
+		SendJSON(w, r, http.StatusForbidden, models.APIResponse{
+			Success: false,
+			Error:   "Forbidden: Only admin role is authorized to execute custom SQL queries. Guest role access is denied.",
+		})
+		return
+	}
+
+	var req models.SQLRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{Success: false, Error: "Invalid JSON payload"})
+		return
+	}
+
+	result, err := h.voterService.ExecuteSQL(r.Context(), req.SQL)
+	if err != nil {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{Success: false, Error: err.Error()})
+		return
+	}
+
+	SendJSON(w, r, http.StatusOK, models.APIResponse{
+		Success: true,
+		Message: "SQL query executed successfully",
+		Data:    result,
+	})
+}
+
+func (h *Handler) GroupByHandler(w http.ResponseWriter, r *http.Request) {
+	var req models.GroupByRequest
+	if r.Method == http.MethodPost {
+		json.NewDecoder(r.Body).Decode(&req)
+	} else {
+		req.Field = r.URL.Query().Get("field")
+		if lStr := r.URL.Query().Get("limit"); lStr != "" {
+			req.Limit, _ = strconv.Atoi(lStr)
+		}
+		if mStr := r.URL.Query().Get("min_count"); mStr != "" {
+			req.MinCount, _ = strconv.Atoi(mStr)
+		}
+		req.Sort = r.URL.Query().Get("sort")
+	}
+
+	result, err := h.voterService.GroupBy(r.Context(), req)
+	if err != nil {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{Success: false, Error: err.Error()})
+		return
+	}
+
+	SendJSON(w, r, http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    result,
+	})
+}
+
+func (h *Handler) GeoNearbyPollingStationsHandler(w http.ResponseWriter, r *http.Request) {
+	lat, _ := strconv.ParseFloat(r.URL.Query().Get("lat"), 64)
+	lng, _ := strconv.ParseFloat(r.URL.Query().Get("lng"), 64)
+	radius, _ := strconv.ParseFloat(r.URL.Query().Get("radius_km"), 64)
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
+	if lat == 0 || lng == 0 {
+		lat = 21.19
+		lng = 81.28
+	}
+
+	req := models.GeoNearbyRequest{
+		Latitude:  lat,
+		Longitude: lng,
+		RadiusKM:  radius,
+		Limit:     limit,
+	}
+
+	stations, err := h.voterService.GetNearbyPollingStations(r.Context(), req)
+	if err != nil {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{Success: false, Error: err.Error()})
+		return
+	}
+
+	SendJSON(w, r, http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    stations,
+	})
+}
+
+func (h *Handler) GeoNearbyVotersHandler(w http.ResponseWriter, r *http.Request) {
+	lat, _ := strconv.ParseFloat(r.URL.Query().Get("lat"), 64)
+	lng, _ := strconv.ParseFloat(r.URL.Query().Get("lng"), 64)
+	radius, _ := strconv.ParseFloat(r.URL.Query().Get("radius_km"), 64)
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
+	if lat == 0 || lng == 0 {
+		lat = 21.19
+		lng = 81.28
+	}
+
+	req := models.GeoNearbyRequest{
+		Latitude:  lat,
+		Longitude: lng,
+		RadiusKM:  radius,
+		Limit:     limit,
+	}
+
+	voters, err := h.voterService.GetNearbyVoters(r.Context(), req)
+	if err != nil {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{Success: false, Error: err.Error()})
+		return
+	}
+
+	SendJSON(w, r, http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    voters,
+	})
+}
+
+func (h *Handler) GeoDistanceHandler(w http.ResponseWriter, r *http.Request) {
+	lat1, _ := strconv.ParseFloat(r.URL.Query().Get("lat1"), 64)
+	lng1, _ := strconv.ParseFloat(r.URL.Query().Get("lng1"), 64)
+	lat2, _ := strconv.ParseFloat(r.URL.Query().Get("lat2"), 64)
+	lng2, _ := strconv.ParseFloat(r.URL.Query().Get("lng2"), 64)
+
+	res := h.voterService.CalculateDistance(lat1, lng1, lat2, lng2)
+	SendJSON(w, r, http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    res,
+	})
+}
+
 func (h *Handler) OpenAPIHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -429,7 +590,6 @@ const dashboardHTML = `<!DOCTYPE html>
             border: 1px solid var(--card-border);
             margin-bottom: 2rem;
             position: relative;
-            overflow: hidden;
             backdrop-filter: blur(16px);
         }
 
@@ -445,7 +605,6 @@ const dashboardHTML = `<!DOCTYPE html>
             font-weight: 700;
             margin-bottom: 1rem;
             border: 1px solid rgba(56, 189, 248, 0.4);
-            letter-spacing: 0.5px;
         }
 
         .pulse-dot {
@@ -464,21 +623,42 @@ const dashboardHTML = `<!DOCTYPE html>
         }
 
         h1 {
-            font-size: 3rem;
+            font-size: 2.8rem;
             font-weight: 800;
             background: linear-gradient(to right, #38bdf8, #c084fc, #34d399);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.6rem;
-            letter-spacing: -0.5px;
         }
 
         p.subtitle {
             color: var(--text-muted);
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             max-width: 800px;
             margin: 0 auto;
         }
+
+        /* Role Switcher */
+        .auth-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 1rem 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .role-pill {
+            padding: 0.3rem 0.8rem;
+            border-radius: 0.5rem;
+            font-weight: 800;
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .role-admin { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.4); }
+        .role-guest { background: rgba(251, 191, 36, 0.2); color: var(--accent-amber); border: 1px solid rgba(251, 191, 36, 0.4); }
 
         /* Stats Grid */
         .stats-grid {
@@ -493,71 +673,82 @@ const dashboardHTML = `<!DOCTYPE html>
             border: 1px solid var(--card-border);
             border-radius: 1rem;
             padding: 1.25rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
         }
 
-        .stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
         .stat-val { font-size: 1.85rem; font-weight: 800; color: var(--text-main); font-family: 'JetBrains Mono', monospace; }
         .stat-meta { font-size: 0.8rem; color: var(--accent-emerald); font-weight: 500; }
 
-        /* Search Section */
-        .search-section {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 1rem;
-            padding: 1.75rem;
+        /* Feature Cards Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2.5rem;
         }
 
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
         .section-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 700;
-            margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: space-between;
         }
 
-        .search-box {
-            display: flex;
-            gap: 0.75rem;
-        }
-
-        .search-input {
-            flex: 1;
+        .form-control {
             background: #090d16;
             border: 1px solid var(--card-border);
             border-radius: 0.6rem;
             padding: 0.75rem 1rem;
             color: #fff;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-family: 'JetBrains Mono', monospace;
+            width: 100%;
             outline: none;
-            transition: border-color 0.2s;
         }
-
-        .search-input:focus { border-color: var(--accent-blue); }
+        .form-control:focus { border-color: var(--accent-blue); }
 
         .btn {
             background: var(--accent-blue);
             color: #090d16;
             font-weight: 700;
             border: none;
-            padding: 0.75rem 1.5rem;
+            padding: 0.65rem 1.25rem;
             border-radius: 0.6rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
-
         .btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-rose { background: var(--accent-rose); color: #fff; }
+        .btn-purple { background: var(--accent-purple); color: #090d16; }
+        .btn-amber { background: var(--accent-amber); color: #090d16; }
+
+        .preset-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.4rem;
+            cursor: pointer;
+        }
+        .preset-btn:hover { background: rgba(56,189,248,0.15); color: var(--accent-blue); }
 
         /* Endpoint Explorer Grid */
         .endpoints-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 1.25rem;
             margin-bottom: 2.5rem;
         }
@@ -566,7 +757,7 @@ const dashboardHTML = `<!DOCTYPE html>
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 1rem;
-            padding: 1.5rem;
+            padding: 1.25rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -574,26 +765,18 @@ const dashboardHTML = `<!DOCTYPE html>
         }
 
         .method {
-            display: inline-block;
-            padding: 0.2rem 0.55rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 0.3rem;
             font-size: 0.75rem;
             font-weight: 800;
             font-family: 'JetBrains Mono', monospace;
             margin-right: 0.5rem;
         }
-
         .method.get { background: rgba(52, 211, 153, 0.15); color: var(--accent-emerald); border: 1px solid rgba(52, 211, 153, 0.3); }
         .method.post { background: rgba(192, 132, 252, 0.15); color: var(--accent-purple); border: 1px solid rgba(192, 132, 252, 0.3); }
 
-        .endpoint-path {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        .endpoint-desc { font-size: 0.9rem; color: var(--text-muted); }
+        .endpoint-path { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; }
+        .endpoint-desc { font-size: 0.85rem; color: var(--text-muted); }
 
         /* Response Viewer */
         .response-viewer {
@@ -646,15 +829,28 @@ const dashboardHTML = `<!DOCTYPE html>
     <div class="container">
         <header>
             <div style="display: flex; justify-content: center; gap: 0.75rem;">
-                <span class="badge"><span class="pulse-dot"></span> DuckDB 1.5 Engine Active</span>
-                <span class="badge" style="color: var(--accent-purple); border-color: rgba(192,132,252,0.4); background: rgba(192,132,252,0.15);">Go 1.24 REST Backend</span>
+                <span class="badge"><span class="pulse-dot"></span> DuckDB 1.5 Vectorized Engine</span>
+                <span class="badge" style="color: var(--accent-purple); border-color: rgba(192,132,252,0.4); background: rgba(192,132,252,0.15);">Go 1.24 REST API</span>
             </div>
-            <h1>Durg Electoral Roll Production API</h1>
-            <p class="subtitle">High-performance, vectorized SQL database API querying 1,045,426 voter records and 1,513 polling station booths in under 15ms.</p>
+            <h1>Durg Electoral Roll Dashboard</h1>
+            <p class="subtitle">Production API with Role-Based Auth, Admin SQL Execution Console, Group-By Analytics, and Spatial Geo-Location Proximity Search serving 1.04M+ voters.</p>
         </header>
 
-        <!-- Stats Row -->
-        <div class="stats-grid" id="statsGrid">
+        <!-- Auth Role Switcher -->
+        <div class="auth-bar">
+            <div>
+                <span style="font-weight: 700; margin-right: 0.5rem;">🔐 Active Auth Role:</span>
+                <span id="roleBadge" class="role-pill role-admin">ADMIN</span>
+                <span id="roleDesc" style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.75rem;">(Full Privileges: Read, Search, Filter, GroupBy, GeoLocation & Raw SQL Console)</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-rose" onclick="switchRole('admin')">Login as ADMIN</button>
+                <button class="btn btn-amber" onclick="switchRole('guest')">Login as GUEST</button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
             <div class="stat-card">
                 <span class="stat-label">Total Electorate</span>
                 <span class="stat-val" id="statTotalVoters">1,045,426</span>
@@ -662,13 +858,13 @@ const dashboardHTML = `<!DOCTYPE html>
             </div>
             <div class="stat-card">
                 <span class="stat-label">Male Voters</span>
-                <span class="stat-val" id="statMaleVoters">524,198</span>
-                <span class="stat-meta">~50.15% Ratio</span>
+                <span class="stat-val" id="statMaleVoters">519,448</span>
+                <span class="stat-meta">~49.7% Male Ratio</span>
             </div>
             <div class="stat-card">
                 <span class="stat-label">Female Voters</span>
-                <span class="stat-val" id="statFemaleVoters">521,209</span>
-                <span class="stat-meta">~49.85% Ratio</span>
+                <span class="stat-val" id="statFemaleVoters">524,804</span>
+                <span class="stat-meta">~50.2% Female Ratio</span>
             </div>
             <div class="stat-card">
                 <span class="stat-label">Polling Station Booths</span>
@@ -677,64 +873,133 @@ const dashboardHTML = `<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- Quick Voter Search -->
+        <!-- Feature Grid: Admin SQL, Group-By Analytics, Geo Location -->
+        <div class="feature-grid">
+            <!-- Admin SQL Execution Console -->
+            <div class="feature-card" style="grid-column: span 2;">
+                <div class="section-title">
+                    <span>⚡ Admin SQL Execution Console <span style="font-size: 0.75rem; color: var(--accent-rose); font-weight: 700; border: 1px solid rgba(244,63,94,0.4); padding: 0.1rem 0.4rem; border-radius: 0.3rem;">ADMIN ONLY</span></span>
+                    <div style="display: flex; gap: 0.3rem;">
+                        <button class="preset-btn" onclick="setSQLPreset('gender')">Gender Count</button>
+                        <button class="preset-btn" onclick="setSQLPreset('towns')">Top Towns</button>
+                        <button class="preset-btn" onclick="setSQLPreset('constituency')">Constituency Summary</button>
+                    </div>
+                </div>
+                <textarea id="sqlInput" class="form-control" rows="3" style="resize: vertical;">SELECT gender_english, count(*) AS total FROM voters GROUP BY 1;</textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Note: Only Admin role can run raw DuckDB SQL. Guest role attempts return 403 Forbidden.</span>
+                    <button class="btn btn-rose" onclick="runSQLQuery()">Execute SQL &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Group-By Names & Demographics -->
+            <div class="feature-card">
+                <div class="section-title">
+                    <span>📊 Group-By Analytics</span>
+                    <span style="font-size: 0.75rem; color: var(--accent-emerald);">ADMIN & GUEST</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Grouping Field:</label>
+                    <select id="groupByField" class="form-control">
+                        <option value="full_name">Full Name (Voter Name)</option>
+                        <option value="relative_name">Relative Name</option>
+                        <option value="gender">Gender</option>
+                        <option value="assembly_constituency">Assembly Constituency</option>
+                        <option value="town_village">Town / Village</option>
+                        <option value="age_group">Age Group Breakdown</option>
+                    </select>
+                </div>
+                <button class="btn btn-purple" onclick="runGroupBy()">Run Group-By &rarr;</button>
+            </div>
+
+            <!-- Geo-Location Spatial Proximity Search -->
+            <div class="feature-card" style="grid-column: span 3;">
+                <div class="section-title">
+                    <span>📍 Geo-Location Spatial Proximity Search</span>
+                    <div style="display: flex; gap: 0.3rem;">
+                        <button class="preset-btn" onclick="setGeoPreset(21.19, 81.28)">Durg Center (21.19, 81.28)</button>
+                        <button class="preset-btn" onclick="setGeoPreset(21.21, 81.38)">Bhilai Center (21.21, 81.38)</button>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted);">Latitude:</label>
+                        <input type="number" step="0.0001" id="geoLat" class="form-control" value="21.19">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted);">Longitude:</label>
+                        <input type="number" step="0.0001" id="geoLng" class="form-control" value="81.28">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted);">Radius (KM):</label>
+                        <input type="number" step="0.5" id="geoRadius" class="form-control" value="5.0">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="runGeoStations()">Find Nearby Polling Stations</button>
+                    <button class="btn btn-purple" onclick="runGeoVoters()">Find Nearby Voters</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick EPIC Lookup -->
         <div class="search-section">
             <div class="section-title">🔍 Quick EPIC Voter Profile Lookup</div>
             <div class="search-box">
-                <input type="text" id="epicInput" class="search-input" placeholder="Enter EPIC Card Number (e.g. DVB5080734, SHJ0000059, DVB3380300)..." value="DVB5080734">
+                <input type="text" id="epicInput" class="form-control" placeholder="Enter EPIC Card Number (e.g. IXG1482629, SHJ1301639)..." value="IXG1482629">
                 <button class="btn" onclick="lookupEPIC()">Search EPIC Profile</button>
             </div>
         </div>
 
-        <!-- API Explorer -->
-        <div class="section-title" style="margin-bottom: 1.25rem;">⚡ Interactive API Endpoint Tester</div>
+        <!-- API Explorer Grid -->
+        <div class="section-title" style="margin-bottom: 1.25rem;">⚡ Full Endpoint Explorer</div>
         <div class="endpoints-grid">
             <div class="endpoint-card">
                 <div>
                     <span class="method get">GET</span> <span class="endpoint-path">/api/v1/health</span>
-                    <p class="endpoint-desc">System uptime, DuckDB connection health, and Go runtime memory stats.</p>
+                    <p class="endpoint-desc">System health, DuckDB status, and memory metrics.</p>
                 </div>
-                <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="testEndpoint('/api/v1/health')">Run Test &rarr;</button>
+                <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="testEndpoint('/api/v1/health')">Test &rarr;</button>
             </div>
 
             <div class="endpoint-card">
                 <div>
                     <span class="method get">GET</span> <span class="endpoint-path">/api/v1/stats</span>
-                    <p class="endpoint-desc">Full demographic summary, male/female ratios, and booth totals.</p>
+                    <p class="endpoint-desc">Electorate demographics and booth totals.</p>
                 </div>
-                <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="testEndpoint('/api/v1/stats')">Run Test &rarr;</button>
+                <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="testEndpoint('/api/v1/stats')">Test &rarr;</button>
             </div>
 
             <div class="endpoint-card">
                 <div>
                     <span class="method get">GET</span> <span class="endpoint-path">/api/v1/voters?limit=5</span>
-                    <p class="endpoint-desc">Paginated list of 1.04M voters with search, age, and assembly filters.</p>
+                    <p class="endpoint-desc">Paginated list of 1.04M voters.</p>
                 </div>
-                <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="testEndpoint('/api/v1/voters?limit=5')">Run Test &rarr;</button>
+                <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="testEndpoint('/api/v1/voters?limit=5')">Test &rarr;</button>
             </div>
 
             <div class="endpoint-card">
                 <div>
-                    <span class="method get">GET</span> <span class="endpoint-path">/api/v1/polling-stations?limit=5</span>
-                    <p class="endpoint-desc">List of all 1,513 polling stations with GPS coordinates & address details.</p>
+                    <span class="method get">GET</span> <span class="endpoint-path">/api/v1/voters/group-by?field=full_name</span>
+                    <p class="endpoint-desc">Group voter counts by name or demography.</p>
                 </div>
-                <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="testEndpoint('/api/v1/polling-stations?limit=5')">Run Test &rarr;</button>
+                <button class="btn btn-purple" onclick="testEndpoint('/api/v1/voters/group-by?field=full_name&limit=5')">Test Group-By &rarr;</button>
             </div>
 
             <div class="endpoint-card">
                 <div>
-                    <span class="method get">GET</span> <span class="endpoint-path">/api/v1/constituencies</span>
-                    <p class="endpoint-desc">Breakdown of total electorate and booths across all Assembly Constituencies.</p>
+                    <span class="method post">POST</span> <span class="endpoint-path">/api/v1/admin/sql</span>
+                    <p class="endpoint-desc">Admin raw DuckDB SQL execution (Forbidden for Guest).</p>
                 </div>
-                <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="testEndpoint('/api/v1/constituencies')">Run Test &rarr;</button>
+                <button class="btn btn-rose" onclick="runSQLQuery()">Test Admin SQL &rarr;</button>
             </div>
 
             <div class="endpoint-card">
                 <div>
-                    <span class="method post">POST</span> <span class="endpoint-path">/api/v1/voters/search</span>
-                    <p class="endpoint-desc">Advanced multi-field JSON search payload execution on DuckDB.</p>
+                    <span class="method get">GET</span> <span class="endpoint-path">/api/v1/geo/nearby-polling-stations</span>
+                    <p class="endpoint-desc">Spatial proximity search for booths within radius.</p>
                 </div>
-                <button class="btn" style="background: rgba(192,132,252,0.2); color: var(--accent-purple);" onclick="testPostSearch()">Run POST Test &rarr;</button>
+                <button class="btn btn-amber" onclick="runGeoStations()">Test Geo Booths &rarr;</button>
             </div>
         </div>
 
@@ -747,7 +1012,7 @@ const dashboardHTML = `<!DOCTYPE html>
                     <span id="respStatus" class="status-badge">HTTP 200 OK</span>
                 </div>
             </div>
-            <pre class="json-output" id="jsonOutput">Select an endpoint above or search an EPIC number to execute a real-time query on DuckDB.</pre>
+            <pre class="json-output" id="jsonOutput">Select an endpoint above or run an Admin SQL query to execute a real-time query on DuckDB.</pre>
         </div>
 
         <footer>
@@ -756,6 +1021,25 @@ const dashboardHTML = `<!DOCTYPE html>
     </div>
 
     <script>
+        let activeToken = "admin-token-secret-key-12345";
+        let activeRole = "admin";
+
+        function switchRole(role) {
+            if (role === 'admin') {
+                activeToken = "admin-token-secret-key-12345";
+                activeRole = "admin";
+                document.getElementById('roleBadge').className = "role-pill role-admin";
+                document.getElementById('roleBadge').innerText = "ADMIN";
+                document.getElementById('roleDesc').innerText = "(Full Privileges: Read, Search, Filter, GroupBy, GeoLocation & Raw SQL Console)";
+            } else {
+                activeToken = "guest-token-secret-key-67890";
+                activeRole = "guest";
+                document.getElementById('roleBadge').className = "role-pill role-guest";
+                document.getElementById('roleBadge').innerText = "GUEST";
+                document.getElementById('roleDesc').innerText = "(Guest Privileges: Read, Search, Filter, GroupBy & GeoLocation. Raw SQL Execution Locked)";
+            }
+        }
+
         async function loadStats() {
             try {
                 const res = await fetch('/api/v1/stats');
@@ -771,48 +1055,80 @@ const dashboardHTML = `<!DOCTYPE html>
             }
         }
 
-        async function testEndpoint(url) {
+        async function testEndpoint(url, method = 'GET', body = null) {
             const t0 = performance.now();
             try {
-                const res = await fetch(url);
+                const opts = {
+                    method: method,
+                    headers: {
+                        'Authorization': 'Bearer ' + activeToken,
+                        'Content-Type': 'application/json'
+                    }
+                };
+                if (body) opts.body = JSON.stringify(body);
+
+                const res = await fetch(url, opts);
                 const t1 = performance.now();
                 const data = await res.json();
                 document.getElementById('respTime').innerText = (t1 - t0).toFixed(1) + ' ms';
                 document.getElementById('respStatus').innerText = 'HTTP ' + res.status;
+                if (res.status === 403) {
+                    document.getElementById('respStatus').style.background = 'rgba(244,63,94,0.2)';
+                    document.getElementById('respStatus').style.color = 'var(--accent-rose)';
+                } else {
+                    document.getElementById('respStatus').style.background = 'rgba(52,211,153,0.2)';
+                    document.getElementById('respStatus').style.color = 'var(--accent-emerald)';
+                }
                 document.getElementById('jsonOutput').innerText = JSON.stringify(data, null, 2);
             } catch (err) {
                 document.getElementById('jsonOutput').innerText = 'Error: ' + err.message;
             }
+        }
+
+        function setSQLPreset(type) {
+            if (type === 'gender') {
+                document.getElementById('sqlInput').value = "SELECT gender_english, count(*) AS total FROM voters GROUP BY 1;";
+            } else if (type === 'towns') {
+                document.getElementById('sqlInput').value = "SELECT town_village, count(*) AS total FROM polling_stations GROUP BY 1 ORDER BY 2 DESC LIMIT 5;";
+            } else if (type === 'constituency') {
+                document.getElementById('sqlInput').value = "SELECT assembly_constituency, count(*) AS voters FROM voters GROUP BY 1 ORDER BY 2 DESC;";
+            }
+        }
+
+        async function runSQLQuery() {
+            const sql = document.getElementById('sqlInput').value.trim();
+            if (!sql) return;
+            testEndpoint('/api/v1/admin/sql', 'POST', { sql: sql });
+        }
+
+        async function runGroupBy() {
+            const field = document.getElementById('groupByField').value;
+            testEndpoint('/api/v1/voters/group-by?field=' + field + '&limit=10');
+        }
+
+        function setGeoPreset(lat, lng) {
+            document.getElementById('geoLat').value = lat;
+            document.getElementById('geoLng').value = lng;
+        }
+
+        async function runGeoStations() {
+            const lat = document.getElementById('geoLat').value;
+            const lng = document.getElementById('geoLng').value;
+            const radius = document.getElementById('geoRadius').value;
+            testEndpoint('/api/v1/geo/nearby-polling-stations?lat=' + lat + '&lng=' + lng + '&radius_km=' + radius + '&limit=5');
+        }
+
+        async function runGeoVoters() {
+            const lat = document.getElementById('geoLat').value;
+            const lng = document.getElementById('geoLng').value;
+            const radius = document.getElementById('geoRadius').value;
+            testEndpoint('/api/v1/geo/nearby-voters?lat=' + lat + '&lng=' + lng + '&radius_km=' + radius + '&limit=5');
         }
 
         async function lookupEPIC() {
             const epic = document.getElementById('epicInput').value.trim();
             if (!epic) return;
             testEndpoint('/api/v1/voters/' + encodeURIComponent(epic));
-        }
-
-        async function testPostSearch() {
-            const t0 = performance.now();
-            try {
-                const res = await fetch('/api/v1/voters/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        query: "Patel",
-                        gender: "Female",
-                        min_age: 18,
-                        max_age: 45,
-                        limit: 5
-                    })
-                });
-                const t1 = performance.now();
-                const data = await res.json();
-                document.getElementById('respTime').innerText = (t1 - t0).toFixed(1) + ' ms';
-                document.getElementById('respStatus').innerText = 'HTTP ' + res.status;
-                document.getElementById('jsonOutput').innerText = JSON.stringify(data, null, 2);
-            } catch (err) {
-                document.getElementById('jsonOutput').innerText = 'Error: ' + err.message;
-            }
         }
 
         window.onload = loadStats;

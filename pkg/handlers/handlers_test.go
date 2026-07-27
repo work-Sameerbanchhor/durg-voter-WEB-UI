@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -114,5 +115,83 @@ func TestListVotersPagination(t *testing.T) {
 	}
 	if resp.Meta.TotalItems <= 1000000 {
 		t.Errorf("expected total items > 1,000,000, got %d", resp.Meta.TotalItems)
+	}
+}
+
+func TestAuthLogin(t *testing.T) {
+	duckDB, _ := setupTestServer(t)
+	defer duckDB.Close()
+
+	repo := repository.NewVoterRepository(duckDB)
+	svc := service.NewVoterService(repo)
+
+	// Test Admin Login
+	adminResp, err := svc.AuthenticateUser("admin", "adminpass")
+	if err != nil || adminResp.Role != models.RoleAdmin {
+		t.Fatalf("expected admin authentication success, got err: %v", err)
+	}
+
+	// Test Guest Login
+	guestResp, err := svc.AuthenticateUser("guest", "guestpass")
+	if err != nil || guestResp.Role != models.RoleGuest {
+		t.Fatalf("expected guest authentication success, got err: %v", err)
+	}
+}
+
+func TestAdminExecuteSQL(t *testing.T) {
+	duckDB, _ := setupTestServer(t)
+	defer duckDB.Close()
+
+	repo := repository.NewVoterRepository(duckDB)
+	svc := service.NewVoterService(repo)
+
+	ctx := context.Background()
+	sqlRes, err := svc.ExecuteSQL(ctx, "SELECT gender_english, count(*) FROM voters GROUP BY 1;")
+	if err != nil {
+		t.Fatalf("expected SQL execution success for admin, got err: %v", err)
+	}
+	if len(sqlRes.Columns) != 2 {
+		t.Errorf("expected 2 columns, got %d", len(sqlRes.Columns))
+	}
+}
+
+func TestGroupByNames(t *testing.T) {
+	duckDB, _ := setupTestServer(t)
+	defer duckDB.Close()
+
+	repo := repository.NewVoterRepository(duckDB)
+	svc := service.NewVoterService(repo)
+
+	ctx := context.Background()
+	res, err := svc.GroupBy(ctx, models.GroupByRequest{Field: "full_name", Limit: 5})
+	if err != nil {
+		t.Fatalf("expected GroupBy success, got err: %v", err)
+	}
+	if len(res.Groups) == 0 {
+		t.Errorf("expected non-empty group results")
+	}
+}
+
+func TestGeoNearby(t *testing.T) {
+	duckDB, _ := setupTestServer(t)
+	defer duckDB.Close()
+
+	repo := repository.NewVoterRepository(duckDB)
+	svc := service.NewVoterService(repo)
+
+	ctx := context.Background()
+	req := models.GeoNearbyRequest{Latitude: 21.19, Longitude: 81.28, RadiusKM: 10.0, Limit: 5}
+
+	stations, err := svc.GetNearbyPollingStations(ctx, req)
+	if err != nil {
+		t.Fatalf("expected nearby polling stations success, got err: %v", err)
+	}
+	if len(stations) == 0 {
+		t.Errorf("expected nearby polling stations")
+	}
+
+	dist := svc.CalculateDistance(21.19, 81.28, 21.21, 81.38)
+	if dist.DistanceKM <= 0 {
+		t.Errorf("expected calculated distance > 0, got %f", dist.DistanceKM)
 	}
 }

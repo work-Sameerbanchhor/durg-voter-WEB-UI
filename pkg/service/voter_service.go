@@ -17,6 +17,12 @@ type VoterService interface {
 	ListPollingStations(ctx context.Context, filter models.SearchFilter) ([]models.PollingStation, *models.Pagination, error)
 	GetPollingStation(ctx context.Context, assembly string, partNo int64) (*models.PollingStation, error)
 	ListConstituencies(ctx context.Context) ([]models.ConstituencySummary, error)
+	ExecuteSQL(ctx context.Context, sqlQuery string) (*models.SQLResult, error)
+	GroupBy(ctx context.Context, req models.GroupByRequest) (*models.GroupByResult, error)
+	GetNearbyPollingStations(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoPollingStationResult, error)
+	GetNearbyVoters(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoVoterResult, error)
+	CalculateDistance(lat1, lng1, lat2, lng2 float64) models.GeoDistanceResult
+	AuthenticateUser(username, password string) (*models.LoginResponse, error)
 }
 
 type voterService struct {
@@ -122,4 +128,66 @@ func (s *voterService) ListConstituencies(ctx context.Context) ([]models.Constit
 	s.cachedConstituencies = constituencies
 	s.constCacheTime = time.Now()
 	return constituencies, nil
+}
+
+func (s *voterService) ExecuteSQL(ctx context.Context, sqlQuery string) (*models.SQLResult, error) {
+	if sqlQuery == "" {
+		return nil, fmt.Errorf("SQL query string is required")
+	}
+	return s.repo.ExecuteSQL(ctx, sqlQuery)
+}
+
+func (s *voterService) GroupBy(ctx context.Context, req models.GroupByRequest) (*models.GroupByResult, error) {
+	if req.Field == "" {
+		req.Field = "full_name"
+	}
+	return s.repo.GroupBy(ctx, req)
+}
+
+func (s *voterService) GetNearbyPollingStations(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoPollingStationResult, error) {
+	if req.Latitude == 0 || req.Longitude == 0 {
+		return nil, fmt.Errorf("valid latitude and longitude coordinates are required")
+	}
+	return s.repo.GetNearbyPollingStations(ctx, req)
+}
+
+func (s *voterService) GetNearbyVoters(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoVoterResult, error) {
+	if req.Latitude == 0 || req.Longitude == 0 {
+		return nil, fmt.Errorf("valid latitude and longitude coordinates are required")
+	}
+	return s.repo.GetNearbyVoters(ctx, req)
+}
+
+func (s *voterService) CalculateDistance(lat1, lng1, lat2, lng2 float64) models.GeoDistanceResult {
+	return s.repo.CalculateDistance(lat1, lng1, lat2, lng2)
+}
+
+func (s *voterService) AuthenticateUser(username, password string) (*models.LoginResponse, error) {
+	switch username {
+	case "admin":
+		if password == "adminpass" || password == "admin" {
+			return &models.LoginResponse{
+				Token: "admin-token-secret-key-12345",
+				Role:  models.RoleAdmin,
+				User: models.User{
+					Username:    "admin",
+					Role:        models.RoleAdmin,
+					Permissions: []string{"read", "search", "filter", "group_by", "geo", "execute_sql"},
+				},
+			}, nil
+		}
+	case "guest":
+		if password == "guestpass" || password == "guest" || password == "" {
+			return &models.LoginResponse{
+				Token: "guest-token-secret-key-67890",
+				Role:  models.RoleGuest,
+				User: models.User{
+					Username:    "guest",
+					Role:        models.RoleGuest,
+					Permissions: []string{"read", "search", "filter", "group_by", "geo"},
+				},
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("invalid username or password credentials")
 }

@@ -111,3 +111,100 @@ type StatsSummary struct {
 	AssemblyBreakdown map[string]int64 `json:"assembly_breakdown"`
 	Engine            string           `json:"engine"`
 }
+
+// UserRole defines application roles
+type UserRole string
+
+const (
+	RoleAdmin UserRole = "admin"
+	RoleGuest UserRole = "guest"
+)
+
+// User credentials and context
+type User struct {
+	Username    string   `json:"username"`
+	Role        UserRole `json:"role"`
+	Permissions []string `json:"permissions"`
+}
+
+// LoginRequest payload
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// LoginResponse payload
+type LoginResponse struct {
+	Token string   `json:"token"`
+	User  User     `json:"user"`
+	Role  UserRole `json:"role"`
+}
+
+// SQLRequest payload for raw query execution
+type SQLRequest struct {
+	SQL string `json:"sql"`
+}
+
+// SQLResult payload for query execution output
+type SQLResult struct {
+	Columns         []string        `json:"columns"`
+	Rows            [][]interface{} `json:"rows"`
+	RowCount        int             `json:"row_count"`
+	ExecutionTimeMS float64         `json:"execution_time_ms"`
+}
+
+// GroupByRequest payload
+type GroupByRequest struct {
+	Field    string `json:"field"`     // "full_name", "relative_name", "gender", "assembly_constituency", "town_village", "age_group"
+	Limit    int    `json:"limit"`     // default 20
+	MinCount int    `json:"min_count"` // default 1
+	Sort     string `json:"sort"`      // "desc" or "asc"
+}
+
+// GroupCountItem holds grouped count breakdown
+type GroupCountItem struct {
+	Value      string  `json:"value"`
+	Count      int64   `json:"count"`
+	Percentage float64 `json:"percentage"`
+}
+
+// GroupByResult payload
+type GroupByResult struct {
+	Field      string           `json:"field"`
+	TotalItems int64            `json:"total_items"`
+	Groups     []GroupCountItem `json:"groups"`
+}
+
+// GeoNearbyRequest payload for proximity queries
+type GeoNearbyRequest struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	RadiusKM  float64 `json:"radius_km"` // Search radius in kilometers
+	Limit     int     `json:"limit"`
+}
+
+// GeoPollingStationResult extends PollingStation with calculated distance
+type GeoPollingStationResult struct {
+	PollingStation PollingStation `json:"polling_station"`
+	DistanceKM     float64        `json:"distance_km"`
+	DistanceMeters float64        `json:"distance_meters"`
+}
+
+// GeoVoterResult extends Voter with calculated distance
+type GeoVoterResult struct {
+	Voter          Voter   `json:"voter"`
+	DistanceKM     float64 `json:"distance_km"`
+	DistanceMeters float64 `json:"distance_meters"`
+}
+
+// GeoDistanceResult details distance between two coordinates
+type GeoDistanceResult struct {
+	Lat1           float64 `json:"lat1"`
+	Lng1           float64 `json:"lng1"`
+	Lat2           float64 `json:"lat2"`
+	Lng2           float64 `json:"lng2"`
+	DistanceKM     float64 `json:"distance_km"`
+	DistanceMiles  float64 `json:"distance_miles"`
+	DistanceMeters float64 `json:"distance_meters"`
+}
+

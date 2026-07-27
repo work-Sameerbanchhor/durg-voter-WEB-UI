@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"durg-voter-api/pkg/db"
 	"durg-voter-api/pkg/models"
@@ -18,6 +19,11 @@ type VoterRepository interface {
 	ListPollingStations(ctx context.Context, filter models.SearchFilter) ([]models.PollingStation, *models.Pagination, error)
 	GetPollingStation(ctx context.Context, assembly string, partNo int64) (*models.PollingStation, error)
 	ListConstituencies(ctx context.Context) ([]models.ConstituencySummary, error)
+	ExecuteSQL(ctx context.Context, sqlQuery string) (*models.SQLResult, error)
+	GroupBy(ctx context.Context, req models.GroupByRequest) (*models.GroupByResult, error)
+	GetNearbyPollingStations(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoPollingStationResult, error)
+	GetNearbyVoters(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoVoterResult, error)
+	CalculateDistance(lat1, lng1, lat2, lng2 float64) models.GeoDistanceResult
 }
 
 type duckDBVoterRepository struct {
@@ -484,4 +490,326 @@ func (r *duckDBVoterRepository) ListConstituencies(ctx context.Context) ([]model
 	}
 
 	return summaries, nil
+}
+
+func (r *duckDBVoterRepository) ExecuteSQL(ctx context.Context, sqlQuery string) (*models.SQLResult, error) {
+	sqlClean := strings.TrimSpace(sqlQuery)
+	if sqlClean == "" {
+		return nil, fmt.Errorf("SQL query cannot be empty")
+	}
+
+	// Security check: only allow read-only SELECT queries
+	upperSQL := strings.ToUpper(sqlClean)
+	if !strings.HasPrefix(upperSQL, "SELECT") && !strings.HasPrefix(upperSQL, "WITH") && !strings.HasPrefix(upperSQL, "EXPLAIN") && !strings.HasPrefix(upperSQL, "SHOW") && !strings.HasPrefix(upperSQL, "DESCRIBE") {
+		return nil, fmt.Errorf("read-only access: custom SQL execution is restricted to SELECT/analytics queries")
+	}
+
+	t0 := time.Now()
+	rows, err := r.duckDB.DB.QueryContext(ctx, sqlClean)
+	if err != nil {
+		return nil, fmt.Errorf("SQL execution error: %w", err)
+	}
+	defer rows.Close()
+
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve column names: %w", err)
+	}
+
+	resultRows := make([][]interface{}, 0)
+	for rows.Next() {
+		columns := make([]interface{}, len(cols))
+		columnPointers := make([]interface{}, len(cols))
+		for i := range columns {
+			columnPointers[i] = &columns[i]
+		}
+
+		if err := rows.Scan(columnPointers...); err != nil {
+			return nil, fmt.Errorf("failed scanning row: %w", err)
+		}
+
+		rowValues := make([]interface{}, len(cols))
+		for i, val := range columns {
+			if b, ok := val.([]byte); ok {
+				rowValues[i] = string(b)
+			} else {
+				rowValues[i] = val
+			}
+		}
+		resultRows = append(resultRows, rowValues)
+
+		// Limit maximum rows returned in response to prevent memory overflow
+		if len(resultRows) >= 1000 {
+			break
+		}
+	}
+
+	duration := float64(time.Since(t0).Microseconds()) / 1000.0
+
+	return &models.SQLResult{
+		Columns:         cols,
+		Rows:            resultRows,
+		RowCount:        len(resultRows),
+		ExecutionTimeMS: duration,
+	}, nil
+}
+
+func (r *duckDBVoterRepository) GroupBy(ctx context.Context, req models.GroupByRequest) (*models.GroupByResult, error) {
+	fieldExpr := "voter_name_english"
+	switch strings.ToLower(req.Field) {
+	case "name", "full_name", "voter_name":
+		fieldExpr = "COALESCE(NULLIF(TRIM(voter_name_english), ''), 'Unknown')"
+	case "relative_name", "relative":
+		fieldExpr = "COALESCE(NULLIF(TRIM(relative_name_english), ''), 'Unknown')"
+	case "gender":
+		fieldExpr = "COALESCE(NULLIF(TRIM(gender_english), ''), 'Unknown')"
+	case "assembly", "assembly_constituency":
+		fieldExpr = "COALESCE(NULLIF(TRIM(assembly_constituency), ''), 'Unknown')"
+	case "town_village", "town", "village":
+		fieldExpr = "COALESCE(NULLIF(TRIM(town_village), ''), 'Unknown')"
+	case "age_group":
+		fieldExpr = "CASE WHEN age < 25 THEN '18-24' WHEN age < 40 THEN '25-39' WHEN age < 60 THEN '40-59' ELSE '60+' END"
+	}
+
+	limit := req.Limit
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	minCount := req.MinCount
+	if minCount < 1 {
+		minCount = 1
+	}
+	sortOrder := "DESC"
+	if strings.EqualFold(req.Sort, "asc") {
+		sortOrder = "ASC"
+	}
+
+	var totalVoters int64
+	err := r.duckDB.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM voters;").Scan(&totalVoters)
+	if err != nil || totalVoters == 0 {
+		totalVoters = 1
+	}
+
+	query := fmt.Sprintf(`
+		SELECT %s AS val, COUNT(*) AS cnt
+		FROM voters
+		GROUP BY val
+		HAVING cnt >= ?
+		ORDER BY cnt %s
+		LIMIT ?;
+	`, fieldExpr, sortOrder)
+
+	rows, err := r.duckDB.DB.QueryContext(ctx, query, minCount, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute GroupBy query: %w", err)
+	}
+	defer rows.Close()
+
+	items := make([]models.GroupCountItem, 0)
+	for rows.Next() {
+		var item models.GroupCountItem
+		if err := rows.Scan(&item.Value, &item.Count); err != nil {
+			return nil, fmt.Errorf("failed scanning group by row: %w", err)
+		}
+		item.Percentage = math.Round((float64(item.Count)/float64(totalVoters))*10000.0) / 100.0
+		items = append(items, item)
+	}
+
+	return &models.GroupByResult{
+		Field:      req.Field,
+		TotalItems: totalVoters,
+		Groups:     items,
+	}, nil
+}
+
+func (r *duckDBVoterRepository) GetNearbyPollingStations(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoPollingStationResult, error) {
+	radius := req.RadiusKM
+	if radius <= 0 {
+		radius = 5.0 // default 5km
+	}
+	limit := req.Limit
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+
+	query := `
+		SELECT * FROM (
+			SELECT 
+				COALESCE(assembly_constituency, ''),
+				COALESCE(part_number, 0),
+				COALESCE(polling_station_name, ''),
+				COALESCE(polling_station_address, ''),
+				COALESCE(town_village, ''),
+				COALESCE(tehsil, ''),
+				COALESCE(district, ''),
+				COALESCE(pin_code, ''),
+				COALESCE(latitude, 0.0),
+				COALESCE(longitude, 0.0),
+				COALESCE(total_voters, 0),
+				COALESCE(total_male_voters, 0),
+				COALESCE(total_female_voters, 0),
+				(6371.0 * 2 * ASIN(SQRT(
+					POWER(SIN(RADIANS(? - latitude) / 2), 2) +
+					COS(RADIANS(?)) * COS(RADIANS(latitude)) *
+					POWER(SIN(RADIANS(? - longitude) / 2), 2)
+				))) AS distance_km
+			FROM polling_stations
+			WHERE latitude != 0 AND longitude != 0
+		) sub
+		WHERE sub.distance_km <= ?
+		ORDER BY sub.distance_km ASC
+		LIMIT ?;
+	`
+
+	rows, err := r.duckDB.DB.QueryContext(ctx, query, req.Latitude, req.Latitude, req.Longitude, radius, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query nearby polling stations: %w", err)
+	}
+	defer rows.Close()
+
+	results := make([]models.GeoPollingStationResult, 0)
+	for rows.Next() {
+		var res models.GeoPollingStationResult
+		err := rows.Scan(
+			&res.PollingStation.AssemblyConstituency,
+			&res.PollingStation.PartNumber,
+			&res.PollingStation.PollingStationName,
+			&res.PollingStation.PollingStationAddress,
+			&res.PollingStation.TownVillage,
+			&res.PollingStation.Tehsil,
+			&res.PollingStation.District,
+			&res.PollingStation.PinCode,
+			&res.PollingStation.Latitude,
+			&res.PollingStation.Longitude,
+			&res.PollingStation.TotalVoters,
+			&res.PollingStation.TotalMaleVoters,
+			&res.PollingStation.TotalFemaleVoters,
+			&res.DistanceKM,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed scanning nearby polling station: %w", err)
+		}
+		res.DistanceKM = math.Round(res.DistanceKM*100) / 100
+		res.DistanceMeters = math.Round(res.DistanceKM * 1000)
+		results = append(results, res)
+	}
+
+	return results, nil
+}
+
+func (r *duckDBVoterRepository) GetNearbyVoters(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoVoterResult, error) {
+	radius := req.RadiusKM
+	if radius <= 0 {
+		radius = 2.0 // default 2km
+	}
+	limit := req.Limit
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+
+	query := `
+		SELECT * FROM (
+			SELECT 
+				COALESCE(voter_id, ''),
+				COALESCE(voter_name_english, ''),
+				COALESCE(voter_name_hindi, ''),
+				COALESCE(relative_name_english, ''),
+				COALESCE(relative_name_hindi, ''),
+				COALESCE(gender_english, ''),
+				COALESCE(gender_hindi, ''),
+				COALESCE(age, 0),
+				COALESCE(house_number, ''),
+				COALESCE(station_name_loc, ''),
+				COALESCE(station_address_loc, ''),
+				COALESCE(part_number, 0),
+				COALESCE(assembly_constituency, ''),
+				COALESCE(assembly_constituency_full, ''),
+				COALESCE(parliamentary_constituency, ''),
+				COALESCE(town_village, ''),
+				COALESCE(tehsil, ''),
+				COALESCE(district, ''),
+				COALESCE(pin_code, ''),
+				COALESCE(latitude, 0.0),
+				COALESCE(longitude, 0.0),
+				(6371.0 * 2 * ASIN(SQRT(
+					POWER(SIN(RADIANS(? - latitude) / 2), 2) +
+					COS(RADIANS(?)) * COS(RADIANS(latitude)) *
+					POWER(SIN(RADIANS(? - longitude) / 2), 2)
+				))) AS distance_km
+			FROM voters
+			WHERE latitude != 0 AND longitude != 0
+		) sub
+		WHERE sub.distance_km <= ?
+		ORDER BY sub.distance_km ASC
+		LIMIT ?;
+	`
+
+	rows, err := r.duckDB.DB.QueryContext(ctx, query, req.Latitude, req.Latitude, req.Longitude, radius, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query nearby voters: %w", err)
+	}
+	defer rows.Close()
+
+	results := make([]models.GeoVoterResult, 0)
+	for rows.Next() {
+		var res models.GeoVoterResult
+		err := rows.Scan(
+			&res.Voter.EPICNo,
+			&res.Voter.FullName,
+			&res.Voter.FullNameHindi,
+			&res.Voter.RelativeName,
+			&res.Voter.RelativeNameHindi,
+			&res.Voter.Gender,
+			&res.Voter.GenderHindi,
+			&res.Voter.Age,
+			&res.Voter.HouseNo,
+			&res.Voter.PollingStationName,
+			&res.Voter.PollingStationAddress,
+			&res.Voter.PartNumber,
+			&res.Voter.AssemblyConstituency,
+			&res.Voter.AssemblyConstituencyFull,
+			&res.Voter.ParliamentaryConstituency,
+			&res.Voter.TownVillage,
+			&res.Voter.Tehsil,
+			&res.Voter.District,
+			&res.Voter.PinCode,
+			&res.Voter.Latitude,
+			&res.Voter.Longitude,
+			&res.DistanceKM,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed scanning nearby voter: %w", err)
+		}
+		res.DistanceKM = math.Round(res.DistanceKM*100) / 100
+		res.DistanceMeters = math.Round(res.DistanceKM * 1000)
+		results = append(results, res)
+	}
+
+	return results, nil
+}
+
+func (r *duckDBVoterRepository) CalculateDistance(lat1, lng1, lat2, lng2 float64) models.GeoDistanceResult {
+	const earthRadiusKM = 6371.0
+
+	dLat := (lat2 - lat1) * (math.Pi / 180.0)
+	dLng := (lng2 - lng1) * (math.Pi / 180.0)
+
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1*(math.Pi/180.0))*math.Cos(lat2*(math.Pi/180.0))*
+			math.Sin(dLng/2)*math.Sin(dLng/2)
+
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	distKM := earthRadiusKM * c
+	distMiles := distKM * 0.621371
+	distMeters := distKM * 1000.0
+
+	return models.GeoDistanceResult{
+		Lat1:           lat1,
+		Lng1:           lng1,
+		Lat2:           lat2,
+		Lng2:           lng2,
+		DistanceKM:     math.Round(distKM*100) / 100,
+		DistanceMiles:  math.Round(distMiles*100) / 100,
+		DistanceMeters: math.Round(distMeters),
+	}
 }
