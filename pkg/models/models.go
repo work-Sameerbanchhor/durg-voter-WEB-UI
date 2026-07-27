@@ -79,6 +79,22 @@ type PollingStation struct {
 	TotalFemaleVoters     int64   `json:"total_female_voters"`
 }
 
+// PartDetails structure for complete booth & section metadata
+type PartDetails struct {
+	AssemblyConstituency  string   `json:"assembly_constituency"`
+	PartNumber            int64    `json:"part_number"`
+	PollingStationName    string   `json:"polling_station_name"`
+	PollingStationAddress string   `json:"polling_station_address"`
+	TownVillage           string   `json:"town_village,omitempty"`
+	Tehsil                string   `json:"tehsil,omitempty"`
+	District              string   `json:"district,omitempty"`
+	PinCode               string   `json:"pin_code,omitempty"`
+	PostOffice            string   `json:"post_office,omitempty"`
+	PoliceStation         string   `json:"police_station,omitempty"`
+	TotalVoters           int64    `json:"total_voters"`
+	Sections              []string `json:"sections"`
+}
+
 // ConstituencySummary details for assembly constituencies
 type ConstituencySummary struct {
 	AssemblyConstituency string `json:"assembly_constituency"`
@@ -98,6 +114,7 @@ type SearchFilter struct {
 	MaxAge               int    `json:"max_age"`
 	TownVillage          string `json:"town_village"`
 	PartNumber           int64  `json:"part_number"`
+	SectionNumberAndName string `json:"section_number_and_name"`
 	SortBy               string `json:"sort_by"`
 	SortOrder            string `json:"sort_order"`
 	Page                 int    `json:"page"`

@@ -266,6 +266,43 @@ func (h *Handler) GetPollingStationHandler(w http.ResponseWriter, r *http.Reques
 	})
 }
 
+func (h *Handler) GetPartDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	assembly := r.URL.Query().Get("assembly")
+	partStr := r.URL.Query().Get("part_number")
+	partNo, _ := strconv.ParseInt(partStr, 10, 64)
+
+	if assembly == "" || partNo <= 0 {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error:   "Assembly constituency and valid part_number query parameters are required",
+		})
+		return
+	}
+
+	details, err := h.voterService.GetPartDetails(ctx, assembly, partNo)
+	if err != nil {
+		SendJSON(w, r, http.StatusInternalServerError, models.APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	if details == nil {
+		SendJSON(w, r, http.StatusNotFound, models.APIResponse{
+			Success: false,
+			Error:   "Part details not found",
+		})
+		return
+	}
+
+	SendJSON(w, r, http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    details,
+	})
+}
+
 func (h *Handler) ListConstituenciesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	constituencies, err := h.voterService.ListConstituencies(ctx)

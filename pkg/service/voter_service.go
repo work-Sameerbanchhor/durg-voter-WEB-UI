@@ -16,6 +16,7 @@ type VoterService interface {
 	GetVoterByEPIC(ctx context.Context, epicNo string) (*models.Voter, error)
 	ListPollingStations(ctx context.Context, filter models.SearchFilter) ([]models.PollingStation, *models.Pagination, error)
 	GetPollingStation(ctx context.Context, assembly string, partNo int64) (*models.PollingStation, error)
+	GetPartDetails(ctx context.Context, assembly string, partNo int64) (*models.PartDetails, error)
 	ListConstituencies(ctx context.Context) ([]models.ConstituencySummary, error)
 	ExecuteSQL(ctx context.Context, sqlQuery string) (*models.SQLResult, error)
 	GroupBy(ctx context.Context, req models.GroupByRequest) (*models.GroupByResult, error)
@@ -190,4 +191,8 @@ func (s *voterService) AuthenticateUser(username, password string) (*models.Logi
 		}
 	}
 	return nil, fmt.Errorf("invalid username or password credentials")
+}
+
+func (s *voterService) GetPartDetails(ctx context.Context, assembly string, partNo int64) (*models.PartDetails, error) {
+	return s.repo.GetPartDetails(ctx, assembly, partNo)
 }

@@ -18,6 +18,7 @@ type VoterRepository interface {
 	GetVoterByEPIC(ctx context.Context, epicNo string) (*models.Voter, error)
 	ListPollingStations(ctx context.Context, filter models.SearchFilter) ([]models.PollingStation, *models.Pagination, error)
 	GetPollingStation(ctx context.Context, assembly string, partNo int64) (*models.PollingStation, error)
+	GetPartDetails(ctx context.Context, assembly string, partNo int64) (*models.PartDetails, error)
 	ListConstituencies(ctx context.Context) ([]models.ConstituencySummary, error)
 	ExecuteSQL(ctx context.Context, sqlQuery string) (*models.SQLResult, error)
 	GroupBy(ctx context.Context, req models.GroupByRequest) (*models.GroupByResult, error)
@@ -125,6 +126,11 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 	if filter.PartNumber > 0 {
 		conditions = append(conditions, "part_number = ?")
 		args = append(args, filter.PartNumber)
+	}
+
+	if filter.SectionNumberAndName != "" {
+		conditions = append(conditions, "LOWER(section_number_and_name) LIKE ?")
+		args = append(args, "%"+strings.ToLower(filter.SectionNumberAndName)+"%")
 	}
 
 	whereClause := ""
@@ -469,6 +475,66 @@ func (r *duckDBVoterRepository) GetPollingStation(ctx context.Context, assembly 
 	}
 
 	return &ps, nil
+}
+
+func (r *duckDBVoterRepository) GetPartDetails(ctx context.Context, assembly string, partNo int64) (*models.PartDetails, error) {
+	query := `
+		SELECT 
+			COALESCE(assembly_constituency, ''),
+			COALESCE(part_number, 0),
+			COALESCE(station_name_loc, ''),
+			COALESCE(station_address_loc, ''),
+			COALESCE(town_village, ''),
+			COALESCE(tehsil, ''),
+			COALESCE(district, ''),
+			COALESCE(pin_code, ''),
+			COALESCE(post_office, ''),
+			COALESCE(police_station, ''),
+			COUNT(*) AS total_voters
+		FROM voters
+		WHERE LOWER(assembly_constituency) LIKE LOWER(?) AND part_number = ?
+		GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+		LIMIT 1;
+	`
+	var pd models.PartDetails
+	err := r.duckDB.DB.QueryRowContext(ctx, query, "%"+assembly+"%", partNo).Scan(
+		&pd.AssemblyConstituency,
+		&pd.PartNumber,
+		&pd.PollingStationName,
+		&pd.PollingStationAddress,
+		&pd.TownVillage,
+		&pd.Tehsil,
+		&pd.District,
+		&pd.PinCode,
+		&pd.PostOffice,
+		&pd.PoliceStation,
+		&pd.TotalVoters,
+	)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed to query part details: %w", err)
+	}
+
+	secQuery := `
+		SELECT DISTINCT section_number_and_name
+		FROM voters
+		WHERE LOWER(assembly_constituency) LIKE LOWER(?) AND part_number = ?
+		  AND section_number_and_name IS NOT NULL AND section_number_and_name != ''
+		ORDER BY 1;
+	`
+	rows, err := r.duckDB.DB.QueryContext(ctx, secQuery, "%"+assembly+"%", partNo)
+	if err == nil {
+		defer rows.Close()
+		sections := make([]string, 0)
+		for rows.Next() {
+			var sec string
+			if err := rows.Scan(&sec); err == nil && sec != "" {
+				sections = append(sections, sec)
+			}
+		}
+		pd.Sections = sections
+	}
+
+	return &pd, nil
 }
 
 func (r *duckDBVoterRepository) ListConstituencies(ctx context.Context) ([]models.ConstituencySummary, error) {

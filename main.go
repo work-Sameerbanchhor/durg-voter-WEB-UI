@@ -50,6 +50,7 @@ func main() {
 	mux.HandleFunc("POST /api/v1/voters/group-by", h.GroupByHandler)
 	mux.HandleFunc("GET /api/v1/polling-stations", h.ListPollingStationsHandler)
 	mux.HandleFunc("GET /api/v1/polling-stations/detail", h.GetPollingStationHandler)
+	mux.HandleFunc("GET /api/v1/polling-stations/part-details", h.GetPartDetailsHandler)
 	mux.HandleFunc("GET /api/v1/constituencies", h.ListConstituenciesHandler)
 	mux.HandleFunc("GET /api/v1/openapi.json", h.OpenAPIHandler)
 
