@@ -516,20 +516,27 @@ func (r *duckDBVoterRepository) GetPartDetails(ctx context.Context, assembly str
 	}
 
 	secQuery := `
-		SELECT DISTINCT section_number_and_name
+		SELECT DISTINCT UNNEST(STRING_SPLIT(section_number_and_name, ';')) AS sec
 		FROM voters
 		WHERE LOWER(assembly_constituency) LIKE ? AND part_number = ?
-		  AND section_number_and_name IS NOT NULL AND section_number_and_name != ''
-		ORDER BY 1;
+		  AND section_number_and_name IS NOT NULL AND section_number_and_name != '';
 	`
 	rows, err := r.duckDB.DB.QueryContext(ctx, secQuery, asmPattern, partNo)
 	if err == nil {
 		defer rows.Close()
+		secMap := make(map[string]bool)
 		sections := make([]string, 0)
 		for rows.Next() {
-			var sec string
-			if err := rows.Scan(&sec); err == nil && sec != "" {
-				sections = append(sections, sec)
+			var rawSec string
+			if err := rows.Scan(&rawSec); err == nil {
+				subParts := strings.Split(rawSec, ":")
+				for _, sp := range subParts {
+					cleanSec := strings.TrimSpace(sp)
+					if cleanSec != "" && !secMap[cleanSec] {
+						secMap[cleanSec] = true
+						sections = append(sections, cleanSec)
+					}
+				}
 			}
 		}
 		pd.Sections = sections
