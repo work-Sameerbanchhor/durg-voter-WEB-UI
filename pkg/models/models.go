@@ -55,6 +55,9 @@ type Voter struct {
 	Tehsil                   string  `json:"tehsil,omitempty"`
 	District                 string  `json:"district"`
 	PinCode                  string  `json:"pin_code,omitempty"`
+	SectionNumberAndName     string  `json:"section_number_and_name,omitempty"`
+	PostOffice               string  `json:"post_office,omitempty"`
+	PoliceStation            string  `json:"police_station,omitempty"`
 	Latitude                 float64 `json:"latitude,omitempty"`
 	Longitude                float64 `json:"longitude,omitempty"`
 }

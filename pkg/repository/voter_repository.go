@@ -93,8 +93,8 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 
 	if filter.Query != "" {
 		q := "%" + strings.ToLower(filter.Query) + "%"
-		conditions = append(conditions, "(LOWER(voter_id) LIKE ? OR LOWER(voter_name_english) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_english) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(house_number) LIKE ? OR LOWER(town_village) LIKE ? OR LOWER(assembly_constituency) LIKE ?)")
-		args = append(args, q, q, q, q, q, q, q, q)
+		conditions = append(conditions, "(LOWER(voter_id) LIKE ? OR LOWER(voter_name_english) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_english) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(house_number) LIKE ? OR LOWER(town_village) LIKE ? OR LOWER(assembly_constituency) LIKE ? OR LOWER(section_number_and_name) LIKE ?)")
+		args = append(args, q, q, q, q, q, q, q, q, q)
 	}
 
 	if filter.AssemblyConstituency != "" {
@@ -192,6 +192,9 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 			COALESCE(tehsil, ''),
 			COALESCE(district, ''),
 			COALESCE(pin_code, ''),
+			COALESCE(section_number_and_name, ''),
+			COALESCE(post_office, ''),
+			COALESCE(police_station, ''),
 			COALESCE(latitude, 0.0),
 			COALESCE(longitude, 0.0)
 		FROM voters %s
@@ -229,6 +232,9 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 			&v.Tehsil,
 			&v.District,
 			&v.PinCode,
+			&v.SectionNumberAndName,
+			&v.PostOffice,
+			&v.PoliceStation,
 			&v.Latitude,
 			&v.Longitude,
 		)
@@ -270,6 +276,9 @@ func (r *duckDBVoterRepository) GetVoterByEPIC(ctx context.Context, epicNo strin
 			COALESCE(tehsil, ''),
 			COALESCE(district, ''),
 			COALESCE(pin_code, ''),
+			COALESCE(section_number_and_name, ''),
+			COALESCE(post_office, ''),
+			COALESCE(police_station, ''),
 			COALESCE(latitude, 0.0),
 			COALESCE(longitude, 0.0)
 		FROM voters
@@ -298,6 +307,9 @@ func (r *duckDBVoterRepository) GetVoterByEPIC(ctx context.Context, epicNo strin
 		&v.Tehsil,
 		&v.District,
 		&v.PinCode,
+		&v.SectionNumberAndName,
+		&v.PostOffice,
+		&v.PoliceStation,
 		&v.Latitude,
 		&v.Longitude,
 	)
@@ -729,6 +741,9 @@ func (r *duckDBVoterRepository) GetNearbyVoters(ctx context.Context, req models.
 				COALESCE(tehsil, ''),
 				COALESCE(district, ''),
 				COALESCE(pin_code, ''),
+				COALESCE(section_number_and_name, ''),
+				COALESCE(post_office, ''),
+				COALESCE(police_station, ''),
 				COALESCE(latitude, 0.0),
 				COALESCE(longitude, 0.0),
 				(6371.0 * 2 * ASIN(SQRT(
@@ -773,6 +788,9 @@ func (r *duckDBVoterRepository) GetNearbyVoters(ctx context.Context, req models.
 			&res.Voter.Tehsil,
 			&res.Voter.District,
 			&res.Voter.PinCode,
+			&res.Voter.SectionNumberAndName,
+			&res.Voter.PostOffice,
+			&res.Voter.PoliceStation,
 			&res.Voter.Latitude,
 			&res.Voter.Longitude,
 			&res.DistanceKM,
