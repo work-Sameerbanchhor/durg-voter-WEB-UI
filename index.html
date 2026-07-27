@@ -814,7 +814,7 @@
                     </div>
                     <div>
                         <label class="form-label">Booth No (Part Number):</label>
-                        <input type="number" id="srchPartNumber" class="form-control" placeholder="Select Assembly First" disabled onchange="onPartNumberChange()" onkeyup="if(event.key === 'Enter') { onPartNumberChange(); executeVoterSearch(1); }">
+                        <input type="number" id="srchPartNumber" class="form-control" placeholder="Select Assembly First" disabled oninput="onPartNumberChange()" onchange="onPartNumberChange()" onkeyup="if(event.key === 'Enter') { onPartNumberChange(); executeVoterSearch(1); }">
                     </div>
                     <div>
                         <label class="form-label">Gender:</label>

@@ -478,6 +478,7 @@ func (r *duckDBVoterRepository) GetPollingStation(ctx context.Context, assembly 
 }
 
 func (r *duckDBVoterRepository) GetPartDetails(ctx context.Context, assembly string, partNo int64) (*models.PartDetails, error) {
+	asmPattern := "%" + strings.ReplaceAll(strings.ToLower(assembly), "-", "%") + "%"
 	query := `
 		SELECT 
 			COALESCE(assembly_constituency, ''),
@@ -492,12 +493,12 @@ func (r *duckDBVoterRepository) GetPartDetails(ctx context.Context, assembly str
 			COALESCE(police_station, ''),
 			COUNT(*) AS total_voters
 		FROM voters
-		WHERE LOWER(assembly_constituency) LIKE LOWER(?) AND part_number = ?
+		WHERE LOWER(assembly_constituency) LIKE ? AND part_number = ?
 		GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 		LIMIT 1;
 	`
 	var pd models.PartDetails
-	err := r.duckDB.DB.QueryRowContext(ctx, query, "%"+assembly+"%", partNo).Scan(
+	err := r.duckDB.DB.QueryRowContext(ctx, query, asmPattern, partNo).Scan(
 		&pd.AssemblyConstituency,
 		&pd.PartNumber,
 		&pd.PollingStationName,
@@ -517,11 +518,11 @@ func (r *duckDBVoterRepository) GetPartDetails(ctx context.Context, assembly str
 	secQuery := `
 		SELECT DISTINCT section_number_and_name
 		FROM voters
-		WHERE LOWER(assembly_constituency) LIKE LOWER(?) AND part_number = ?
+		WHERE LOWER(assembly_constituency) LIKE ? AND part_number = ?
 		  AND section_number_and_name IS NOT NULL AND section_number_and_name != ''
 		ORDER BY 1;
 	`
-	rows, err := r.duckDB.DB.QueryContext(ctx, secQuery, "%"+assembly+"%", partNo)
+	rows, err := r.duckDB.DB.QueryContext(ctx, secQuery, asmPattern, partNo)
 	if err == nil {
 		defer rows.Close()
 		sections := make([]string, 0)
