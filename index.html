@@ -835,7 +835,7 @@
                 </div>
 
                 <!-- Hidden Collapsible Part Details & Section Selector -->
-                <div id="partDetailsCard" style="display: none; background: var(--subtle-bg); border: 1px solid var(--border-color); padding: 1rem; margin-bottom: 1.25rem;">
+                <div id="partDetailsCard" style="display: none; background: var(--subtle-bg); border: 1px solid var(--border-color); padding: 1.25rem; margin-bottom: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 0.75rem;">
                         <span id="partTitle" style="font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-main);">Part Details</span>
                         <div style="display: flex; gap: 8px; align-items: center;">
@@ -845,11 +845,19 @@
                             </select>
                         </div>
                     </div>
-                    <div id="partMetaGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; font-size: 0.78rem; color: var(--text-muted);">
+                    <div id="partMetaGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem;">
                         <div><strong>Building:</strong> <span id="pmStation" style="color: var(--text-main);">--</span></div>
                         <div><strong>Post Office:</strong> <span id="pmPost" style="color: var(--text-main);">--</span></div>
                         <div><strong>Police Station:</strong> <span id="pmPolice" style="color: var(--text-main);">--</span></div>
                         <div><strong>Total Booth Voters:</strong> <span id="pmVoters" style="color: var(--text-main); font-weight: 600;">--</span></div>
+                    </div>
+
+                    <!-- Covered Areas & Sections List -->
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                        <div style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
+                            Covered Areas &amp; Neighborhoods (<span id="pmSecCount">0</span> Sections):
+                        </div>
+                        <div id="pmSectionsChips" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
                     </div>
                 </div>
 
@@ -1312,6 +1320,30 @@
                                 if (sec === curSec) opt.selected = true;
                                 secSelect.appendChild(opt);
                             });
+                        }
+                    }
+
+                    const chipsContainer = document.getElementById('pmSectionsChips');
+                    if (chipsContainer) {
+                        chipsContainer.innerHTML = '';
+                        if (Array.isArray(pd.sections) && pd.sections.length > 0) {
+                            document.getElementById('pmSecCount').innerText = pd.sections.length;
+                            pd.sections.forEach(sec => {
+                                const chip = document.createElement('span');
+                                chip.className = 'preset-chip';
+                                chip.style.cursor = 'pointer';
+                                chip.style.fontSize = '0.75rem';
+                                chip.style.padding = '3px 8px';
+                                chip.innerText = sec;
+                                chip.onclick = () => {
+                                    if (secSelect) secSelect.value = sec;
+                                    executeVoterSearch(1);
+                                };
+                                chipsContainer.appendChild(chip);
+                            });
+                        } else {
+                            document.getElementById('pmSecCount').innerText = '0';
+                            chipsContainer.innerHTML = '<span style="font-size: 0.75rem; color: var(--text-muted);">No specific area sections recorded for this part.</span>';
                         }
                     }
                 } else {
