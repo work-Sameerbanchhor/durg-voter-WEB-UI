@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
     
     <style>
         :root {
@@ -909,95 +910,41 @@
 
         <!-- TAB 3: MAP & POLLING LOCATIONS -->
         <div id="tabMap" class="tab-content">
-            <!-- OpenStreetMap Interactive Map Panel -->
-            <div class="panel-card" style="margin-bottom: 1.5rem;">
-                <div class="panel-header" style="margin-bottom: 0.75rem;">
+            <div class="panel-card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1rem;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="panel-title">🗺️ Interactive OpenStreetMap & Spatial Explorer</span>
-                        <span id="osmMapStatus" class="badge badge-info" style="font-size: 0.7rem; text-transform: uppercase;">Ready</span>
+                        <span class="panel-title" style="margin: 0; font-size: 1rem;">🗺️ Polling Station Parts & School Heatmap</span>
+                        <span id="osmMapStatus" class="badge badge-info" style="font-size: 0.72rem; text-transform: uppercase;">Loading Map Data...</span>
                     </div>
-                    <div style="display: flex; gap: 6px;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label class="form-label" style="margin: 0; font-size: 0.78rem;">Assembly:</label>
+                            <select id="mapAssemblyFilter" class="form-control" style="width: auto; min-width: 140px; padding: 5px 10px; font-size: 0.8rem;" onchange="filterMapByAssembly()">
+                                <option value="">All Assemblies</option>
+                                <option value="durg-city">Durg City</option>
+                                <option value="durg-gramin">Durg Gramin</option>
+                                <option value="bhilai-nagar">Bhilai Nagar</option>
+                                <option value="vaishali-nagar">Vaishali Nagar</option>
+                                <option value="patan">Patan</option>
+                                <option value="Ahiwara">Ahiwara</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label class="form-label" style="margin: 0; font-size: 0.78rem;">Layer Mode:</label>
+                            <div class="theme-segmented">
+                                <button id="mapModeBoth" class="segment-opt active" onclick="setMapLayerMode('both')">Pins &amp; Heatmap</button>
+                                <button id="mapModePins" class="segment-opt" onclick="setMapLayerMode('pins')">Dropped Pins</button>
+                                <button id="mapModeHeat" class="segment-opt" onclick="setMapLayerMode('heat')">School Heatmap</button>
+                            </div>
+                        </div>
                         <button class="preset-chip" onclick="resetMapView()">Reset View</button>
-                        <button class="preset-chip" onclick="toggleMapTiles()">Dark / Light Layer</button>
+                        <button class="preset-chip" onclick="toggleMapTiles()">Dark / Light Map</button>
                     </div>
                 </div>
-                <div id="osmMap" style="width: 100%; height: 460px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--subtle-bg); position: relative; z-index: 1;"></div>
-            </div>
-
-            <div class="grid-2col">
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">Spatial Coordinates & Radius Finder</span>
-                        <div style="display: flex; gap: 4px;">
-                            <button class="preset-chip" onclick="setGeoPreset(21.19, 81.28)">Durg</button>
-                            <button class="preset-chip" onclick="setGeoPreset(21.21, 81.38)">Bhilai</button>
-                            <button class="preset-chip" onclick="setGeoPreset(21.03, 81.53)">Patan</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Latitude:</label>
-                        <input type="number" step="0.0001" id="geoLat" class="form-control" value="21.19" onchange="updateSearchPointMarker()">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Longitude:</label>
-                        <input type="number" step="0.0001" id="geoLng" class="form-control" value="81.28" onchange="updateSearchPointMarker()">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Search Radius (Kilometers):</label>
-                        <input type="number" step="0.5" id="geoRadius" class="form-control" value="5.0" onchange="updateSearchPointMarker()">
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-action" onclick="executeGeoBooths()" style="flex: 1;">Find Booths</button>
-                        <button class="btn-action" onclick="executeGeoVoters()" style="flex: 1; background: transparent; color: var(--text-main);">Find Voters</button>
-                    </div>
+                <div style="margin-bottom: 1rem;">
+                    <input type="text" id="mapSearchInput" class="form-control" placeholder="Search school name, part number, building address, or locality..." onkeyup="filterMapBySearch()">
                 </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">Distance Calculator</span>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Point 1 (Lat, Lng):</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="number" step="0.0001" id="distLat1" class="form-control" value="21.19">
-                            <input type="number" step="0.0001" id="distLng1" class="form-control" value="81.28">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Point 2 (Lat, Lng):</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="number" step="0.0001" id="distLat2" class="form-control" value="21.21">
-                            <input type="number" step="0.0001" id="distLng2" class="form-control" value="81.38">
-                        </div>
-                    </div>
-                    <button class="btn-action" onclick="executeDistance()" style="width: 100%; margin-bottom: 1rem;">Calculate Distance</button>
-                    <div id="distanceOutput" style="background: var(--subtle-bg); padding: 1rem; border: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: center;">
-                        Distance: -- km
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel-card">
-                <div class="panel-header">
-                    <span class="panel-title">Nearby Spatial Search Results</span>
-                </div>
-                <div class="responsive-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name / Booth</th>
-                                <th>Assembly</th>
-                                <th>Town / Village</th>
-                                <th>Coordinates</th>
-                                <th>Distance</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="geoTableBody">
-                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Run a spatial query above to plot nearby booths or voters on OpenStreetMap.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <div id="osmMap" style="width: 100%; height: 650px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--subtle-bg); position: relative; z-index: 1;"></div>
             </div>
         </div>
 
@@ -1222,21 +1169,22 @@
             }
         }
 
-        /* SPATIAL GEO & LEAFLET OPENSTREETMAP INTEGRATION */
+        /* LEAFLET OPENSTREETMAP & SCHOOL HEATMAP INTEGRATION */
         let osmMap = null;
-        let searchCenterMarker = null;
-        let searchRadiusCircle = null;
-        let resultsLayerGroup = null;
-        let distancePolyline = null;
-        let distanceMarkersGroup = null;
+        let allPollingStations = [];
+        let schoolLocationGroups = [];
+        let mapPinsLayerGroup = null;
+        let mapHeatLayer = null;
         let currentTileLayer = null;
         let isDarkTileMode = false;
+        let currentMapLayerMode = 'both'; // 'both', 'pins', 'heat'
 
-        function initOSMMap() {
+        async function initOSMMap() {
             if (osmMap) return;
             const container = document.getElementById('osmMap');
             if (!container) return;
 
+            // Centered on Durg District (21.19, 81.28)
             osmMap = L.map('osmMap').setView([21.19, 81.28], 12);
 
             currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1244,10 +1192,174 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(osmMap);
 
-            resultsLayerGroup = L.layerGroup().addTo(osmMap);
-            distanceMarkersGroup = L.layerGroup().addTo(osmMap);
+            mapPinsLayerGroup = L.layerGroup().addTo(osmMap);
 
-            updateSearchPointMarker();
+            await fetchAndRenderAllPollingStations();
+        }
+
+        async function fetchAndRenderAllPollingStations() {
+            const statusBadge = document.getElementById('osmMapStatus');
+            if (statusBadge) statusBadge.innerText = 'Fetching 1,513 Polling Parts...';
+
+            try {
+                const res = await fetchAPI('/api/v1/polling-stations?limit=2000');
+                if (res.data && res.data.success && Array.isArray(res.data.data)) {
+                    allPollingStations = res.data.data;
+                    processAndGroupPollingStations();
+                    renderMapLayers();
+                } else {
+                    if (statusBadge) statusBadge.innerText = 'Failed to load map data';
+                }
+            } catch (err) {
+                if (statusBadge) statusBadge.innerText = 'Error loading map data';
+            }
+        }
+
+        function processAndGroupPollingStations() {
+            const locationMap = new Map();
+
+            allPollingStations.forEach(ps => {
+                const lat = parseFloat(ps.latitude) || 0;
+                const lng = parseFloat(ps.longitude) || 0;
+                if (!lat || !lng) return;
+
+                // Key grouped by coordinates
+                const key = `${lat.toFixed(5)}_${lng.toFixed(5)}`;
+
+                if (!locationMap.has(key)) {
+                    let buildingName = ps.polling_station_name || 'Polling Station';
+                    buildingName = buildingName.replace(/^\d+\s*-\s*/, '').trim();
+
+                    locationMap.set(key, {
+                        key,
+                        lat,
+                        lng,
+                        buildingName,
+                        address: ps.polling_station_address || buildingName,
+                        assembly: ps.assembly_constituency,
+                        town: ps.town_village || ps.tehsil || '',
+                        parts: [],
+                        totalVoters: 0
+                    });
+                }
+
+                const loc = locationMap.get(key);
+                loc.parts.push(ps);
+                loc.totalVoters += (ps.total_voters || 0);
+            });
+
+            schoolLocationGroups = Array.from(locationMap.values());
+        }
+
+        function renderMapLayers() {
+            if (!osmMap) return;
+
+            if (mapPinsLayerGroup) mapPinsLayerGroup.clearLayers();
+            if (mapHeatLayer) {
+                osmMap.removeLayer(mapHeatLayer);
+                mapHeatLayer = null;
+            }
+
+            const selectedAssembly = document.getElementById('mapAssemblyFilter')?.value?.toLowerCase() || "";
+            const searchQuery = document.getElementById('mapSearchInput')?.value?.trim()?.toLowerCase() || "";
+
+            const filteredLocations = schoolLocationGroups.filter(loc => {
+                if (selectedAssembly && loc.assembly.toLowerCase() !== selectedAssembly) return false;
+                if (searchQuery) {
+                    const matchName = loc.buildingName.toLowerCase().includes(searchQuery);
+                    const matchAddress = loc.address.toLowerCase().includes(searchQuery);
+                    const matchTown = loc.town.toLowerCase().includes(searchQuery);
+                    const matchParts = loc.parts.some(p => p.part_number.toString().includes(searchQuery) || (p.polling_station_name && p.polling_station_name.toLowerCase().includes(searchQuery)));
+                    if (!matchName && !matchAddress && !matchTown && !matchParts) return false;
+                }
+                return true;
+            });
+
+            let totalPartsCount = 0;
+            filteredLocations.forEach(loc => totalPartsCount += loc.parts.length);
+
+            const statusBadge = document.getElementById('osmMapStatus');
+            if (statusBadge) {
+                statusBadge.innerText = `${totalPartsCount} Parts Across ${filteredLocations.length} School Locations`;
+            }
+
+            const heatPoints = [];
+            const bounds = L.latLngBounds();
+
+            filteredLocations.forEach(loc => {
+                bounds.extend([loc.lat, loc.lng]);
+
+                const partCount = loc.parts.length;
+                // Heatmap point intensity weighted by number of parts co-located at this school
+                const intensity = Math.min(1.0, 0.25 + (partCount * 0.25));
+                heatPoints.push([loc.lat, loc.lng, intensity]);
+
+                if (currentMapLayerMode === 'both' || currentMapLayerMode === 'pins') {
+                    const marker = L.marker([loc.lat, loc.lng], {
+                        title: `${loc.buildingName} (${partCount} Parts)`
+                    });
+
+                    let partsListHTML = loc.parts.map(p => `
+                        <div style="background: rgba(0,0,0,0.04); border-left: 3px solid #3b82f6; padding: 4px 8px; margin-top: 4px; border-radius: 4px;">
+                            <strong style="color: #1e293b;">Part #${p.part_number} &bull; ${p.polling_station_name || 'Booth'}</strong><br/>
+                            <span style="font-size: 0.74rem; color: #64748b;">Electors: ${Number(p.total_voters || 0).toLocaleString()} (Male: ${p.total_male_voters || 0}, Female: ${p.total_female_voters || 0})</span>
+                        </div>
+                    `).join('');
+
+                    const popupHTML = `
+                        <div style="font-family: system-ui, sans-serif; font-size: 0.82rem; max-width: 320px; padding: 2px;">
+                            <strong style="color: #0284c7; font-size: 0.9rem; display: block;">🏫 ${loc.buildingName}</strong>
+                            <div style="color: #475569; font-size: 0.78rem; margin-top: 2px;"><b>Assembly:</b> ${loc.assembly} &bull; <b>Town:</b> ${loc.town || 'N/A'}</div>
+                            <div style="color: #64748b; font-size: 0.76rem; margin-top: 2px; margin-bottom: 6px;"><b>Address:</b> ${loc.address}</div>
+                            <div style="background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.78rem; display: inline-block; margin-bottom: 6px;">
+                                📍 ${partCount} Polling ${partCount === 1 ? 'Part' : 'Parts'} Co-located (${Number(loc.totalVoters).toLocaleString()} Total Voters)
+                            </div>
+                            <div style="max-height: 180px; overflow-y: auto;">
+                                ${partsListHTML}
+                            </div>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupHTML);
+                    mapPinsLayerGroup.addLayer(marker);
+                }
+            });
+
+            if ((currentMapLayerMode === 'both' || currentMapLayerMode === 'heat') && heatPoints.length > 0 && typeof L.heatLayer === 'function') {
+                mapHeatLayer = L.heatLayer(heatPoints, {
+                    radius: 30,
+                    blur: 20,
+                    maxZoom: 15,
+                    gradient: { 0.2: '#3b82f6', 0.4: '#06b6d4', 0.6: '#10b981', 0.8: '#f59e0b', 1.0: '#ef4444' }
+                }).addTo(osmMap);
+            }
+
+            if (osmMap && !bounds.isEmpty()) {
+                osmMap.fitBounds(bounds, { padding: [30, 30] });
+            }
+        }
+
+        function setMapLayerMode(mode) {
+            currentMapLayerMode = mode;
+            document.querySelectorAll('.theme-segmented button').forEach(b => {
+                if (b.id && b.id.startsWith('mapMode')) b.classList.remove('active');
+            });
+            if (mode === 'both') document.getElementById('mapModeBoth')?.classList.add('active');
+            if (mode === 'pins') document.getElementById('mapModePins')?.classList.add('active');
+            if (mode === 'heat') document.getElementById('mapModeHeat')?.classList.add('active');
+            renderMapLayers();
+        }
+
+        function filterMapByAssembly() {
+            renderMapLayers();
+        }
+
+        let mapSearchDebounce = null;
+        function filterMapBySearch() {
+            if (mapSearchDebounce) clearTimeout(mapSearchDebounce);
+            mapSearchDebounce = setTimeout(() => {
+                renderMapLayers();
+            }, 250);
         }
 
         function toggleMapTiles() {
@@ -1268,200 +1380,14 @@
             }
         }
 
-        function updateSearchPointMarker() {
-            if (!osmMap) initOSMMap();
-            const lat = parseFloat(document.getElementById('geoLat').value) || 21.19;
-            const lng = parseFloat(document.getElementById('geoLng').value) || 81.28;
-            const radiusKm = parseFloat(document.getElementById('geoRadius').value) || 5.0;
-
-            if (searchCenterMarker) osmMap.removeLayer(searchCenterMarker);
-            if (searchRadiusCircle) osmMap.removeLayer(searchRadiusCircle);
-
-            searchCenterMarker = L.marker([lat, lng], {
-                title: "Search Center Point"
-            }).addTo(osmMap).bindPopup(`<b>📍 Search Center Point</b><br/>Lat: ${lat}, Lng: ${lng}<br/>Radius: ${radiusKm} km`);
-
-            searchRadiusCircle = L.circle([lat, lng], {
-                radius: radiusKm * 1000,
-                color: '#3b82f6',
-                fillColor: '#3b82f6',
-                fillOpacity: 0.12,
-                weight: 2,
-                dashArray: '4, 4'
-            }).addTo(osmMap);
-
-            osmMap.panTo([lat, lng]);
-        }
-
         function resetMapView() {
             if (!osmMap) initOSMMap();
-            document.getElementById('geoLat').value = 21.19;
-            document.getElementById('geoLng').value = 81.28;
-            document.getElementById('geoRadius').value = 5.0;
-            if (resultsLayerGroup) resultsLayerGroup.clearLayers();
-            if (distanceMarkersGroup) distanceMarkersGroup.clearLayers();
-            if (distancePolyline) osmMap.removeLayer(distancePolyline);
-            updateSearchPointMarker();
-            osmMap.setZoom(12);
-            document.getElementById('osmMapStatus').innerText = 'Ready';
-        }
-
-        function setGeoPreset(lat, lng) {
-            document.getElementById('geoLat').value = lat;
-            document.getElementById('geoLng').value = lng;
-            updateSearchPointMarker();
-        }
-
-        function focusOnCoordinate(lat, lng, label) {
-            openTab(document.querySelectorAll('.tab-btn')[2], 'tabMap');
-            setTimeout(() => {
-                if (!osmMap) initOSMMap();
-                osmMap.setView([lat, lng], 15);
-                L.popup()
-                    .setLatLng([lat, lng])
-                    .setContent(`<b>📍 ${label || 'Location'}</b><br/>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`)
-                    .openOn(osmMap);
-            }, 120);
-        }
-
-        async function executeGeoBooths() {
-            if (!osmMap) initOSMMap();
-            const lat = document.getElementById('geoLat').value;
-            const lng = document.getElementById('geoLng').value;
-            const radius = document.getElementById('geoRadius').value;
-
-            updateSearchPointMarker();
-            const res = await fetchAPI(`/api/v1/geo/nearby-polling-stations?lat=${lat}&lng=${lng}&radius_km=${radius}&limit=20`);
-            renderGeoResults(res, 'booth');
-        }
-
-        async function executeGeoVoters() {
-            if (!osmMap) initOSMMap();
-            const lat = document.getElementById('geoLat').value;
-            const lng = document.getElementById('geoLng').value;
-            const radius = document.getElementById('geoRadius').value;
-
-            updateSearchPointMarker();
-            const res = await fetchAPI(`/api/v1/geo/nearby-voters?lat=${lat}&lng=${lng}&radius_km=${radius}&limit=20`);
-            renderGeoResults(res, 'voter');
-        }
-
-        function renderGeoResults(res, type) {
-            if (!osmMap) initOSMMap();
-            const tbody = document.getElementById('geoTableBody');
-            tbody.innerHTML = '';
-            if (resultsLayerGroup) resultsLayerGroup.clearLayers();
-
-            const statusBadge = document.getElementById('osmMapStatus');
-
-            if (res.data && res.data.success && Array.isArray(res.data.data)) {
-                if (res.data.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No results found within specified radius.</td></tr>';
-                    if (statusBadge) statusBadge.innerText = '0 Results Found';
-                    return;
-                }
-
-                if (statusBadge) statusBadge.innerText = `${res.data.data.length} ${type === 'booth' ? 'Booths' : 'Voters'} Plotted`;
-                const bounds = L.latLngBounds();
-
-                res.data.data.forEach(item => {
-                    const tr = document.createElement('tr');
-                    let lat = 0, lng = 0, title = "", subInfo = "", town = "", assembly = "";
-
-                    if (type === 'booth') {
-                        const ps = item.polling_station;
-                        lat = ps.latitude;
-                        lng = ps.longitude;
-                        title = ps.polling_station_name || `Booth #${ps.part_number}`;
-                        subInfo = ps.polling_station_address || ps.town_village || 'Polling Station';
-                        town = ps.town_village || 'N/A';
-                        assembly = ps.assembly_constituency || 'N/A';
-
-                        tr.innerHTML = `
-                            <td style="font-weight: 700;">${title}</td>
-                            <td>${assembly}</td>
-                            <td>${town}</td>
-                            <td>${lat ? lat.toFixed(6) : 'N/A'}, ${lng ? lng.toFixed(6) : 'N/A'}</td>
-                            <td style="color: var(--accent-info); font-weight: 700;">${item.distance_km} km (${item.distance_meters} m)</td>
-                            <td><button class="preset-chip" onclick="focusOnCoordinate(${lat}, ${lng}, '${title.replace(/'/g, "\\'")}')">View 📍</button></td>
-                        `;
-                    } else {
-                        const v = item.voter;
-                        lat = v.latitude;
-                        lng = v.longitude;
-                        title = `${v.full_name || 'Voter'} (${v.epic_no})`;
-                        subInfo = `Relative: ${v.relative_name || 'N/A'}, House: ${v.house_number || 'N/A'}`;
-                        town = v.town_village || 'N/A';
-                        assembly = v.assembly_constituency || 'N/A';
-
-                        tr.innerHTML = `
-                            <td style="font-weight: 700;">${title}</td>
-                            <td>${assembly}</td>
-                            <td>${town}</td>
-                            <td>${lat ? lat.toFixed(6) : 'N/A'}, ${lng ? lng.toFixed(6) : 'N/A'}</td>
-                            <td style="color: var(--accent-info); font-weight: 700;">${item.distance_km} km (${item.distance_meters} m)</td>
-                            <td><button class="preset-chip" onclick="focusOnCoordinate(${lat}, ${lng}, '${title.replace(/'/g, "\\'")}')">View 📍</button></td>
-                        `;
-                    }
-                    tbody.appendChild(tr);
-
-                    if (lat && lng && osmMap && resultsLayerGroup) {
-                        bounds.extend([lat, lng]);
-                        const popupContent = `
-                            <div style="font-family: system-ui, sans-serif; font-size: 0.82rem; padding: 2px;">
-                                <strong style="color: #0284c7; font-size: 0.88rem; display: block; margin-bottom: 4px;">${title}</strong>
-                                <div style="color: #444; margin-bottom: 2px;"><b>Assembly:</b> ${assembly}</div>
-                                <div style="color: #555; margin-bottom: 4px;">${subInfo}</div>
-                                <div style="font-size: 0.76rem; color: #16a34a; font-weight: 600;">📍 ${lat.toFixed(6)}, ${lng.toFixed(6)} (${item.distance_km} km away)</div>
-                            </div>
-                        `;
-                        const marker = L.marker([lat, lng]).bindPopup(popupContent);
-                        resultsLayerGroup.addLayer(marker);
-                    }
-                });
-
-                if (searchCenterMarker && searchCenterMarker.getLatLng()) {
-                    bounds.extend(searchCenterMarker.getLatLng());
-                }
-
-                if (osmMap && !bounds.isEmpty()) {
-                    osmMap.fitBounds(bounds, { padding: [40, 40] });
-                }
-            }
-        }
-
-        async function executeDistance() {
-            if (!osmMap) initOSMMap();
-            const lat1 = parseFloat(document.getElementById('distLat1').value) || 0;
-            const lng1 = parseFloat(document.getElementById('distLng1').value) || 0;
-            const lat2 = parseFloat(document.getElementById('distLat2').value) || 0;
-            const lng2 = parseFloat(document.getElementById('distLng2').value) || 0;
-
-            const res = await fetchAPI(`/api/v1/geo/distance?lat1=${lat1}&lng1=${lng1}&lat2=${lat2}&lng2=${lng2}`);
-            if (res.data && res.data.success && res.data.data) {
-                const d = res.data.data;
-                document.getElementById('distanceOutput').innerText = `Distance: ${d.distance_km} km (${d.distance_miles} miles / ${d.distance_meters} meters)`;
-
-                if (osmMap) {
-                    if (distancePolyline) osmMap.removeLayer(distancePolyline);
-                    if (distanceMarkersGroup) distanceMarkersGroup.clearLayers();
-
-                    const m1 = L.marker([lat1, lng1]).bindPopup(`<b>Point 1</b><br/>${lat1}, ${lng1}`);
-                    const m2 = L.marker([lat2, lng2]).bindPopup(`<b>Point 2</b><br/>${lat2}, ${lng2}`);
-                    distanceMarkersGroup.addLayer(m1);
-                    distanceMarkersGroup.addLayer(m2);
-
-                    distancePolyline = L.polyline([[lat1, lng1], [lat2, lng2]], {
-                        color: '#ec4899',
-                        weight: 4,
-                        dashArray: '8, 8'
-                    }).addTo(osmMap);
-
-                    distancePolyline.bindPopup(`<b>Straight-line Distance</b><br/>${d.distance_km} km (${d.distance_meters} m)`);
-
-                    osmMap.fitBounds(distancePolyline.getBounds(), { padding: [50, 50] });
-                }
-            }
+            const assemblySelect = document.getElementById('mapAssemblyFilter');
+            const searchInput = document.getElementById('mapSearchInput');
+            if (assemblySelect) assemblySelect.value = "";
+            if (searchInput) searchInput.value = "";
+            setMapLayerMode('both');
+            renderMapLayers();
         }
 
         /* VOTER SEARCH */

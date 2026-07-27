@@ -89,8 +89,11 @@ func (s *voterService) GetVoterByEPIC(ctx context.Context, epicNo string) (*mode
 }
 
 func (s *voterService) ListPollingStations(ctx context.Context, filter models.SearchFilter) ([]models.PollingStation, *models.Pagination, error) {
-	if filter.Limit <= 0 || filter.Limit > 100 {
+	if filter.Limit <= 0 {
 		filter.Limit = 20
+	}
+	if filter.Limit > 2000 {
+		filter.Limit = 2000
 	}
 	if filter.Page <= 0 {
 		filter.Page = 1

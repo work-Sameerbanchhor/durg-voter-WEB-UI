@@ -361,8 +361,11 @@ func (r *duckDBVoterRepository) ListPollingStations(ctx context.Context, filter 
 		page = 1
 	}
 	limit := filter.Limit
-	if limit <= 0 || limit > 100 {
+	if limit <= 0 {
 		limit = 20
+	}
+	if limit > 2000 {
+		limit = 2000
 	}
 
 	totalPages := int(math.Ceil(float64(totalItems) / float64(limit)))
