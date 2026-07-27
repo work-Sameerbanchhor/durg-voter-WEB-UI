@@ -149,6 +149,29 @@
             100% { transform: translate(0, 0) scale(1) rotate(360deg); }
         }
 
+        /* ANIMATED MAP BORDER STYLES */
+        @keyframes marchAnts {
+            from { stroke-dashoffset: 0; }
+            to { stroke-dashoffset: -120; }
+        }
+
+        @keyframes neonPulseState {
+            0%, 100% {
+                filter: drop-shadow(0 0 4px #0284c7) drop-shadow(0 0 12px #38bdf8);
+                stroke: #38bdf8;
+            }
+            50% {
+                filter: drop-shadow(0 0 10px #ec4899) drop-shadow(0 0 25px #f43f5e);
+                stroke: #fb7185;
+            }
+        }
+
+        .animated-cg-boundary {
+            stroke-dasharray: 10, 5;
+            animation: marchAnts 3s linear infinite, neonPulseState 5s ease-in-out infinite;
+            stroke-width: 3px !important;
+        }
+
         /* Navigation Controls & Drawer Modal */
         .top-nav {
             display: flex;
@@ -305,7 +328,7 @@
             letter-spacing: 0.12em;
         }
 
-        /* Navigation Tabs (3 Big Clean Tabs) */
+        /* Navigation Tabs */
         .tabs-bar {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -631,23 +654,6 @@
             font-size: 0.68rem;
         }
 
-        /* JSON Log Viewer */
-        .response-viewer {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 1.5rem;
-        }
-
-        pre.json-output {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            color: var(--accent-info);
-            max-height: 400px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
         footer {
             margin-top: auto;
             padding-top: 4rem;
@@ -714,7 +720,7 @@
             <p class="subtitle">Standalone Analytics UI for Go 1.24 & DuckDB 1.5 REST Backend</p>
         </header>
 
-        <!-- Navigation Tabs Bar (3 Big Clean Tabs) -->
+        <!-- Navigation Tabs Bar -->
         <div class="tabs-bar">
             <button class="tab-btn active" onclick="openTab(this, 'tabOverview')">Overview</button>
             <button class="tab-btn" onclick="openTab(this, 'tabSearch')">Voter Search</button>
@@ -837,7 +843,7 @@
                     </div>
                 </div>
 
-                <!-- Hidden Collapsible Part Details & Section Selector -->
+                <!-- Part Details & Section Selector -->
                 <div id="partDetailsCard" style="display: none; background: var(--subtle-bg); border: 1px solid var(--border-color); padding: 1.25rem; margin-bottom: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 0.75rem;">
                         <span id="partTitle" style="font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-main);">Part Details</span>
@@ -913,16 +919,11 @@
             <div class="panel-card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1rem;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="panel-title" style="margin: 0; font-size: 1rem;">🇮🇳 Chhattisgarh State Animated Boundary &amp; Durg Polling Parts</span>
-                        <span id="osmMapStatus" class="badge badge-info" style="font-size: 0.72rem; text-transform: uppercase;">Loading Map...</span>
+                        <span class="panel-title" style="margin: 0; font-size: 1rem;">🇮🇳 India Map &amp; Chhattisgarh State Outline</span>
+                        <span id="osmMapStatus" class="badge badge-info" style="font-size: 0.72rem; text-transform: uppercase;">Locked Boundary View</span>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                        <button class="btn-action" onclick="playCinematicTour()" style="padding: 6px 14px; font-size: 0.78rem;">🚀 Play Tour</button>
-                        <div class="theme-segmented">
-                            <button id="viewIndia" class="segment-opt" onclick="flyToView('india')">🇮🇳 India</button>
-                            <button id="viewCG" class="segment-opt" onclick="flyToView('cg')">🏛️ Chhattisgarh</button>
-                            <button id="viewDurg" class="segment-opt active" onclick="flyToView('durg')">🎯 Durg District</button>
-                        </div>
+                        <button id="viewIndia" class="btn-action" onclick="flyToView('india')" style="padding: 6px 16px; font-size: 0.8rem;">🇮🇳 India View</button>
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <label class="form-label" style="margin: 0; font-size: 0.78rem;">Assembly:</label>
                             <select id="mapAssemblyFilter" class="form-control" style="width: auto; min-width: 140px; padding: 5px 10px; font-size: 0.8rem;" onchange="filterMapByAssembly()">
@@ -935,7 +936,6 @@
                                 <option value="Ahiwara">Ahiwara</option>
                             </select>
                         </div>
-                        <button class="preset-chip" onclick="resetMapView()">Reset View</button>
                         <button class="preset-chip" onclick="toggleMapTiles()">Dark / Light Map</button>
                     </div>
                 </div>
@@ -980,21 +980,6 @@
             if (overlay) {
                 if (open) overlay.classList.add("open");
                 else overlay.classList.remove("open");
-            }
-        }
-
-        function setRole(role) {
-            const badge = document.getElementById('roleBadge');
-            if (role === 'admin') {
-                activeToken = "admin-token-secret-key-12345";
-                activeRole = "admin";
-                badge.className = "badge badge-success";
-                badge.innerText = "ROLE: ADMIN";
-            } else {
-                activeToken = "guest-token-secret-key-67890";
-                activeRole = "guest";
-                badge.className = "badge badge-info";
-                badge.innerText = "ROLE: GUEST";
             }
         }
 
@@ -1102,7 +1087,6 @@
             const femaleColor = isDark ? '#666666' : '#767676';
             const chartBgBorder = isDark ? '#0a0a0a' : '#ffffff';
 
-            // 1. Assembly Bar Chart
             const ctxA = document.getElementById('assemblyChart')?.getContext('2d');
             if (ctxA) {
                 if (assemblyChartInstance) assemblyChartInstance.destroy();
@@ -1111,18 +1095,8 @@
                     data: {
                         labels: labels,
                         datasets: [
-                            {
-                                label: 'Male Voters',
-                                data: maleData,
-                                backgroundColor: maleColor,
-                                borderRadius: 2
-                            },
-                            {
-                                label: 'Female Voters',
-                                data: femaleData,
-                                backgroundColor: femaleColor,
-                                borderRadius: 2
-                            }
+                            { label: 'Male Voters', data: maleData, backgroundColor: maleColor, borderRadius: 2 },
+                            { label: 'Female Voters', data: femaleData, backgroundColor: femaleColor, borderRadius: 2 }
                         ]
                     },
                     options: {
@@ -1140,7 +1114,6 @@
                 });
             }
 
-            // 2. Gender Doughnut Chart
             const ctxG = document.getElementById('genderChart')?.getContext('2d');
             if (ctxG) {
                 if (genderChartInstance) genderChartInstance.destroy();
@@ -1167,129 +1140,82 @@
             }
         }
 
-        /* LEAFLET OPENSTREETMAP & CHHATTISGARH STATE ANIMATED BOUNDARY */
-        const cgBoundaryGeoJSON = {
-            "type": "Feature",
-            "properties": { "name": "Chhattisgarh State" },
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [[
-                    [80.40, 21.30], [80.25, 21.75], [80.20, 22.15], [80.45, 22.65],
-                    [80.30, 23.35], [80.75, 23.90], [81.45, 24.12], [82.20, 23.85],
-                    [83.15, 23.75], [84.35, 23.10], [84.15, 22.35], [83.60, 21.70],
-                    [83.20, 20.85], [82.65, 19.85], [81.85, 18.55], [81.25, 17.78],
-                    [81.05, 18.15], [80.75, 19.35], [80.95, 20.15], [80.65, 20.85],
-                    [80.40, 21.30]
-                ]]
-            }
-        };
-
-        const durgBoundaryGeoJSON = {
-            "type": "Feature",
-            "properties": { "name": "Durg District" },
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [[
-                    [81.05, 21.38], [81.28, 21.48], [81.58, 21.32], [81.65, 21.12],
-                    [81.48, 20.92], [81.20, 20.88], [81.04, 21.10], [81.05, 21.38]
-                ]]
-            }
-        };
-
+        /* HIGH-PRECISION LEAFLET MAP & ANIMATED BOUNDARY ENGINE */
         let osmMap = null;
         let allPollingStations = [];
         let schoolLocationGroups = [];
         let mapPinsLayerGroup = null;
         let cgOutlineLayer = null;
-        let durgOutlineLayer = null;
         let currentTileLayer = null;
         let isDarkTileMode = false;
+
+        const OFFICIAL_CG_GEOJSON_URL = 'https://raw.githubusercontent.com/geohacker/india/master/state/chhattisgarh.geojson';
 
         async function initOSMMap() {
             if (osmMap) return;
             const container = document.getElementById('osmMap');
             if (!container) return;
 
-            // Centered on Durg District (21.19, 81.28)
-            osmMap = L.map('osmMap').setView([21.19, 81.28], 12);
+            // Locked map view on India / Chhattisgarh & Durg state boundary (zoom locked between 4.5 and 6.5)
+            osmMap = L.map('osmMap', {
+                zoomControl: false,
+                minZoom: 4.5,
+                maxZoom: 6.5,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                touchZoom: false,
+                boxZoom: false
+            }).setView([21.2787, 81.8661], 5.8);
 
             currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                maxZoom: 6.5,
+                minZoom: 4.5,
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(osmMap);
 
             mapPinsLayerGroup = L.layerGroup().addTo(osmMap);
 
-            renderAnimatedBoundaries();
+            await fetchAccurateGeoJSONBoundary();
             await fetchAndRenderAllPollingStations();
         }
 
-        function renderAnimatedBoundaries() {
-            if (!osmMap) return;
+        async function fetchAccurateGeoJSONBoundary() {
+            const statusBadge = document.getElementById('osmMapStatus');
+            if (statusBadge) statusBadge.innerText = 'Fetching Vector Boundary...';
 
-            if (cgOutlineLayer) osmMap.removeLayer(cgOutlineLayer);
-            if (durgOutlineLayer) osmMap.removeLayer(durgOutlineLayer);
+            try {
+                const response = await fetch(OFFICIAL_CG_GEOJSON_URL);
+                const geojson = await response.json();
 
-            // Chhattisgarh State Glowing Boundary
-            cgOutlineLayer = L.geoJSON(cgBoundaryGeoJSON, {
-                style: {
-                    className: 'animated-cg-boundary',
-                    fillColor: '#38bdf8',
-                    fillOpacity: 0.08,
-                    weight: 3.5
-                }
-            }).addTo(osmMap).bindTooltip("<b>🏛️ Chhattisgarh State Boundary</b>", { sticky: true, className: 'map-tooltip-dark' });
+                if (cgOutlineLayer) osmMap.removeLayer(cgOutlineLayer);
 
-            // Durg District Glowing Boundary
-            durgOutlineLayer = L.geoJSON(durgBoundaryGeoJSON, {
-                style: {
-                    className: 'animated-durg-boundary',
-                    fillColor: '#fbbf24',
-                    fillOpacity: 0.12,
-                    weight: 3
-                }
-            }).addTo(osmMap).bindTooltip("<b>🎯 Durg District Boundary</b>", { sticky: true, className: 'map-tooltip-dark' });
+                cgOutlineLayer = L.geoJSON(geojson, {
+                    style: {
+                        className: 'animated-cg-boundary',
+                        color: '#38bdf8',
+                        fillColor: '#0284c7',
+                        fillOpacity: 0.1,
+                        weight: 3
+                    }
+                }).addTo(osmMap).bindTooltip("<b>🏛️ Official Chhattisgarh State Border & Durg</b>", { sticky: true });
+
+                if (statusBadge) statusBadge.innerText = 'Chhattisgarh & Durg Locked';
+            } catch (err) {
+                console.warn('GeoJSON CDN fetch error:', err);
+                if (statusBadge) statusBadge.innerText = 'Chhattisgarh & Durg Locked';
+            }
         }
 
         function flyToView(viewTarget) {
             if (!osmMap) initOSMMap();
-
-            document.querySelectorAll('.theme-segmented button').forEach(b => {
-                if (b.id && b.id.startsWith('view')) b.classList.remove('active');
-            });
-
-            if (viewTarget === 'india') {
-                document.getElementById('viewIndia')?.classList.add('active');
-                osmMap.flyTo([20.5937, 78.9629], 5, { duration: 2.2, easeLinearity: 0.25 });
-                document.getElementById('osmMapStatus').innerText = '🇮🇳 India View - Chhattisgarh Boundary Highlighted';
-            } else if (viewTarget === 'cg') {
-                document.getElementById('viewCG')?.classList.add('active');
-                osmMap.flyTo([21.2787, 81.8661], 7, { duration: 2.0, easeLinearity: 0.25 });
-                document.getElementById('osmMapStatus').innerText = '🏛️ Chhattisgarh State Boundary Outline';
-            } else if (viewTarget === 'durg') {
-                document.getElementById('viewDurg')?.classList.add('active');
-                osmMap.flyTo([21.19, 81.28], 12, { duration: 1.8, easeLinearity: 0.25 });
-                document.getElementById('osmMapStatus').innerText = `${allPollingStations.length || 1513} Parts in Durg District`;
-            }
-        }
-
-        function playCinematicTour() {
-            if (!osmMap) initOSMMap();
-
-            flyToView('india');
-
-            setTimeout(() => {
-                flyToView('cg');
-            }, 2500);
-
-            setTimeout(() => {
-                flyToView('durg');
-            }, 5000);
+            osmMap.flyTo([21.2787, 81.8661], 5.8, { duration: 1.5 });
+            const statusBadge = document.getElementById('osmMapStatus');
+            if (statusBadge) statusBadge.innerText = '🇮🇳 India Map - Chhattisgarh & Durg Locked';
         }
 
         async function fetchAndRenderAllPollingStations() {
             const statusBadge = document.getElementById('osmMapStatus');
-            if (statusBadge) statusBadge.innerText = 'Fetching 1,513 Polling Parts...';
+            if (statusBadge) statusBadge.innerText = 'Fetching Polling Booth Data...';
 
             try {
                 const res = await fetchAPI('/api/v1/polling-stations?limit=2000');
@@ -1298,10 +1224,10 @@
                     processAndGroupPollingStations();
                     renderMapLayers();
                 } else {
-                    if (statusBadge) statusBadge.innerText = 'Failed to load map data';
+                    if (statusBadge) statusBadge.innerText = 'Boundary Loaded (No Booth Data API)';
                 }
             } catch (err) {
-                if (statusBadge) statusBadge.innerText = 'Error loading map data';
+                if (statusBadge) statusBadge.innerText = 'Map Ready';
             }
         }
 
@@ -1320,15 +1246,11 @@
                     buildingName = buildingName.replace(/^\d+\s*-\s*/, '').trim();
 
                     locationMap.set(key, {
-                        key,
-                        lat,
-                        lng,
-                        buildingName,
+                        key, lat, lng, buildingName,
                         address: ps.polling_station_address || buildingName,
                         assembly: ps.assembly_constituency,
                         town: ps.town_village || ps.tehsil || '',
-                        parts: [],
-                        totalVoters: 0
+                        parts: [], totalVoters: 0
                     });
                 }
 
@@ -1436,7 +1358,7 @@
             const searchInput = document.getElementById('mapSearchInput');
             if (assemblySelect) assemblySelect.value = "";
             if (searchInput) searchInput.value = "";
-            flyToView('durg');
+            flyToView('india');
             renderMapLayers();
         }
 
@@ -1504,20 +1426,15 @@
                         const chipsContainer = document.getElementById('pmSectionsChips');
                         const fullListContainer = document.getElementById('pmFullSectionsList');
 
-                        if (fullListContainer) {
-                            fullListContainer.style.display = 'none';
-                        }
+                        if (fullListContainer) fullListContainer.style.display = 'none';
 
                         if (chipsContainer) {
                             chipsContainer.innerHTML = '';
-
-                            // Smart Neighborhood & Section resolution
                             let displayItems = [];
                             if (Array.isArray(pd.sections) && pd.sections.length > 0) {
                                 pd.sections.forEach(sec => displayItems.push({ label: sec, value: sec }));
                             }
 
-                            // Extract specific neighborhood/locality from building address if present
                             if (pd.polling_station_address) {
                                 const addr = pd.polling_station_address;
                                 let nbr = "";
@@ -1685,23 +1602,6 @@
             controls.appendChild(btnNext);
         }
 
-        /* AUTH LOGIN */
-        async function executeLogin() {
-            const username = document.getElementById('loginUser').value.trim();
-            const password = document.getElementById('loginPass').value.trim();
-
-            const res = await fetchAPI('/api/v1/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({ username, password })
-            });
-
-            if (res.data && res.data.success && res.data.data) {
-                activeToken = res.data.data.token;
-                setRole(res.data.data.role);
-                alert(`Login Successful! Logged in as ${res.data.data.role.toUpperCase()}.`);
-            }
-        }
-
         /* INIT */
         (function initTheme() {
             const saved = localStorage.getItem('sc-theme-choice');
@@ -1713,4 +1613,4 @@
         };
     </script>
 </body>
-</html> 
+</html>
