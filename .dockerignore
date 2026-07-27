@@ -1,0 +1,6 @@
+.git
+.gitignore
+README.md
+server
+dataset/durg_voter_list.json
+dataset/durg_voters.duckdb
