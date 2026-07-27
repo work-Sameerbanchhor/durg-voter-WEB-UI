@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-color-mode="auto">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,398 +7,545 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-dark: #070a12;
-            --bg-card: #0e1526;
-            --card-border: #1e2d4a;
-            --card-border-hover: #334b7a;
-            
-            --accent-blue: #38bdf8;
-            --accent-blue-glow: rgba(56, 189, 248, 0.25);
-            --accent-emerald: #34d399;
-            --accent-emerald-glow: rgba(52, 211, 153, 0.25);
-            --accent-purple: #c084fc;
-            --accent-purple-glow: rgba(192, 132, 252, 0.25);
-            --accent-rose: #f43f5e;
-            --accent-rose-glow: rgba(244, 63, 94, 0.25);
-            --accent-amber: #fbbf24;
-            --accent-amber-glow: rgba(251, 191, 36, 0.25);
-            
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
+            --bg-main: #ffffff;
+            --border-color: #e5e5e5;
+            --border-dark: #000000;
+            --text-main: #111111;
+            --text-muted: #767676;
+            --accent-err: #d9534f;
+            --accent-success: #2e7d32;
+            --accent-info: #0284c7;
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --subtle-bg: #fafafa;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        [data-color-mode="dark"] {
+            --bg-main: #0a0a0a;
+            --border-color: #262626;
+            --border-dark: #ffffff;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent-err: #ff6b6b;
+            --accent-success: #4ade80;
+            --accent-info: #38bdf8;
+            --card-bg: #121212;
+            --input-bg: #181818;
+            --subtle-bg: #1c1c1c;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root[data-color-mode="auto"] {
+                --bg-main: #0a0a0a;
+                --border-color: #262626;
+                --border-dark: #ffffff;
+                --text-main: #ffffff;
+                --text-muted: #888888;
+                --accent-err: #ff6b6b;
+                --accent-success: #4ade80;
+                --accent-info: #38bdf8;
+                --card-bg: #121212;
+                --input-bg: #181818;
+                --subtle-bg: #1c1c1c;
+            }
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
 
         body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-primary);
-            line-height: 1.6;
-            padding: 1.5rem;
+            background: var(--bg-main);
             min-height: 100vh;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(192, 132, 252, 0.05) 0%, transparent 40%);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 1.5rem;
+            letter-spacing: 0.02em;
+            position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
-        .container { max-width: 1400px; margin: 0 auto; }
+        h1, h2, h3, h4, h5 {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
 
-        /* Top Header & Branding */
-        header {
-            background: linear-gradient(135deg, rgba(14, 21, 38, 0.8), rgba(19, 27, 46, 0.9));
-            border: 1px solid var(--card-border);
-            border-radius: 1.25rem;
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(20px);
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Ambient Background Animation */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle, rgba(120, 120, 120, 0.12) 1px, transparent 1px);
+            background-size: 28px 28px;
+            opacity: 0.7;
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.12;
+            animation: float 20s infinite ease-in-out alternate;
+        }
+
+        .bg-blob-1 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #f09433, #e6683c, #dc2743);
+            top: -120px;
+            left: -120px;
+            animation-duration: 22s;
+        }
+
+        .bg-blob-2 {
+            width: 550px;
+            height: 550px;
+            background: linear-gradient(135deg, #cc2366, #bc1888, #8a3ab9);
+            bottom: -150px;
+            right: -120px;
+            animation-duration: 26s;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(40px, -50px) scale(1.05) rotate(180deg); }
+            100% { transform: translate(0, 0) scale(1) rotate(360deg); }
+        }
+
+        /* Navigation Controls & Drawer Modal */
+        .top-nav {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .icon-btn:hover {
+            background: var(--subtle-bg);
+            border-color: var(--border-dark);
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .navigation-drawer {
+            position: fixed;
+            top: 0; left: -340px; bottom: 0;
+            width: 320px;
+            max-width: 85vw;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            gap: 2rem;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .drawer-overlay.open .navigation-drawer { left: 0; }
+
+        .drawer-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
         }
 
-        .brand-title {
+        .drawer-header h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+        }
+
+        .setting-group {
             display: flex;
-            align-items: center;
-            gap: 1rem;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            border-radius: 0.85rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            box-shadow: 0 0 20px var(--accent-blue-glow);
+        .setting-group label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            font-weight: 600;
         }
 
-        h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            background: linear-gradient(to right, #38bdf8, #c084fc, #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1.2;
-        }
-
-        p.subtitle {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
-
-        /* Settings & Auth Config Bar */
-        .config-bar {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            background: rgba(7, 10, 18, 0.6);
-            border: 1px solid var(--card-border);
-            padding: 0.75rem 1.25rem;
-            border-radius: 1rem;
-        }
-
-        .config-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-        }
-
-        .input-sm {
-            background: var(--bg-dark);
-            border: 1px solid var(--card-border);
-            border-radius: 0.5rem;
-            padding: 0.4rem 0.75rem;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
+        .setting-group select, .input-sm {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 12px;
             font-size: 0.85rem;
             outline: none;
+            transition: border-color 0.2s;
         }
-        .input-sm:focus { border-color: var(--accent-blue); }
 
-        .role-pill {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-weight: 800;
-            font-size: 0.75rem;
-            font-family: 'JetBrains Mono', monospace;
-            letter-spacing: 0.5px;
+        .theme-segmented {
+            display: flex;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            padding: 3px;
+            background: var(--subtle-bg);
+            gap: 3px;
         }
-        .role-admin { background: var(--accent-rose-glow); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.4); }
-        .role-guest { background: var(--accent-amber-glow); color: var(--accent-amber); border: 1px solid rgba(251, 191, 36, 0.4); }
 
-        .btn-auth {
+        .segment-opt {
+            flex: 1;
+            text-align: center;
+            background: transparent;
             border: none;
-            padding: 0.45rem 0.9rem;
-            border-radius: 0.5rem;
-            font-weight: 700;
-            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 8px 10px;
+            font-size: 0.72rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .btn-auth-admin { background: var(--accent-rose); color: #fff; }
-        .btn-auth-guest { background: var(--accent-amber); color: #070a12; }
-        .btn-auth:hover { filter: brightness(1.15); transform: translateY(-1px); }
 
-        /* Navigation Tabs */
-        .nav-tabs {
+        .segment-opt.active {
+            background: var(--text-main);
+            color: var(--bg-main);
+            font-weight: 700;
+        }
+
+        /* Header Branding */
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        header h1 {
+            font-size: 2.1rem;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        header p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        /* Navigation Tabs Bar */
+        .tabs-bar {
             display: flex;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 2rem;
             overflow-x: auto;
-            padding-bottom: 0.5rem;
+            width: 100%;
         }
 
         .tab-btn {
-            background: var(--bg-card);
-            border: 1px solid var(--card-border);
-            color: var(--text-secondary);
-            padding: 0.75rem 1.25rem;
-            border-radius: 0.85rem;
-            font-size: 0.9rem;
-            font-weight: 600;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
             transition: all 0.2s ease;
             white-space: nowrap;
         }
 
         .tab-btn:hover {
-            border-color: var(--card-border-hover);
-            color: var(--text-primary);
+            color: var(--text-main);
+            border-color: var(--border-dark);
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(192, 132, 252, 0.15));
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-            box-shadow: 0 0 15px var(--accent-blue-glow);
+            background: var(--border-dark);
+            color: var(--bg-main);
+            border-color: var(--border-dark);
+            font-weight: 600;
         }
 
-        /* Tab Content Container */
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* Tab Content */
+        .tab-content { display: none; width: 100%; }
+        .tab-content.active { display: block; }
 
         /* Metric Cards Grid */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.25rem;
-            margin-bottom: 1.5rem;
+            gap: 16px;
+            margin-bottom: 2rem;
         }
 
         .metric-card {
-            background: var(--bg-card);
-            border: 1px solid var(--card-border);
-            border-radius: 1rem;
-            padding: 1.25rem 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 0.3rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
+            gap: 8px;
         }
 
         .metric-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            font-weight: 600;
+            font-size: 0.72rem;
+            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.12em;
+            font-weight: 600;
         }
 
         .metric-value {
-            font-size: 1.85rem;
-            font-weight: 800;
+            font-size: 1.8rem;
+            font-weight: 400;
             font-family: 'JetBrains Mono', monospace;
-            color: var(--text-primary);
+            color: var(--text-main);
         }
 
         .metric-meta {
-            font-size: 0.8rem;
-            color: var(--accent-emerald);
-            font-weight: 500;
+            font-size: 0.75rem;
+            color: var(--accent-success);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        /* Layout Grids */
-        .grid-2col {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .grid-full {
-            margin-bottom: 1.5rem;
-        }
-
+        /* Card Panels & Containers */
         .panel-card {
-            background: var(--bg-card);
-            border: 1px solid var(--card-border);
-            border-radius: 1.25rem;
-            padding: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            width: 100%;
         }
 
         .panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.25rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .panel-title {
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-weight: 600;
+            color: var(--text-main);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 8px;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 2rem;
         }
 
         /* Form Controls */
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 0.4rem;
-            margin-bottom: 1rem;
+            gap: 6px;
+            margin-bottom: 1.2rem;
         }
 
         .form-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
             font-weight: 600;
         }
 
         .form-control {
-            background: var(--bg-dark);
-            border: 1px solid var(--card-border);
-            border-radius: 0.6rem;
-            padding: 0.75rem 1rem;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 14px;
+            font-size: 0.85rem;
             outline: none;
             width: 100%;
             transition: border-color 0.2s;
         }
-        .form-control:focus { border-color: var(--accent-blue); }
+        .form-control:focus { border-color: var(--border-dark); }
 
         textarea.form-control {
+            font-family: 'JetBrains Mono', monospace;
             resize: vertical;
             min-height: 100px;
         }
 
+        /* Buttons & Badges */
         .btn-action {
-            background: var(--accent-blue);
-            color: #070a12;
+            background: var(--border-dark);
+            border: 1px solid var(--border-color);
+            color: var(--bg-main);
+            padding: 12px 20px;
             font-weight: 700;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.65rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
             cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.9rem;
+            transition: opacity 0.2s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
+            gap: 8px;
         }
-        .btn-action:hover { filter: brightness(1.15); transform: translateY(-1px); }
-        .btn-rose { background: var(--accent-rose); color: #fff; }
-        .btn-purple { background: var(--accent-purple); color: #070a12; }
-        .btn-emerald { background: var(--accent-emerald); color: #070a12; }
+        .btn-action:hover { opacity: 0.88; }
 
         .preset-chip {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--card-border);
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            padding: 0.3rem 0.6rem;
-            border-radius: 0.4rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            padding: 6px 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .preset-chip:hover { background: rgba(56,189,248,0.15); color: var(--accent-blue); border-color: var(--accent-blue); }
+        .preset-chip:hover {
+            border-color: var(--border-dark);
+            color: var(--text-main);
+        }
 
-        /* Data Tables */
-        .table-responsive {
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: 1px solid var(--border-color);
+        }
+        .badge-success { border-color: var(--accent-success); color: var(--accent-success); }
+        .badge-danger { border-color: var(--accent-err); color: var(--accent-err); }
+        .badge-info { border-color: var(--accent-info); color: var(--accent-info); }
+
+        /* Responsive Minimalist Tables */
+        .responsive-table {
+            display: block;
             width: 100%;
+            max-width: 100%;
             overflow-x: auto;
-            border-radius: 0.75rem;
-            border: 1px solid var(--card-border);
+            border: 1px solid var(--border-color);
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             text-align: left;
         }
 
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
         th {
-            background: rgba(14, 21, 38, 0.95);
-            color: var(--text-secondary);
-            font-weight: 700;
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--card-border);
-            font-family: 'JetBrains Mono', monospace;
+            background: var(--subtle-bg);
+            font-weight: 500;
+            color: var(--text-muted);
             text-transform: uppercase;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
         }
 
-        td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--card-border);
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--text-primary);
-        }
+        td { font-family: 'JetBrains Mono', monospace; }
+        tr:last-child td { border-bottom: none; }
 
-        tr:nth-child(even) { background: rgba(255,255,255,0.02); }
-        tr:hover { background: rgba(56,189,248,0.05); }
-
-        /* Distribution Progress Bar */
+        /* Custom Progress Bars */
         .bar-container {
             width: 100%;
-            height: 8px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 4px;
+            height: 6px;
+            background: var(--subtle-bg);
+            border: 1px solid var(--border-color);
             overflow: hidden;
             margin-top: 4px;
         }
+        .bar-fill { height: 100%; background: var(--text-main); }
 
-        /* Pagination Controls */
+        /* Pagination Area */
         .pagination-container {
             display: flex;
             justify-content: space-between;
@@ -406,188 +553,173 @@
             flex-wrap: wrap;
             gap: 1rem;
             margin-top: 1rem;
-            padding: 0.75rem 1rem;
-            background: var(--bg-card);
-            border: 1px solid var(--card-border);
-            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
         }
 
         .pagination-info {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            flex-wrap: wrap;
         }
 
         .pagination-controls {
             display: flex;
             align-items: center;
-            gap: 0.35rem;
-            flex-wrap: wrap;
+            gap: 4px;
         }
 
         .page-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            color: var(--text-primary);
-            padding: 0.4rem 0.75rem;
-            border-radius: 0.5rem;
-            font-size: 0.8rem;
-            font-family: 'JetBrains Mono', monospace;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            font-size: 0.72rem;
+            text-transform: uppercase;
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
         .page-btn:hover:not(:disabled) {
-            background: var(--accent-blue-glow);
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
+            background: var(--border-dark);
+            color: var(--bg-main);
+            border-color: var(--border-dark);
         }
 
         .page-btn.active {
-            background: var(--accent-blue);
-            border-color: var(--accent-blue);
-            color: #070a12;
+            background: var(--border-dark);
+            color: var(--bg-main);
             font-weight: 700;
         }
 
-        .page-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        /* Polling Station Booth Area Chips */
+        /* Polling Booth Chip */
         .booth-chip-wrapper {
             display: flex;
             flex-direction: column;
-            gap: 0.3rem;
-            align-items: flex-start;
-            max-width: 280px;
+            gap: 4px;
         }
-
-        .booth-chip-header {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            flex-wrap: wrap;
-        }
-
+        .booth-chip-header { display: flex; gap: 6px; align-items: center; }
         .booth-chip-part {
-            background: rgba(56, 189, 248, 0.18);
-            border: 1px solid var(--accent-blue);
-            color: var(--accent-blue);
-            padding: 0.15rem 0.5rem;
-            border-radius: 0.4rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-            white-space: nowrap;
+            border: 1px solid var(--border-color);
+            padding: 2px 6px;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            color: var(--text-main);
         }
-
         .booth-chip-area {
-            background: rgba(52, 211, 153, 0.15);
-            border: 1px solid rgba(52, 211, 153, 0.4);
-            color: var(--accent-emerald);
-            padding: 0.15rem 0.5rem;
-            border-radius: 0.4rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            white-space: nowrap;
+            border: 1px solid var(--accent-info);
+            color: var(--accent-info);
+            padding: 2px 6px;
+            font-size: 0.68rem;
         }
 
-        .booth-chip-name {
-            font-size: 0.8rem;
-            color: var(--text-primary);
-            font-weight: 500;
-            line-height: 1.25;
-            word-break: break-word;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
-            border-radius: 4px;
-        }
-
-        /* Response Viewer */
+        /* JSON Log Viewer */
         .response-viewer {
-            background: #04060c;
-            border: 1px solid var(--card-border);
-            border-radius: 1.25rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
             padding: 1.5rem;
-        }
-
-        .status-badge {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 0.25rem 0.6rem;
-            border-radius: 0.4rem;
-            background: rgba(52, 211, 153, 0.2);
-            color: var(--accent-emerald);
         }
 
         pre.json-output {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #38bdf8;
-            max-height: 450px;
+            font-size: 0.8rem;
+            color: var(--accent-info);
+            max-height: 400px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-word;
         }
 
-        /* Footer */
         footer {
-            text-align: center;
+            margin-top: auto;
+            padding-top: 4rem;
             color: var(--text-muted);
-            font-size: 0.85rem;
-            padding: 2rem 0;
-            border-top: 1px solid var(--card-border);
-            margin-top: 2rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            text-align: center;
+            opacity: 0.8;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 2rem 1rem; }
+            .grid-2col { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+
+    <!-- Ambient Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-grid"></div>
+        <div class="bg-blob bg-blob-1"></div>
+        <div class="bg-blob bg-blob-2"></div>
+    </div>
+
+    <!-- Navigation Drawer Overlay -->
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer(false)">
+        <aside class="navigation-drawer" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <h3>System Controls</h3>
+                <button class="icon-btn" onclick="toggleDrawer(false)">Close</button>
+            </div>
+
+            <div class="setting-group">
+                <label for="apiEndpoint">📡 API Endpoint Base</label>
+                <input type="text" id="apiEndpoint" class="input-sm" value="http://localhost:7860">
+            </div>
+
+            <div class="setting-group">
+                <label>🔐 Active Authorization Role</label>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-action" style="flex:1;" onclick="setRole('admin')">Admin</button>
+                    <button class="btn-action" style="flex:1; background: transparent; color: var(--text-main);" onclick="setRole('guest')">Guest</button>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label>Appearance Theme</label>
+                <div class="theme-segmented">
+                    <button id="theme-auto" class="segment-opt active" onclick="setTheme('auto')">Auto</button>
+                    <button id="theme-light" class="segment-opt" onclick="setTheme('light')">Light</button>
+                    <button id="theme-dark" class="segment-opt" onclick="setTheme('dark')">Dark</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
     <div class="container">
+        <!-- Top Nav Controls -->
+        <div class="top-nav">
+            <button id="menuBtn" class="icon-btn" onclick="toggleDrawer(true)">
+                Controls & Config
+            </button>
+            <span id="roleBadge" class="badge badge-success" style="margin-left: 10px;">ROLE: ADMIN</span>
+        </div>
+
         <!-- Header -->
         <header>
-            <div class="brand-title">
-                <div class="logo-icon">🗳️</div>
-                <div>
-                    <h1>Durg Voter Analytics Studio</h1>
-                    <p class="subtitle">Standalone Analytics UI for Go 1.24 & DuckDB 1.5 REST Backend (Port 7860)</p>
-                </div>
-            </div>
-
-            <!-- Configuration & Role Switcher -->
-            <div class="config-bar">
-                <div class="config-item">
-                    <span style="font-weight: 600;">📡 API Endpoint:</span>
-                    <input type="text" id="apiEndpoint" class="input-sm" value="http://localhost:7860" style="width: 180px;">
-                </div>
-                <div class="config-item">
-                    <span style="font-weight: 600;">🔐 Auth Role:</span>
-                    <span id="roleBadge" class="role-pill role-admin">ADMIN</span>
-                </div>
-                <div style="display: flex; gap: 0.4rem;">
-                    <button class="btn-auth btn-auth-admin" onclick="setRole('admin')">ADMIN</button>
-                    <button class="btn-auth btn-auth-guest" onclick="setRole('guest')">GUEST</button>
-                </div>
-            </div>
+            <h1>Durg Voter Analytics Studio</h1>
+            <p class="subtitle">Standalone Analytics UI for Go 1.24 & DuckDB 1.5 REST Backend</p>
         </header>
 
-        <!-- Navigation Tabs -->
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="openTab('tabOverview')">📊 Overview & Demographics</button>
-            <button class="tab-btn" onclick="openTab('tabSQL')">⚡ Admin SQL Studio</button>
-            <button class="tab-btn" onclick="openTab('tabGroupBy')">📈 Group-By Analytics</button>
-            <button class="tab-btn" onclick="openTab('tabGeo')">📍 Spatial Geo-Location</button>
-            <button class="tab-btn" onclick="openTab('tabSearch')">🔍 Voter Search & Directory</button>
-            <button class="tab-btn" onclick="openTab('tabAPI')">📡 API Endpoint Explorer</button>
+        <!-- Navigation Tabs Bar -->
+        <div class="tabs-bar">
+            <button class="tab-btn active" onclick="openTab(this, 'tabOverview')">📊 Overview & Demographics</button>
+            <button class="tab-btn" onclick="openTab(this, 'tabSQL')">⚡ Admin SQL Studio</button>
+            <button class="tab-btn" onclick="openTab(this, 'tabGroupBy')">📈 Group-By Analytics</button>
+            <button class="tab-btn" onclick="openTab(this, 'tabGeo')">📍 Spatial Geo-Location</button>
+            <button class="tab-btn" onclick="openTab(this, 'tabSearch')">🔍 Voter Search Directory</button>
+            <button class="tab-btn" onclick="openTab(this, 'tabAPI')">📡 API Endpoint Explorer</button>
         </div>
 
         <!-- TAB 1: OVERVIEW & DEMOGRAPHICS -->
@@ -615,12 +747,12 @@
                 </div>
             </div>
 
-            <div class="panel-card grid-full">
+            <div class="panel-card">
                 <div class="panel-header">
-                    <span class="panel-title">🏛️ Assembly Constituency Electorate Breakdown</span>
+                    <span class="panel-title">🏛️ Assembly Constituency Breakdown</span>
                     <button class="preset-chip" onclick="loadOverviewStats()">Refresh Data</button>
                 </div>
-                <div id="constituenciesContainer" class="table-responsive">
+                <div class="responsive-table">
                     <table>
                         <thead>
                             <tr>
@@ -633,7 +765,7 @@
                             </tr>
                         </thead>
                         <tbody id="constituenciesTableBody">
-                            <tr><td colspan="6" style="text-align: center;">Loading constituency breakdown...</td></tr>
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading constituency breakdown...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -642,14 +774,14 @@
 
         <!-- TAB 2: ADMIN SQL STUDIO -->
         <div id="tabSQL" class="tab-content">
-            <div class="panel-card grid-full">
+            <div class="panel-card">
                 <div class="panel-header">
-                    <span class="panel-title">⚡ DuckDB Admin SQL Query Studio <span style="font-size: 0.75rem; color: var(--accent-rose); border: 1px solid rgba(244,63,94,0.4); padding: 0.15rem 0.5rem; border-radius: 0.4rem;">ADMIN PRIVILEGE REQUIRED</span></span>
-                    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                        <button class="preset-chip" onclick="setSQLPreset('gender')">Gender Breakdown</button>
-                        <button class="preset-chip" onclick="setSQLPreset('towns')">Top 10 Towns</button>
+                    <span class="panel-title">⚡ Admin SQL Query Studio <span class="badge badge-danger">ADMIN REQUIRED</span></span>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button class="preset-chip" onclick="setSQLPreset('gender')">Gender</button>
+                        <button class="preset-chip" onclick="setSQLPreset('towns')">Top Towns</button>
                         <button class="preset-chip" onclick="setSQLPreset('age')">Age Groups</button>
-                        <button class="preset-chip" onclick="setSQLPreset('booths')">Booths Per Assembly</button>
+                        <button class="preset-chip" onclick="setSQLPreset('booths')">Booths/Assembly</button>
                     </div>
                 </div>
 
@@ -657,23 +789,23 @@
                     <textarea id="sqlInput" class="form-control" rows="4">SELECT gender_english, count(*) AS total_voters FROM voters GROUP BY 1 ORDER BY 2 DESC;</textarea>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">Only read-only SELECT queries are permitted. Guest role execution will trigger HTTP 403 Forbidden.</span>
-                    <button class="btn-action btn-rose" onclick="executeSQLQuery()">Execute SQL Query &rarr;</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Read-only SELECT queries permitted.</span>
+                    <button class="btn-action" onclick="executeSQLQuery()">Execute Query &rarr;</button>
                 </div>
 
-                <div class="panel-header" style="margin-top: 1.5rem;">
+                <div class="panel-header">
                     <span class="panel-title">📋 Query Results Output</span>
-                    <div style="display: flex; gap: 0.75rem; align-items: center;">
-                        <span id="sqlExecutionTime" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary);">0 ms</span>
-                        <span id="sqlRowCount" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent-blue);">0 rows</span>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <span id="sqlExecutionTime" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted);">0 ms</span>
+                        <span id="sqlRowCount" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--accent-info);">0 rows</span>
                     </div>
                 </div>
 
-                <div class="table-responsive" id="sqlTableContainer">
-                    <table id="sqlDataTable">
+                <div class="responsive-table">
+                    <table>
                         <thead id="sqlTableHead"><tr><th>Status</th></tr></thead>
-                        <tbody id="sqlTableBody"><tr><td>Execute a query above to display output rows.</td></tr></tbody>
+                        <tbody id="sqlTableBody"><tr><td style="color: var(--text-muted);">Execute a query above to display output rows.</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -685,7 +817,7 @@
                 <div class="panel-card">
                     <div class="panel-header">
                         <span class="panel-title">📈 Group-By Query Builder</span>
-                        <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 700;">ADMIN & GUEST</span>
+                        <span class="badge badge-info">ALL ROLES</span>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Grouping Dimension / Field:</label>
@@ -714,16 +846,16 @@
                             <option value="asc">Lowest Count to Highest (ASC)</option>
                         </select>
                     </div>
-                    <button class="btn-action btn-purple" onclick="executeGroupBy()" style="width: 100%;">Run Group-By Aggregation &rarr;</button>
+                    <button class="btn-action" onclick="executeGroupBy()" style="width: 100%;">Run Aggregation &rarr;</button>
                 </div>
 
                 <div class="panel-card">
                     <div class="panel-header">
-                        <span class="panel-title">📊 Aggregated Distribution Breakdown</span>
-                        <span id="gbTotalCount" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent-purple);">1.04M Voters</span>
+                        <span class="panel-title">📊 Aggregated Distribution</span>
+                        <span id="gbTotalCount" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent-info);">1.04M Voters</span>
                     </div>
-                    <div id="groupByResults" style="display: flex; flex-direction: column; gap: 0.85rem; max-height: 400px; overflow-y: auto;">
-                        <p style="color: var(--text-muted); font-size: 0.9rem;">Select parameters and click "Run Group-By Aggregation" to generate distribution breakdown.</p>
+                    <div id="groupByResults" style="display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Select parameters to generate breakdown.</p>
                     </div>
                 </div>
             </div>
@@ -734,9 +866,9 @@
             <div class="grid-2col">
                 <div class="panel-card">
                     <div class="panel-header">
-                        <span class="panel-title">📍 Spatial Coordinates & Proximity Radius</span>
-                        <div style="display: flex; gap: 0.3rem;">
-                            <button class="preset-chip" onclick="setGeoPreset(21.19, 81.28)">Durg Center</button>
+                        <span class="panel-title">📍 Spatial Coordinates & Radius</span>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="preset-chip" onclick="setGeoPreset(21.19, 81.28)">Durg</button>
                             <button class="preset-chip" onclick="setGeoPreset(21.21, 81.38)">Bhilai</button>
                             <button class="preset-chip" onclick="setGeoPreset(21.03, 81.53)">Patan</button>
                         </div>
@@ -753,54 +885,54 @@
                         <label class="form-label">Search Radius (Kilometers):</label>
                         <input type="number" step="0.5" id="geoRadius" class="form-control" value="5.0">
                     </div>
-                    <div style="display: flex; gap: 0.75rem;">
-                        <button class="btn-action btn-emerald" onclick="executeGeoBooths()" style="flex: 1;">Find Nearby Booths</button>
-                        <button class="btn-action btn-purple" onclick="executeGeoVoters()" style="flex: 1;">Find Nearby Voters</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-action" onclick="executeGeoBooths()" style="flex: 1;">Find Booths</button>
+                        <button class="btn-action" onclick="executeGeoVoters()" style="flex: 1; background: transparent; color: var(--text-main);">Find Voters</button>
                     </div>
                 </div>
 
                 <div class="panel-card">
                     <div class="panel-header">
-                        <span class="panel-title">🧭 Distance Calculator Between Coordinates</span>
+                        <span class="panel-title">🧭 Distance Calculator</span>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Point 1 (Lat, Lng):</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" step="0.0001" id="distLat1" class="form-control" value="21.19" placeholder="Lat 1">
-                            <input type="number" step="0.0001" id="distLng1" class="form-control" value="81.28" placeholder="Lng 1">
+                        <div style="display: flex; gap: 8px;">
+                            <input type="number" step="0.0001" id="distLat1" class="form-control" value="21.19">
+                            <input type="number" step="0.0001" id="distLng1" class="form-control" value="81.28">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Point 2 (Lat, Lng):</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" step="0.0001" id="distLat2" class="form-control" value="21.21" placeholder="Lat 2">
-                            <input type="number" step="0.0001" id="distLng2" class="form-control" value="81.38" placeholder="Lng 2">
+                        <div style="display: flex; gap: 8px;">
+                            <input type="number" step="0.0001" id="distLat2" class="form-control" value="21.21">
+                            <input type="number" step="0.0001" id="distLng2" class="form-control" value="81.38">
                         </div>
                     </div>
-                    <button class="btn-action" onclick="executeDistance()" style="width: 100%; margin-bottom: 1rem;">Calculate Straight-Line Distance</button>
-                    <div id="distanceOutput" style="background: var(--bg-dark); padding: 1rem; border-radius: 0.75rem; border: 1px solid var(--card-border); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; text-align: center;">
+                    <button class="btn-action" onclick="executeDistance()" style="width: 100%; margin-bottom: 1rem;">Calculate Distance</button>
+                    <div id="distanceOutput" style="background: var(--subtle-bg); padding: 1rem; border: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: center;">
                         Distance: -- km
                     </div>
                 </div>
             </div>
 
-            <div class="panel-card grid-full">
+            <div class="panel-card">
                 <div class="panel-header">
                     <span class="panel-title">📍 Nearby Spatial Search Results</span>
                 </div>
-                <div class="table-responsive">
-                    <table id="geoResultsTable">
+                <div class="responsive-table">
+                    <table>
                         <thead>
                             <tr>
                                 <th>Name / Booth</th>
                                 <th>Assembly</th>
                                 <th>Town / Village</th>
-                                <th>Coordinates (Lat, Lng)</th>
+                                <th>Coordinates</th>
                                 <th>Calculated Distance</th>
                             </tr>
                         </thead>
                         <tbody id="geoTableBody">
-                            <tr><td colspan="5" style="text-align: center;">Run a spatial query above to view nearby booths or voters.</td></tr>
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Run a spatial query above to view nearby records.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -809,14 +941,14 @@
 
         <!-- TAB 5: VOTER DIRECTORY & SEARCH -->
         <div id="tabSearch" class="tab-content">
-            <div class="panel-card grid-full">
+            <div class="panel-card">
                 <div class="panel-header">
                     <span class="panel-title">🔍 Multi-Criteria Voter Search Engine</span>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 1rem;">
                     <div>
-                        <label class="form-label">Search Query (Name/EPIC/House):</label>
-                        <input type="text" id="srchQuery" class="form-control" placeholder="e.g. Patel, IXG1482629..." value="" onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
+                        <label class="form-label">Search Query:</label>
+                        <input type="text" id="srchQuery" class="form-control" placeholder="Name/EPIC/House..." onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
                     </div>
                     <div>
                         <label class="form-label">Assembly Constituency:</label>
@@ -832,7 +964,7 @@
                     </div>
                     <div>
                         <label class="form-label">Booth No (Part Number):</label>
-                        <input type="number" id="srchPartNumber" class="form-control" placeholder="Select Assembly First" value="" disabled onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
+                        <input type="number" id="srchPartNumber" class="form-control" placeholder="Select Assembly First" disabled onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
                     </div>
                     <div>
                         <label class="form-label">Gender:</label>
@@ -844,18 +976,18 @@
                     </div>
                     <div>
                         <label class="form-label">Min Age:</label>
-                        <input type="number" id="srchMinAge" class="form-control" placeholder="18" value="" onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
+                        <input type="number" id="srchMinAge" class="form-control" placeholder="18" onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
                     </div>
                     <div>
                         <label class="form-label">Max Age:</label>
-                        <input type="number" id="srchMaxAge" class="form-control" placeholder="100" value="" onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
+                        <input type="number" id="srchMaxAge" class="form-control" placeholder="100" onkeyup="if(event.key === 'Enter') executeVoterSearch(1)">
                     </div>
                 </div>
-                <div style="display: flex; justify-content: flex-end; margin-bottom: 1.25rem;">
-                    <button class="btn-action" onclick="executeVoterSearch(1)">Execute Multi-Criteria Search &rarr;</button>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
+                    <button class="btn-action" onclick="executeVoterSearch(1)">Execute Search &rarr;</button>
                 </div>
 
-                <div class="table-responsive">
+                <div class="responsive-table">
                     <table>
                         <thead>
                             <tr>
@@ -870,17 +1002,16 @@
                             </tr>
                         </thead>
                         <tbody id="voterSearchTableBody">
-                            <tr><td colspan="8" style="text-align: center;">Click "Execute Multi-Criteria Search" to fetch voter records.</td></tr>
+                            <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Click "Execute Search" to fetch voter records.</td></tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Pagination Container -->
                 <div class="pagination-container" id="voterSearchPagination" style="display: none;">
                     <div class="pagination-info">
-                        <span id="voterSearchMetaCount" style="color: var(--accent-blue); font-weight: 700;">Showing 0-0 of 0 records</span>
+                        <span id="voterSearchMetaCount" style="color: var(--text-main); font-weight: 700;">Showing 0-0 of 0 records</span>
                         <span>|</span>
-                        <label for="srchLimit" style="font-size: 0.8rem; color: var(--text-muted);">Rows per page:</label>
+                        <label for="srchLimit">Rows per page:</label>
                         <select id="srchLimit" class="input-sm" style="width: 70px;" onchange="executeVoterSearch(1)">
                             <option value="10">10</option>
                             <option value="25" selected>25</option>
@@ -888,27 +1019,25 @@
                             <option value="100">100</option>
                         </select>
                     </div>
-                    <div class="pagination-controls" id="voterSearchPaginationControls">
-                        <!-- Rendered dynamically by JS -->
-                    </div>
+                    <div class="pagination-controls" id="voterSearchPaginationControls"></div>
                 </div>
             </div>
         </div>
 
         <!-- TAB 6: API ENDPOINT EXPLORER & LOGS -->
         <div id="tabAPI" class="tab-content">
-            <div class="grid-2col" style="margin-bottom: 1.5rem;">
+            <div class="grid-2col">
                 <div class="panel-card">
                     <div class="panel-header">
                         <span class="panel-title">⚡ REST API Quick-Fire Tester</span>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/health')">GET /api/v1/health</button>
-                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/stats')">GET /api/v1/stats</button>
-                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/voters?limit=5')">GET /api/v1/voters?limit=5</button>
-                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/polling-stations?limit=5')">GET /api/v1/polling-stations?limit=5</button>
-                        <button class="btn-action" style="background: rgba(56,189,248,0.2); color: var(--accent-blue);" onclick="callAPI('/api/v1/constituencies')">GET /api/v1/constituencies</button>
-                        <button class="btn-action btn-purple" onclick="callAPI('/api/v1/auth/me')">GET /api/v1/auth/me (Check Token Role)</button>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/health')">GET /api/v1/health</button>
+                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/stats')">GET /api/v1/stats</button>
+                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/voters?limit=5')">GET /api/v1/voters?limit=5</button>
+                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/polling-stations?limit=5')">GET /api/v1/polling-stations?limit=5</button>
+                        <button class="btn-action" style="background: transparent; color: var(--text-main);" onclick="callAPI('/api/v1/constituencies')">GET /api/v1/constituencies</button>
+                        <button class="btn-action" onclick="callAPI('/api/v1/auth/me')">GET /api/v1/auth/me (Check Token Role)</button>
                     </div>
                 </div>
 
@@ -924,17 +1053,16 @@
                         <label class="form-label">Password:</label>
                         <input type="password" id="loginPass" class="form-control" value="adminpass">
                     </div>
-                    <button class="btn-action btn-rose" onclick="executeLogin()" style="width: 100%;">Authenticate & Issue Token &rarr;</button>
+                    <button class="btn-action" onclick="executeLogin()" style="width: 100%;">Authenticate & Issue Token &rarr;</button>
                 </div>
             </div>
 
-            <!-- Live Response Log Viewer -->
             <div class="response-viewer">
                 <div class="panel-header" style="border: none; margin-bottom: 0.5rem;">
                     <span class="panel-title">📡 Live Response Payload Log</span>
-                    <div style="display: flex; gap: 0.75rem; align-items: center;">
-                        <span id="logLatency" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary);">0 ms</span>
-                        <span id="logStatus" class="status-badge">HTTP 200 OK</span>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <span id="logLatency" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-muted);">0 ms</span>
+                        <span id="logStatus" class="badge badge-success">HTTP 200 OK</span>
                     </div>
                 </div>
                 <pre class="json-output" id="jsonLog">Click any quick-fire endpoint button above to inspect JSON response payload.</pre>
@@ -942,11 +1070,10 @@
         </div>
 
         <footer>
-            <p>Durg Voter Production Analytics Studio &bull; Powered by <strong>Go 1.24</strong> &amp; <strong>DuckDB 1.5 Engine</strong> (Endpoint: http://localhost:7860)</p>
+            Durg Voter Production Analytics Studio &bull; Powered by <strong>Go 1.24</strong> &amp; <strong>DuckDB 1.5 Engine</strong>
         </footer>
     </div>
 
-    <!-- JavaScript Logic -->
     <script>
         let activeToken = "admin-token-secret-key-12345";
         let activeRole = "admin";
@@ -955,25 +1082,49 @@
             return document.getElementById('apiEndpoint').value.replace(/\/+$/, '');
         }
 
-        function setRole(role) {
-            if (role === 'admin') {
-                activeToken = "admin-token-secret-key-12345";
-                activeRole = "admin";
-                document.getElementById('roleBadge').className = "role-pill role-admin";
-                document.getElementById('roleBadge').innerText = "ADMIN";
+        function setTheme(mode) {
+            const root = document.documentElement;
+            document.querySelectorAll('.theme-segmented .segment-opt').forEach(btn => btn.classList.remove('active'));
+
+            if (mode === 'auto') {
+                root.setAttribute('data-color-mode', 'auto');
+                document.getElementById('theme-auto')?.classList.add('active');
+                localStorage.removeItem('sc-theme-choice');
             } else {
-                activeToken = "guest-token-secret-key-67890";
-                activeRole = "guest";
-                document.getElementById('roleBadge').className = "role-pill role-guest";
-                document.getElementById('roleBadge').innerText = "GUEST";
+                root.setAttribute('data-color-mode', mode);
+                document.getElementById(`theme-${mode}`)?.classList.add('active');
+                localStorage.setItem('sc-theme-choice', mode);
             }
         }
 
-        function openTab(tabId) {
+        function toggleDrawer(open) {
+            const overlay = document.getElementById("drawerOverlay");
+            if (overlay) {
+                if (open) overlay.classList.add("open");
+                else overlay.classList.remove("open");
+            }
+        }
+
+        function setRole(role) {
+            const badge = document.getElementById('roleBadge');
+            if (role === 'admin') {
+                activeToken = "admin-token-secret-key-12345";
+                activeRole = "admin";
+                badge.className = "badge badge-success";
+                badge.innerText = "ROLE: ADMIN";
+            } else {
+                activeToken = "guest-token-secret-key-67890";
+                activeRole = "guest";
+                badge.className = "badge badge-info";
+                badge.innerText = "ROLE: GUEST";
+            }
+        }
+
+        function openTab(btnEl, tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            btnEl.classList.add('active');
         }
 
         async function fetchAPI(path, options = {}) {
@@ -1006,22 +1157,19 @@
 
         function updateResponseLog(status, latency, data) {
             document.getElementById('logLatency').innerText = latency + ' ms';
-            document.getElementById('logStatus').innerText = 'HTTP ' + status;
+            const logStatus = document.getElementById('logStatus');
+            logStatus.innerText = 'HTTP ' + status;
             if (status >= 400) {
-                document.getElementById('logStatus').style.background = 'var(--accent-rose-glow)';
-                document.getElementById('logStatus').style.color = 'var(--accent-rose)';
+                logStatus.className = 'badge badge-danger';
             } else {
-                document.getElementById('logStatus').style.background = 'var(--accent-emerald-glow)';
-                document.getElementById('logStatus').style.color = 'var(--accent-emerald)';
+                logStatus.className = 'badge badge-success';
             }
             document.getElementById('jsonLog').innerText = JSON.stringify(data, null, 2);
         }
 
-        async function callAPI(path) {
-            await fetchAPI(path);
-        }
+        async function callAPI(path) { await fetchAPI(path); }
 
-        // TAB 1: OVERVIEW
+        /* OVERVIEW STATS */
         async function loadOverviewStats() {
             const res = await fetchAPI('/api/v1/stats');
             if (res.data && res.data.success && res.data.data) {
@@ -1041,7 +1189,7 @@
                         const pct = ((item.total_voters / totalVoters) * 100).toFixed(1);
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-                            <td style="font-weight: 700; color: var(--accent-blue);">${item.assembly_constituency}</td>
+                            <td style="font-weight: 700;">${item.assembly_constituency}</td>
                             <td>${Number(item.total_voters).toLocaleString()}</td>
                             <td>${Number(item.male_voters).toLocaleString()}</td>
                             <td>${Number(item.female_voters).toLocaleString()}</td>
@@ -1057,7 +1205,7 @@
             }
         }
 
-        // TAB 2: ADMIN SQL
+        /* ADMIN SQL */
         function setSQLPreset(type) {
             if (type === 'gender') {
                 document.getElementById('sqlInput').value = "SELECT gender_english, count(*) AS total_voters FROM voters GROUP BY 1 ORDER BY 2 DESC;";
@@ -1081,15 +1229,13 @@
 
             const head = document.getElementById('sqlTableHead');
             const body = document.getElementById('sqlTableBody');
-            head.innerHTML = '';
-            body.innerHTML = '';
+            head.innerHTML = ''; body.innerHTML = '';
 
             if (res.data && res.data.success && res.data.data) {
                 const d = res.data.data;
                 document.getElementById('sqlExecutionTime').innerText = (d.execution_time_ms || 0) + ' ms';
                 document.getElementById('sqlRowCount').innerText = (d.row_count || 0) + ' rows';
 
-                // Render Header
                 const trH = document.createElement('tr');
                 d.columns.forEach(col => {
                     const th = document.createElement('th');
@@ -1098,7 +1244,6 @@
                 });
                 head.appendChild(trH);
 
-                // Render Rows
                 d.rows.forEach(row => {
                     const trB = document.createElement('tr');
                     row.forEach(val => {
@@ -1112,11 +1257,11 @@
                 document.getElementById('sqlExecutionTime').innerText = res.latency + ' ms';
                 document.getElementById('sqlRowCount').innerText = '0 rows';
                 head.innerHTML = '<tr><th>Error Output</th></tr>';
-                body.innerHTML = `<tr><td style="color: var(--accent-rose);">${res.data.error || 'Failed to execute query'}</td></tr>`;
+                body.innerHTML = `<tr><td style="color: var(--accent-err);">${res.data.error || 'Failed to execute query'}</td></tr>`;
             }
         }
 
-        // TAB 3: GROUP BY
+        /* GROUP BY */
         async function executeGroupBy() {
             const field = document.getElementById('gbField').value;
             const limit = document.getElementById('gbLimit').value;
@@ -1132,15 +1277,14 @@
 
                 d.groups.forEach(item => {
                     const div = document.createElement('div');
-                    div.style.background = 'var(--bg-dark)';
+                    div.style.background = 'var(--subtle-bg)';
                     div.style.padding = '0.75rem 1rem';
-                    div.style.borderRadius = '0.75rem';
-                    div.style.border = '1px solid var(--card-border)';
+                    div.style.border = '1px solid var(--border-color)';
 
                     div.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem;">
+                        <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem;">
                             <span>${item.value || 'Unknown'}</span>
-                            <span style="color: var(--accent-purple); font-family: 'JetBrains Mono', monospace;">${Number(item.count).toLocaleString()} (${item.percentage}%)</span>
+                            <span style="font-family: 'JetBrains Mono', monospace;">${Number(item.count).toLocaleString()} (${item.percentage}%)</span>
                         </div>
                         <div class="bar-container"><div class="bar-fill" style="width: ${Math.min(item.percentage * 2, 100)}%;"></div></div>
                     `;
@@ -1149,7 +1293,7 @@
             }
         }
 
-        // TAB 4: SPATIAL GEO
+        /* SPATIAL GEO */
         function setGeoPreset(lat, lng) {
             document.getElementById('geoLat').value = lat;
             document.getElementById('geoLng').value = lng;
@@ -1179,7 +1323,7 @@
 
             if (res.data && res.data.success && Array.isArray(res.data.data)) {
                 if (res.data.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No results found within specified radius.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No results found within specified radius.</td></tr>';
                     return;
                 }
 
@@ -1188,20 +1332,20 @@
                     if (type === 'booth') {
                         const ps = item.polling_station;
                         tr.innerHTML = `
-                            <td style="font-weight: 700; color: var(--accent-blue);">${ps.polling_station_name}</td>
+                            <td style="font-weight: 700;">${ps.polling_station_name}</td>
                             <td>${ps.assembly_constituency}</td>
                             <td>${ps.town_village || 'N/A'}</td>
                             <td>${ps.latitude}, ${ps.longitude}</td>
-                            <td style="color: var(--accent-emerald); font-weight: 700;">${item.distance_km} km (${item.distance_meters} m)</td>
+                            <td style="color: var(--accent-info); font-weight: 700;">${item.distance_km} km (${item.distance_meters} m)</td>
                         `;
                     } else {
                         const v = item.voter;
                         tr.innerHTML = `
-                            <td style="font-weight: 700; color: var(--accent-purple);">${v.full_name || 'Voter Profile'} (${v.epic_no})</td>
+                            <td style="font-weight: 700;">${v.full_name || 'Voter Profile'} (${v.epic_no})</td>
                             <td>${v.assembly_constituency}</td>
                             <td>${v.town_village || 'N/A'}</td>
                             <td>${v.latitude}, ${v.longitude}</td>
-                            <td style="color: var(--accent-emerald); font-weight: 700;">${item.distance_km} km (${item.distance_meters} m)</td>
+                            <td style="color: var(--accent-info); font-weight: 700;">${item.distance_km} km (${item.distance_meters} m)</td>
                         `;
                     }
                     tbody.appendChild(tr);
@@ -1222,7 +1366,7 @@
             }
         }
 
-        // TAB 5: VOTER SEARCH
+        /* VOTER SEARCH */
         let currentSearchPage = 1;
 
         function onAssemblyChange() {
@@ -1253,19 +1397,14 @@
             const limit = parseInt(document.getElementById('srchLimit')?.value) || 25;
 
             const tbody = document.getElementById('voterSearchTableBody');
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Searching voter records...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Searching voter records...</td></tr>';
 
             const res = await fetchAPI('/api/v1/voters/search', {
                 method: 'POST',
                 body: JSON.stringify({
-                    query,
-                    assembly_constituency: assembly,
-                    gender,
-                    min_age: minAge,
-                    max_age: maxAge,
-                    part_number: partNumber,
-                    page: currentSearchPage,
-                    limit: limit
+                    query, assembly_constituency: assembly, gender,
+                    min_age: minAge, max_age: maxAge, part_number: partNumber,
+                    page: currentSearchPage, limit: limit
                 })
             });
 
@@ -1274,7 +1413,7 @@
 
             if (res.data && res.data.success && Array.isArray(res.data.data)) {
                 if (res.data.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No voter records found matching search filters.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No voter records found matching filters.</td></tr>';
                     if (paginationBar) paginationBar.style.display = 'none';
                     return;
                 }
@@ -1286,7 +1425,7 @@
                     const areaTag = v.town_village || v.assembly_constituency || 'Durg';
 
                     tr.innerHTML = `
-                        <td style="color: var(--accent-blue); font-weight: 700;">${v.epic_no}</td>
+                        <td style="font-weight: 700;">${v.epic_no}</td>
                         <td>${v.full_name || 'N/A'}</td>
                         <td>${v.relative_name || 'N/A'}</td>
                         <td>${v.gender}</td>
@@ -1299,19 +1438,17 @@
                                     <span class="booth-chip-part">Booth #${v.part_number}</span>
                                     <span class="booth-chip-area">📍 ${areaTag}</span>
                                 </div>
-                                <div class="booth-chip-name" title="${boothAddress}">🏫 ${boothName}</div>
+                                <div style="font-size: 0.78rem; word-break: break-word;" title="${boothAddress}">🏫 ${boothName}</div>
                             </div>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
 
-                if (res.data.meta && paginationBar) {
-                    renderSearchPagination(res.data.meta);
-                }
+                if (res.data.meta && paginationBar) renderSearchPagination(res.data.meta);
             } else {
-                const errMsg = (res.data && res.data.error) ? res.data.error : 'Failed to execute search. Ensure backend server is running.';
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-rose);">⚠️ ${errMsg}</td></tr>`;
+                const errMsg = (res.data && res.data.error) ? res.data.error : 'Failed to execute search.';
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-err);">⚠️ ${errMsg}</td></tr>`;
                 if (paginationBar) paginationBar.style.display = 'none';
             }
         }
@@ -1323,25 +1460,14 @@
             if (!paginationBar || !metaCount || !controls) return;
 
             paginationBar.style.display = 'flex';
-
             const startItem = (meta.current_page - 1) * meta.page_size + 1;
             const endItem = Math.min(meta.current_page * meta.page_size, meta.total_items);
             metaCount.innerText = `Showing ${startItem.toLocaleString()}-${endItem.toLocaleString()} of ${meta.total_items.toLocaleString()} records`;
 
             controls.innerHTML = '';
-
             const totalPages = meta.total_pages || 1;
             const curPage = meta.current_page;
 
-            // First Page
-            const btnFirst = document.createElement('button');
-            btnFirst.className = 'page-btn';
-            btnFirst.innerText = '« First';
-            btnFirst.disabled = curPage <= 1;
-            btnFirst.onclick = () => executeVoterSearch(1);
-            controls.appendChild(btnFirst);
-
-            // Previous Page
             const btnPrev = document.createElement('button');
             btnPrev.className = 'page-btn';
             btnPrev.innerText = '‹ Prev';
@@ -1349,12 +1475,8 @@
             btnPrev.onclick = () => executeVoterSearch(curPage - 1);
             controls.appendChild(btnPrev);
 
-            // Numeric Page Buttons (window of +/- 2)
             let startPage = Math.max(1, curPage - 2);
             let endPage = Math.min(totalPages, curPage + 2);
-
-            if (curPage <= 3) endPage = Math.min(5, totalPages);
-            if (curPage >= totalPages - 2) startPage = Math.max(1, totalPages - 4);
 
             for (let i = startPage; i <= endPage; i++) {
                 const btnPage = document.createElement('button');
@@ -1364,24 +1486,15 @@
                 controls.appendChild(btnPage);
             }
 
-            // Next Page
             const btnNext = document.createElement('button');
             btnNext.className = 'page-btn';
             btnNext.innerText = 'Next ›';
             btnNext.disabled = curPage >= totalPages;
             btnNext.onclick = () => executeVoterSearch(curPage + 1);
             controls.appendChild(btnNext);
-
-            // Last Page
-            const btnLast = document.createElement('button');
-            btnLast.className = 'page-btn';
-            btnLast.innerText = 'Last »';
-            btnLast.disabled = curPage >= totalPages;
-            btnLast.onclick = () => executeVoterSearch(totalPages);
-            controls.appendChild(btnLast);
         }
 
-        // TAB 6: AUTH LOGIN
+        /* AUTH LOGIN */
         async function executeLogin() {
             const username = document.getElementById('loginUser').value.trim();
             const password = document.getElementById('loginPass').value.trim();
@@ -1392,18 +1505,21 @@
             });
 
             if (res.data && res.data.success && res.data.data) {
-                const token = res.data.data.token;
-                const role = res.data.data.role;
-                activeToken = token;
-                setRole(role);
-                alert(`Login Successful! Logged in as ${role.toUpperCase()}. Active Token attached to requests.`);
+                activeToken = res.data.data.token;
+                setRole(res.data.data.role);
+                alert(`Login Successful! Logged in as ${res.data.data.role.toUpperCase()}.`);
             }
         }
 
-        // Initial Load
+        /* INIT */
+        (function initTheme() {
+            const saved = localStorage.getItem('sc-theme-choice');
+            if (saved && ['light', 'dark', 'auto'].includes(saved)) setTheme(saved);
+        })();
+
         window.onload = function() {
             loadOverviewStats();
         };
     </script>
 </body>
-</html>
+</html> 
