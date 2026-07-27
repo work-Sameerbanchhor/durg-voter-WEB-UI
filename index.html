@@ -708,7 +708,7 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
                     <div>
                         <label class="form-label">Search Query (Name/EPIC/House):</label>
-                        <input type="text" id="srchQuery" class="form-control" placeholder="e.g. Patel, IXG1482629..." value="Patel">
+                        <input type="text" id="srchQuery" class="form-control" placeholder="e.g. Patel, IXG1482629..." value="">
                     </div>
                     <div>
                         <label class="form-label">Assembly Constituency:</label>
@@ -732,11 +732,11 @@
                     </div>
                     <div>
                         <label class="form-label">Min Age:</label>
-                        <input type="number" id="srchMinAge" class="form-control" placeholder="18" value="18">
+                        <input type="number" id="srchMinAge" class="form-control" placeholder="18" value="">
                     </div>
                     <div>
                         <label class="form-label">Max Age:</label>
-                        <input type="number" id="srchMaxAge" class="form-control" placeholder="100" value="45">
+                        <input type="number" id="srchMaxAge" class="form-control" placeholder="100" value="">
                     </div>
                 </div>
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 1.25rem;">
@@ -1097,8 +1097,13 @@
             const query = document.getElementById('srchQuery').value.trim();
             const assembly = document.getElementById('srchAssembly').value;
             const gender = document.getElementById('srchGender').value;
-            const minAge = parseInt(document.getElementById('srchMinAge').value) || 18;
-            const maxAge = parseInt(document.getElementById('srchMaxAge').value) || 100;
+            const minAgeVal = document.getElementById('srchMinAge').value.trim();
+            const maxAgeVal = document.getElementById('srchMaxAge').value.trim();
+            const minAge = minAgeVal !== '' ? (parseInt(minAgeVal) || 0) : 0;
+            const maxAge = maxAgeVal !== '' ? (parseInt(maxAgeVal) || 0) : 0;
+
+            const tbody = document.getElementById('voterSearchTableBody');
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Searching voter records...</td></tr>';
 
             const res = await fetchAPI('/api/v1/voters/search', {
                 method: 'POST',
@@ -1108,11 +1113,10 @@
                     gender,
                     min_age: minAge,
                     max_age: maxAge,
-                    limit: 10
+                    limit: 20
                 })
             });
 
-            const tbody = document.getElementById('voterSearchTableBody');
             tbody.innerHTML = '';
 
             if (res.data && res.data.success && Array.isArray(res.data.data)) {
@@ -1135,6 +1139,9 @@
                     `;
                     tbody.appendChild(tr);
                 });
+            } else {
+                const errMsg = (res.data && res.data.error) ? res.data.error : 'Failed to execute search. Ensure backend server is running.';
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-rose);">⚠️ ${errMsg}</td></tr>`;
             }
         }
 

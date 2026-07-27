@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"durg-voter-api/pkg/db"
@@ -36,6 +37,7 @@ func setupTestServer(t *testing.T) (*db.DuckDB, http.Handler) {
 	mux.HandleFunc("GET /api/v1/voters", h.ListVotersHandler)
 	mux.HandleFunc("GET /api/v1/voters/{epic_no}", h.GetVoterByIDHandler)
 	mux.HandleFunc("GET /api/v1/constituencies", h.ListConstituenciesHandler)
+	mux.HandleFunc("POST /api/v1/voters/search", h.SearchVotersHandler)
 
 	return duckDB, mux
 }
@@ -220,7 +222,35 @@ func TestListConstituencies(t *testing.T) {
 	if !resp.Success {
 		t.Errorf("expected success true, got false")
 	}
+	for _, item := range resp.Data {
+		t.Logf("Constituency in DB: '%s' (Total: %d)", item.AssemblyConstituency, item.TotalVoters)
+	}
 	if len(resp.Data) == 0 {
 		t.Errorf("expected constituencies list to be non-empty")
 	}
+}
+
+func TestSearchVoters(t *testing.T) {
+	duckDB, handler := setupTestServer(t)
+	defer duckDB.Close()
+
+	body := `{"query":"Patel", "min_age":18, "max_age":45, "limit":5}`
+	req := httptest.NewRequest("POST", "/api/v1/voters/search", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d, body: %s", rr.Code, rr.Body.String())
+	}
+
+	var resp struct {
+		Success bool           `json:"success"`
+		Data    []models.Voter `json:"data"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	t.Logf("Search returned %d voters", len(resp.Data))
 }
