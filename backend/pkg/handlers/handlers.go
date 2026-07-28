@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -494,14 +493,6 @@ func (h *Handler) OpenAPIHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) APIDocsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	paths := []string{"frontend/index.html", "../frontend/index.html", "index.html"}
-	for _, p := range paths {
-		if content, err := os.ReadFile(p); err == nil {
-			w.WriteHeader(http.StatusOK)
-			w.Write(content)
-			return
-		}
-	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(dashboardHTML))
 }

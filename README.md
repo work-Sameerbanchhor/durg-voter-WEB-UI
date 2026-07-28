@@ -1,5 +1,5 @@
 ---
-title: Durg Voter Web UI
+title: Durg Voter REST API
 emoji: 🗳️
 colorFrom: blue
 colorTo: indigo
@@ -9,9 +9,9 @@ pinned: false
 license: mit
 ---
 
-# 🗳️ Durg Voter Production REST API & Embedded Dashboard
+# 🗳️ Durg Voter Production REST API
 
-A high-performance, production-grade **Go RESTful API & Interactive Dashboard Backend** powered by **Go 1.24** and the **DuckDB 1.5 Vectorized Analytics Engine**, serving **1,045,426 voter records** and **1,513 polling station booths**.
+A high-performance, production-grade **Go RESTful API Backend** powered by **Go 1.24** and the **DuckDB 1.5 Vectorized Analytics Engine**, serving **1,045,426 voter records** and **1,513 polling station booths**.
 
 ---
 

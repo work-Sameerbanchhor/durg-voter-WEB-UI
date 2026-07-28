@@ -33,7 +33,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy binary from builder
 COPY --from=builder /app/server /app/server
 COPY backend/database/ /app/backend/database/
-COPY frontend/ /app/frontend/
 
 # Expose HTTP port
 EXPOSE 7860

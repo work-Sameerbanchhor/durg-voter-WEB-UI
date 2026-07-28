@@ -59,7 +59,7 @@ func Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		// 2. Allow static root frontend page
+		// 2. Allow API documentation landing page & static assets
 		if r.URL.Path == "/" || r.URL.Path == "/index.html" || r.URL.Path == "/favicon.ico" {
 			next.ServeHTTP(w, r)
 			return
