@@ -857,7 +857,7 @@
 
             <div class="setting-group">
                 <label for="apiEndpoint">API Endpoint Base</label>
-                <input type="text" id="apiEndpoint" class="input-sm" value="https://sameerbanchhor-work-durg-voter-web-ui.hf.space">
+                <input type="text" id="apiEndpoint" class="input-sm" value="http://localhost:7860">
             </div>
 
             <div class="setting-group">
@@ -1041,6 +1041,8 @@
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
                     <button class="btn-action" onclick="executeVoterSearch(1)">Execute Search &rarr;</button>
                 </div>
+
+                <div id="geminiTransliterationBadge" style="display: none; margin-bottom: 1rem; padding: 10px 14px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; color: #60a5fa; font-size: 0.85rem; font-weight: 500;"></div>
 
                 <div class="responsive-table">
                     <table>
@@ -2107,6 +2109,16 @@
 
             tbody.innerHTML = '';
             const paginationBar = document.getElementById('voterSearchPagination');
+            const geminiBadge = document.getElementById('geminiTransliterationBadge');
+
+            if (res.data && res.data.meta && res.data.meta.transliterated_query) {
+                if (geminiBadge) {
+                    geminiBadge.style.display = 'block';
+                    geminiBadge.innerHTML = `✨ <strong>Gemini AI Transliteration Active:</strong> English "${query}" &rarr; Hindi "<strong>${res.data.meta.transliterated_query}</strong>" (Searching both English and Hindi database fields)`;
+                }
+            } else {
+                if (geminiBadge) geminiBadge.style.display = 'none';
+            }
 
             if (res.data && res.data.success && Array.isArray(res.data.data)) {
                 if (res.data.data.length === 0) {

@@ -27,20 +27,22 @@ type VoterService interface {
 }
 
 type voterService struct {
-	repo repository.VoterRepository
+	repo      repository.VoterRepository
+	geminiSvc GeminiService
 
-	mu                 sync.RWMutex
-	cachedStats        *models.StatsSummary
-	statsCacheTime     time.Time
+	mu                   sync.RWMutex
+	cachedStats          *models.StatsSummary
+	statsCacheTime       time.Time
 	cachedConstituencies []models.ConstituencySummary
-	constCacheTime     time.Time
-	cacheTTL           time.Duration
+	constCacheTime       time.Time
+	cacheTTL             time.Duration
 }
 
-func NewVoterService(repo repository.VoterRepository) VoterService {
+func NewVoterService(repo repository.VoterRepository, geminiSvc GeminiService) VoterService {
 	return &voterService{
-		repo:     repo,
-		cacheTTL: 10 * time.Minute,
+		repo:      repo,
+		geminiSvc: geminiSvc,
+		cacheTTL:  10 * time.Minute,
 	}
 }
 
@@ -78,7 +80,17 @@ func (s *voterService) ListVoters(ctx context.Context, filter models.SearchFilte
 		filter.Page = 1
 	}
 
-	return s.repo.ListVoters(ctx, filter)
+	if s.geminiSvc != nil && filter.Query != "" && filter.HindiQuery == "" {
+		if hindiQuery, err := s.geminiSvc.TransliterateEnglishToHindi(ctx, filter.Query); err == nil && hindiQuery != "" {
+			filter.HindiQuery = hindiQuery
+		}
+	}
+
+	voters, meta, err := s.repo.ListVoters(ctx, filter)
+	if err == nil && meta != nil && filter.HindiQuery != "" {
+		meta.TransliteratedQuery = filter.HindiQuery
+	}
+	return voters, meta, err
 }
 
 func (s *voterService) GetVoterByEPIC(ctx context.Context, epicNo string) (*models.Voter, error) {

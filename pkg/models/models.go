@@ -14,10 +14,11 @@ type APIResponse struct {
 
 // Pagination metadata
 type Pagination struct {
-	CurrentPage int   `json:"current_page"`
-	PageSize    int   `json:"page_size"`
-	TotalItems  int64 `json:"total_items"`
-	TotalPages  int   `json:"total_pages"`
+	CurrentPage         int    `json:"current_page"`
+	PageSize            int    `json:"page_size"`
+	TotalItems          int64  `json:"total_items"`
+	TotalPages          int    `json:"total_pages"`
+	TransliteratedQuery string `json:"transliterated_query,omitempty"`
 }
 
 // HealthStatus details
@@ -109,6 +110,7 @@ type ConstituencySummary struct {
 // SearchFilter payload for query requests
 type SearchFilter struct {
 	Query                string `json:"query"`
+	HindiQuery           string `json:"hindi_query,omitempty"`
 	AssemblyConstituency string `json:"assembly_constituency"`
 	Gender               string `json:"gender"`
 	MinAge               int    `json:"min_age"`

@@ -1,8 +1,10 @@
 package config
 
 import (
+	"bufio"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -13,12 +15,16 @@ type Config struct {
 	RateLimitRPS       int
 	RateLimitBurst     int
 	CORSAllowedOrigins string
+	GeminiAPIKey       string
+	GeminiModel        string
 	ReadTimeout        time.Duration
 	WriteTimeout       time.Duration
 	IdleTimeout        time.Duration
 }
 
 func LoadConfig() *Config {
+	loadDotEnv(".env")
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "7860"
@@ -41,6 +47,12 @@ func LoadConfig() *Config {
 		origins = "*"
 	}
 
+	geminiKey := os.Getenv("GEMINI_API_KEY")
+	geminiModel := os.Getenv("GEMINI_MODEL")
+	if geminiModel == "" {
+		geminiModel = "gemini-3.5-flash-lite"
+	}
+
 	return &Config{
 		Port:               port,
 		DBPath:             dbPath,
@@ -48,9 +60,44 @@ func LoadConfig() *Config {
 		RateLimitRPS:       rps,
 		RateLimitBurst:     burst,
 		CORSAllowedOrigins: origins,
+		GeminiAPIKey:       geminiKey,
+		GeminiModel:        geminiModel,
 		ReadTimeout:        15 * time.Second,
-		WriteTimeout       : 15 * time.Second,
+		WriteTimeout:       15 * time.Second,
 		IdleTimeout:        60 * time.Second,
+	}
+}
+
+func loadDotEnv(filepath string) {
+	paths := []string{filepath, "../" + filepath, "../../" + filepath}
+	var file *os.File
+	var err error
+	for _, p := range paths {
+		file, err = os.Open(p)
+		if err == nil {
+			break
+		}
+	}
+	if file == nil || err != nil {
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			key := strings.TrimSpace(parts[0])
+			val := strings.TrimSpace(parts[1])
+			val = strings.Trim(val, `"'`)
+			if os.Getenv(key) == "" {
+				os.Setenv(key, val)
+			}
+		}
 	}
 }
 

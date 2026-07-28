@@ -33,9 +33,15 @@ func main() {
 		}
 	}()
 
-	// 3. Initialize Repository, Service, and Handlers
+	// 3. Initialize Repository, Gemini Service, Voter Service, and Handlers
 	repo := repository.NewVoterRepository(duckDB)
-	voterService := service.NewVoterService(repo)
+	geminiSvc := service.NewGeminiService(cfg.GeminiAPIKey, cfg.GeminiModel)
+	if cfg.GeminiAPIKey != "" {
+		log.Printf("✨ Gemini AI Transliteration active [Model: %s]", cfg.GeminiModel)
+	} else {
+		log.Printf("⚠️ GEMINI_API_KEY not set in environment or .env; AI transliteration disabled")
+	}
+	voterService := service.NewVoterService(repo, geminiSvc)
 	h := handlers.NewHandler(voterService, duckDB)
 
 	// 4. Configure HTTP Routes

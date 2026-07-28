@@ -28,7 +28,7 @@ func setupTestServer(t *testing.T) (*db.DuckDB, http.Handler) {
 	}
 
 	repo := repository.NewVoterRepository(duckDB)
-	svc := service.NewVoterService(repo)
+	svc := service.NewVoterService(repo, nil)
 	h := handlers.NewHandler(svc, duckDB)
 
 	mux := http.NewServeMux()
@@ -126,7 +126,7 @@ func TestAuthLogin(t *testing.T) {
 	defer duckDB.Close()
 
 	repo := repository.NewVoterRepository(duckDB)
-	svc := service.NewVoterService(repo)
+	svc := service.NewVoterService(repo, nil)
 
 	// Test Admin Login
 	adminResp, err := svc.AuthenticateUser("admin", "adminpass")
@@ -146,7 +146,7 @@ func TestAdminExecuteSQL(t *testing.T) {
 	defer duckDB.Close()
 
 	repo := repository.NewVoterRepository(duckDB)
-	svc := service.NewVoterService(repo)
+	svc := service.NewVoterService(repo, nil)
 
 	ctx := context.Background()
 	sqlRes, err := svc.ExecuteSQL(ctx, "SELECT gender_english, count(*) FROM voters GROUP BY 1;")
@@ -163,7 +163,7 @@ func TestGroupByNames(t *testing.T) {
 	defer duckDB.Close()
 
 	repo := repository.NewVoterRepository(duckDB)
-	svc := service.NewVoterService(repo)
+	svc := service.NewVoterService(repo, nil)
 
 	ctx := context.Background()
 	res, err := svc.GroupBy(ctx, models.GroupByRequest{Field: "full_name", Limit: 5})
@@ -180,7 +180,7 @@ func TestGeoNearby(t *testing.T) {
 	defer duckDB.Close()
 
 	repo := repository.NewVoterRepository(duckDB)
-	svc := service.NewVoterService(repo)
+	svc := service.NewVoterService(repo, nil)
 
 	ctx := context.Background()
 	req := models.GeoNearbyRequest{Latitude: 21.19, Longitude: 81.28, RadiusKM: 10.0, Limit: 5}
@@ -261,7 +261,7 @@ func TestGetPartDetails(t *testing.T) {
 
 	ctx := context.Background()
 	repo := repository.NewVoterRepository(duckDB)
-	svc := service.NewVoterService(repo)
+	svc := service.NewVoterService(repo, nil)
 
 	pd, err := svc.GetPartDetails(ctx, "vaishali-nagar", 293)
 	if err != nil {

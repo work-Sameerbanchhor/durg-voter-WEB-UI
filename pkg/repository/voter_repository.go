@@ -94,8 +94,14 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 
 	if filter.Query != "" {
 		q := "%" + strings.ToLower(filter.Query) + "%"
-		conditions = append(conditions, "(LOWER(voter_id) LIKE ? OR LOWER(voter_name_english) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_english) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(house_number) LIKE ? OR LOWER(town_village) LIKE ? OR LOWER(assembly_constituency) LIKE ? OR LOWER(section_number_and_name) LIKE ?)")
-		args = append(args, q, q, q, q, q, q, q, q, q)
+		if filter.HindiQuery != "" && filter.HindiQuery != filter.Query {
+			hq := "%" + strings.ToLower(filter.HindiQuery) + "%"
+			conditions = append(conditions, "(LOWER(voter_id) LIKE ? OR LOWER(voter_name_english) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_english) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(house_number) LIKE ? OR LOWER(town_village) LIKE ? OR LOWER(assembly_constituency) LIKE ? OR LOWER(section_number_and_name) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(town_village) LIKE ? OR LOWER(section_number_and_name) LIKE ?)")
+			args = append(args, q, q, q, q, q, q, q, q, q, hq, hq, hq, hq)
+		} else {
+			conditions = append(conditions, "(LOWER(voter_id) LIKE ? OR LOWER(voter_name_english) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_english) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(house_number) LIKE ? OR LOWER(town_village) LIKE ? OR LOWER(assembly_constituency) LIKE ? OR LOWER(section_number_and_name) LIKE ?)")
+			args = append(args, q, q, q, q, q, q, q, q, q)
+		}
 	}
 
 	if filter.AssemblyConstituency != "" {
