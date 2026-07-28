@@ -485,6 +485,107 @@ func (h *Handler) GeoDistanceHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) SearchHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	searchType := r.URL.Query().Get("type")
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+
+	logs, meta, err := h.voterService.ListSearchLogs(ctx, searchType, limit, page)
+	if err != nil {
+		SendJSON(w, r, http.StatusInternalServerError, models.APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	SendJSON(w, r, http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    logs,
+		Meta:    meta,
+	})
+}
+
+func (h *Handler) SaveSearchHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var req models.SaveSearchRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error:   "Invalid JSON payload: " + err.Error(),
+		})
+		return
+	}
+
+	if req.Query == "" {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error:   "Query parameter is required",
+		})
+		return
+	}
+
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+
+	searchLog := models.SearchLog{
+		Query:        req.Query,
+		SearchType:   req.SearchType,
+		Filters:      req.Filters,
+		TotalResults: req.TotalResults,
+		TopResults:   req.TopResults,
+		IPAddress:    ip,
+		CreatedAt:    time.Now(),
+	}
+
+	if err := h.voterService.SaveSearchLog(ctx, searchLog); err != nil {
+		SendJSON(w, r, http.StatusInternalServerError, models.APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	SendJSON(w, r, http.StatusCreated, models.APIResponse{
+		Success: true,
+		Message: "Search saved successfully",
+		Data:    searchLog,
+	})
+}
+
+func (h *Handler) GetSearchLogByIDHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := r.PathValue("id")
+	if id == "" {
+		id = r.URL.Query().Get("id")
+	}
+
+	if id == "" {
+		SendJSON(w, r, http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error:   "Search log ID is required",
+		})
+		return
+	}
+
+	log, err := h.voterService.GetSearchLogByID(ctx, id)
+	if err != nil {
+		SendJSON(w, r, http.StatusNotFound, models.APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	SendJSON(w, r, http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    log,
+	})
+}
+
 func (h *Handler) OpenAPIHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)

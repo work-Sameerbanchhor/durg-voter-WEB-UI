@@ -231,3 +231,24 @@ type GeoDistanceResult struct {
 	DistanceMeters float64 `json:"distance_meters"`
 }
 
+// SearchLog represents a stored search query and its results metadata
+type SearchLog struct {
+	ID           string    `json:"id"`
+	Query        string    `json:"query"`
+	SearchType   string    `json:"search_type"` // "name", "epic_no", "house_no", "general"
+	Filters      string    `json:"filters,omitempty"`
+	TotalResults int64     `json:"total_results"`
+	TopResults   string    `json:"top_results,omitempty"` // JSON representation of top matching voters
+	IPAddress    string    `json:"ip_address,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// SaveSearchRequest payload for explicitly saving search queries
+type SaveSearchRequest struct {
+	Query        string `json:"query"`
+	SearchType   string `json:"search_type,omitempty"`
+	Filters      string `json:"filters,omitempty"`
+	TotalResults int64  `json:"total_results,omitempty"`
+	TopResults   string `json:"top_results,omitempty"`
+}
+

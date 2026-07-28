@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 )
 
 type VoterService interface {
+	InitSchema(ctx context.Context) error
 	GetStats(ctx context.Context) (*models.StatsSummary, error)
 	ListVoters(ctx context.Context, filter models.SearchFilter) ([]models.Voter, *models.Pagination, error)
 	GetVoterByEPIC(ctx context.Context, epicNo string) (*models.Voter, error)
@@ -24,6 +27,9 @@ type VoterService interface {
 	GetNearbyVoters(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoVoterResult, error)
 	CalculateDistance(lat1, lng1, lat2, lng2 float64) models.GeoDistanceResult
 	AuthenticateUser(username, password string) (*models.LoginResponse, error)
+	SaveSearchLog(ctx context.Context, log models.SearchLog) error
+	ListSearchLogs(ctx context.Context, searchType string, limit, page int) ([]models.SearchLog, *models.Pagination, error)
+	GetSearchLogByID(ctx context.Context, id string) (*models.SearchLog, error)
 }
 
 type voterService struct {
@@ -72,6 +78,34 @@ func (s *voterService) GetStats(ctx context.Context) (*models.StatsSummary, erro
 	return stats, nil
 }
 
+func classifySearchType(query string) string {
+	q := strings.TrimSpace(query)
+	if q == "" {
+		return "general"
+	}
+
+	if len(q) >= 7 && len(q) <= 12 {
+		letters := 0
+		digits := 0
+		for _, r := range q {
+			if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+				letters++
+			} else if r >= '0' && r <= '9' {
+				digits++
+			}
+		}
+		if letters >= 2 && digits >= 3 {
+			return "epic_no"
+		}
+	}
+
+	if strings.Contains(q, "/") || strings.HasPrefix(strings.ToLower(q), "h.") || strings.HasPrefix(strings.ToLower(q), "house") {
+		return "house_no"
+	}
+
+	return "name"
+}
+
 func (s *voterService) ListVoters(ctx context.Context, filter models.SearchFilter) ([]models.Voter, *models.Pagination, error) {
 	if filter.Limit <= 0 || filter.Limit > 100 {
 		filter.Limit = 20
@@ -90,6 +124,43 @@ func (s *voterService) ListVoters(ctx context.Context, filter models.SearchFilte
 	if err == nil && meta != nil && filter.HindiQuery != "" {
 		meta.TransliteratedQuery = filter.HindiQuery
 	}
+
+	if err == nil && filter.Query != "" {
+		go func() {
+			bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			var totalItems int64
+			if meta != nil {
+				totalItems = meta.TotalItems
+			}
+
+			var topResultsJSON string
+			limitTop := len(voters)
+			if limitTop > 5 {
+				limitTop = 5
+			}
+			if limitTop > 0 {
+				if bytes, jsonErr := json.Marshal(voters[:limitTop]); jsonErr == nil {
+					topResultsJSON = string(bytes)
+				}
+			}
+
+			filtersJSON, _ := json.Marshal(filter)
+
+			searchLog := models.SearchLog{
+				Query:        filter.Query,
+				SearchType:   classifySearchType(filter.Query),
+				Filters:      string(filtersJSON),
+				TotalResults: totalItems,
+				TopResults:   topResultsJSON,
+				CreatedAt:    time.Now(),
+			}
+
+			_ = s.repo.SaveSearchLog(bgCtx, searchLog)
+		}()
+	}
+
 	return voters, meta, err
 }
 
@@ -97,7 +168,24 @@ func (s *voterService) GetVoterByEPIC(ctx context.Context, epicNo string) (*mode
 	if epicNo == "" {
 		return nil, fmt.Errorf("epic number cannot be empty")
 	}
-	return s.repo.GetVoterByEPIC(ctx, epicNo)
+	voter, err := s.repo.GetVoterByEPIC(ctx, epicNo)
+	if err == nil && voter != nil {
+		go func() {
+			bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			topResultsJSON, _ := json.Marshal([]models.Voter{*voter})
+			searchLog := models.SearchLog{
+				Query:        epicNo,
+				SearchType:   "epic_no",
+				TotalResults: 1,
+				TopResults:   string(topResultsJSON),
+				CreatedAt:    time.Now(),
+			}
+			_ = s.repo.SaveSearchLog(bgCtx, searchLog)
+		}()
+	}
+	return voter, err
 }
 
 func (s *voterService) ListPollingStations(ctx context.Context, filter models.SearchFilter) ([]models.PollingStation, *models.Pagination, error) {
@@ -210,4 +298,29 @@ func (s *voterService) AuthenticateUser(username, password string) (*models.Logi
 
 func (s *voterService) GetPartDetails(ctx context.Context, assembly string, partNo int64) (*models.PartDetails, error) {
 	return s.repo.GetPartDetails(ctx, assembly, partNo)
+}
+
+func (s *voterService) InitSchema(ctx context.Context) error {
+	return s.repo.InitSchema(ctx)
+}
+
+func (s *voterService) SaveSearchLog(ctx context.Context, log models.SearchLog) error {
+	if log.Query == "" {
+		return fmt.Errorf("search query cannot be empty")
+	}
+	if log.SearchType == "" {
+		log.SearchType = classifySearchType(log.Query)
+	}
+	return s.repo.SaveSearchLog(ctx, log)
+}
+
+func (s *voterService) ListSearchLogs(ctx context.Context, searchType string, limit, page int) ([]models.SearchLog, *models.Pagination, error) {
+	return s.repo.ListSearchLogs(ctx, searchType, limit, page)
+}
+
+func (s *voterService) GetSearchLogByID(ctx context.Context, id string) (*models.SearchLog, error) {
+	if id == "" {
+		return nil, fmt.Errorf("search log ID is required")
+	}
+	return s.repo.GetSearchLogByID(ctx, id)
 }

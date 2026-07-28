@@ -35,6 +35,10 @@ func main() {
 
 	// 3. Initialize Repository, Gemini Service, Voter Service, and Handlers
 	repo := repository.NewVoterRepository(duckDB)
+	if err := repo.InitSchema(context.Background()); err != nil {
+		log.Printf("⚠️ Warning initializing DB schema for search logs: %v", err)
+	}
+
 	geminiSvc := service.NewGeminiService(cfg.GeminiAPIKey, cfg.GeminiModel)
 	if cfg.GeminiAPIKey != "" {
 		log.Printf("✨ Gemini AI Transliteration active [Model: %s]", cfg.GeminiModel)
@@ -59,6 +63,11 @@ func main() {
 	mux.HandleFunc("GET /api/v1/polling-stations/part-details", h.GetPartDetailsHandler)
 	mux.HandleFunc("GET /api/v1/constituencies", h.ListConstituenciesHandler)
 	mux.HandleFunc("GET /api/v1/openapi.json", h.OpenAPIHandler)
+
+	// Search Logging & History Endpoints
+	mux.HandleFunc("GET /api/v1/searches", h.SearchHistoryHandler)
+	mux.HandleFunc("POST /api/v1/searches/save", h.SaveSearchHandler)
+	mux.HandleFunc("GET /api/v1/searches/{id}", h.GetSearchLogByIDHandler)
 
 	// Auth & Role-based Access Endpoints
 	mux.HandleFunc("POST /api/v1/auth/login", h.LoginHandler)

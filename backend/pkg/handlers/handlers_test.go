@@ -28,6 +28,7 @@ func setupTestServer(t *testing.T) (*db.DuckDB, http.Handler) {
 	}
 
 	repo := repository.NewVoterRepository(duckDB)
+	_ = repo.InitSchema(context.Background())
 	svc := service.NewVoterService(repo, nil)
 	h := handlers.NewHandler(svc, duckDB)
 
@@ -38,6 +39,9 @@ func setupTestServer(t *testing.T) (*db.DuckDB, http.Handler) {
 	mux.HandleFunc("GET /api/v1/voters/{epic_no}", h.GetVoterByIDHandler)
 	mux.HandleFunc("GET /api/v1/constituencies", h.ListConstituenciesHandler)
 	mux.HandleFunc("POST /api/v1/voters/search", h.SearchVotersHandler)
+	mux.HandleFunc("GET /api/v1/searches", h.SearchHistoryHandler)
+	mux.HandleFunc("POST /api/v1/searches/save", h.SaveSearchHandler)
+	mux.HandleFunc("GET /api/v1/searches/{id}", h.GetSearchLogByIDHandler)
 
 	return duckDB, mux
 }
@@ -273,6 +277,70 @@ func TestGetPartDetails(t *testing.T) {
 
 	if len(pd.Sections) < 5 {
 		t.Errorf("expected at least 5 sections for vaishali-nagar part 293, got %d", len(pd.Sections))
+	}
+}
+
+func TestSaveSearchAPI(t *testing.T) {
+	duckDB, handler := setupTestServer(t)
+	defer duckDB.Close()
+
+	body := `{"query":"ABC1234567", "search_type":"epic_no", "total_results":1}`
+	req := httptest.NewRequest("POST", "/api/v1/searches/save", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("expected status 201 Created, got %d, body: %s", rr.Code, rr.Body.String())
+	}
+
+	var resp struct {
+		Success bool             `json:"success"`
+		Data    models.SearchLog `json:"data"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if resp.Data.Query != "ABC1234567" {
+		t.Errorf("expected query ABC1234567, got %s", resp.Data.Query)
+	}
+}
+
+func TestSearchHistoryAPI(t *testing.T) {
+	duckDB, handler := setupTestServer(t)
+	defer duckDB.Close()
+
+	// Perform a save first
+	saveBody := `{"query":"12/3", "search_type":"house_no", "total_results":5}`
+	saveReq := httptest.NewRequest("POST", "/api/v1/searches/save", strings.NewReader(saveBody))
+	saveReq.Header.Set("Content-Type", "application/json")
+	saveRr := httptest.NewRecorder()
+	handler.ServeHTTP(saveRr, saveReq)
+
+	if saveRr.Code != http.StatusCreated {
+		t.Fatalf("expected status 201, got %d", saveRr.Code)
+	}
+
+	// Now query search history
+	req := httptest.NewRequest("GET", "/api/v1/searches?type=house_no", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rr.Code)
+	}
+
+	var resp struct {
+		Success bool               `json:"success"`
+		Data    []models.SearchLog `json:"data"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if len(resp.Data) == 0 {
+		t.Errorf("expected non-empty search history for house_no")
 	}
 }
 

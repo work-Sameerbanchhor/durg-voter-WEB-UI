@@ -25,6 +25,10 @@ type VoterRepository interface {
 	GetNearbyPollingStations(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoPollingStationResult, error)
 	GetNearbyVoters(ctx context.Context, req models.GeoNearbyRequest) ([]models.GeoVoterResult, error)
 	CalculateDistance(lat1, lng1, lat2, lng2 float64) models.GeoDistanceResult
+	InitSchema(ctx context.Context) error
+	SaveSearchLog(ctx context.Context, log models.SearchLog) error
+	ListSearchLogs(ctx context.Context, searchType string, limit, page int) ([]models.SearchLog, *models.Pagination, error)
+	GetSearchLogByID(ctx context.Context, id string) (*models.SearchLog, error)
 }
 
 type duckDBVoterRepository struct {
@@ -921,4 +925,153 @@ func (r *duckDBVoterRepository) CalculateDistance(lat1, lng1, lat2, lng2 float64
 		DistanceMiles:  math.Round(distMiles*100) / 100,
 		DistanceMeters: math.Round(distMeters),
 	}
+}
+
+func (r *duckDBVoterRepository) InitSchema(ctx context.Context) error {
+	createTableSQL := `
+		CREATE TABLE IF NOT EXISTS search_logs (
+			id VARCHAR PRIMARY KEY,
+			query VARCHAR,
+			search_type VARCHAR,
+			filters VARCHAR,
+			total_results BIGINT,
+			top_results VARCHAR,
+			ip_address VARCHAR,
+			created_at TIMESTAMP
+		);
+	`
+	_, err := r.duckDB.DB.ExecContext(ctx, createTableSQL)
+	if err != nil {
+		return fmt.Errorf("failed to create search_logs table: %w", err)
+	}
+	return nil
+}
+
+func (r *duckDBVoterRepository) SaveSearchLog(ctx context.Context, log models.SearchLog) error {
+	if log.ID == "" {
+		log.ID = fmt.Sprintf("search-%d", time.Now().UnixNano())
+	}
+	if log.CreatedAt.IsZero() {
+		log.CreatedAt = time.Now()
+	}
+
+	insertSQL := `
+		INSERT INTO search_logs (id, query, search_type, filters, total_results, top_results, ip_address, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+	`
+	_, err := r.duckDB.DB.ExecContext(ctx, insertSQL,
+		log.ID,
+		log.Query,
+		log.SearchType,
+		log.Filters,
+		log.TotalResults,
+		log.TopResults,
+		log.IPAddress,
+		log.CreatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to save search log: %w", err)
+	}
+	return nil
+}
+
+func (r *duckDBVoterRepository) ListSearchLogs(ctx context.Context, searchType string, limit, page int) ([]models.SearchLog, *models.Pagination, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if page <= 0 {
+		page = 1
+	}
+	offset := (page - 1) * limit
+
+	var countQuery string
+	var query string
+	var args []interface{}
+	var countArgs []interface{}
+
+	if searchType != "" {
+		countQuery = "SELECT COUNT(*) FROM search_logs WHERE LOWER(search_type) = LOWER(?);"
+		query = "SELECT id, query, search_type, filters, total_results, top_results, ip_address, created_at FROM search_logs WHERE LOWER(search_type) = LOWER(?) ORDER BY created_at DESC LIMIT ? OFFSET ?;"
+		countArgs = append(countArgs, searchType)
+		args = append(args, searchType, limit, offset)
+	} else {
+		countQuery = "SELECT COUNT(*) FROM search_logs;"
+		query = "SELECT id, query, search_type, filters, total_results, top_results, ip_address, created_at FROM search_logs ORDER BY created_at DESC LIMIT ? OFFSET ?;"
+		args = append(args, limit, offset)
+	}
+
+	var totalItems int64
+	err := r.duckDB.DB.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalItems)
+	if err != nil {
+		totalItems = 0
+	}
+
+	rows, err := r.duckDB.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to list search logs: %w", err)
+	}
+	defer rows.Close()
+
+	var logs []models.SearchLog
+	for rows.Next() {
+		var sl models.SearchLog
+		var filters, topResults, ipAddress sql.NullString
+		err := rows.Scan(
+			&sl.ID,
+			&sl.Query,
+			&sl.SearchType,
+			&filters,
+			&sl.TotalResults,
+			&topResults,
+			&ipAddress,
+			&sl.CreatedAt,
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to scan search log: %w", err)
+		}
+		sl.Filters = filters.String
+		sl.TopResults = topResults.String
+		sl.IPAddress = ipAddress.String
+		logs = append(logs, sl)
+	}
+
+	totalPages := int(math.Ceil(float64(totalItems) / float64(limit)))
+	if totalPages < 1 {
+		totalPages = 1
+	}
+
+	pagination := &models.Pagination{
+		CurrentPage: page,
+		PageSize:    limit,
+		TotalItems:  totalItems,
+		TotalPages:  totalPages,
+	}
+
+	return logs, pagination, nil
+}
+
+func (r *duckDBVoterRepository) GetSearchLogByID(ctx context.Context, id string) (*models.SearchLog, error) {
+	query := "SELECT id, query, search_type, filters, total_results, top_results, ip_address, created_at FROM search_logs WHERE id = ?;"
+	var sl models.SearchLog
+	var filters, topResults, ipAddress sql.NullString
+	err := r.duckDB.DB.QueryRowContext(ctx, query, id).Scan(
+		&sl.ID,
+		&sl.Query,
+		&sl.SearchType,
+		&filters,
+		&sl.TotalResults,
+		&topResults,
+		&ipAddress,
+		&sl.CreatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("search log not found: %s", id)
+		}
+		return nil, fmt.Errorf("failed to fetch search log: %w", err)
+	}
+	sl.Filters = filters.String
+	sl.TopResults = topResults.String
+	sl.IPAddress = ipAddress.String
+	return &sl, nil
 }

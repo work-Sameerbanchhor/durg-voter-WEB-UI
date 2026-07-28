@@ -18,7 +18,7 @@ type DuckDB struct {
 }
 
 func NewDuckDB(dbPath string) (*DuckDB, error) {
-	connStr := fmt.Sprintf("%s?access_mode=READ_ONLY", dbPath)
+	connStr := dbPath
 	database, err := sql.Open("duckdb", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open duckdb at %s: %w", dbPath, err)

@@ -45,8 +45,8 @@ func LoadConfig() *Config {
 		env = "production"
 	}
 
-	rps := getEnvAsInt("RATE_LIMIT_RPS", 50)
-	burst := getEnvAsInt("RATE_LIMIT_BURST", 100)
+	rps := getEnvAsInt("RATE_LIMIT_RPS", 15)
+	burst := getEnvAsInt("RATE_LIMIT_BURST", 20)
 	origins := os.Getenv("CORS_ALLOWED_ORIGINS")
 	if origins == "" {
 		origins = "*"
