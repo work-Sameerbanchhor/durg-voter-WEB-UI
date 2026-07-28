@@ -2177,7 +2177,6 @@
                     const tr = document.createElement('tr');
                     const boothName = v.polling_station_name || ('Booth #' + v.part_number);
                     const boothAddress = v.polling_station_address || boothName;
-                    const areaTag = v.town_village || v.assembly_constituency || 'Durg';
 
                     tr.innerHTML = `
                         <td style="font-weight: 700;">${v.epic_no || 'N/A'}</td>
@@ -2187,15 +2186,7 @@
                         <td>${v.age || 'N/A'}</td>
                         <td>${v.assembly_constituency || 'N/A'}</td>
                         <td>${v.town_village || 'N/A'}</td>
-                        <td>
-                            <div class="booth-chip-wrapper">
-                                <div class="booth-chip-header">
-                                    <span class="booth-chip-part">Booth #${v.part_number}</span>
-                                    <span class="booth-chip-area">${areaTag}</span>
-                                </div>
-                                <div style="font-size: 0.78rem; word-break: break-word;" title="${boothAddress}">${boothName}</div>
-                            </div>
-                        </td>
+                        <td title="${boothAddress}">${boothName}</td>
                     `;
                     tbody.appendChild(tr);
                 });
