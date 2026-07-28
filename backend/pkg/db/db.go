@@ -18,13 +18,35 @@ type DuckDB struct {
 }
 
 func NewDuckDB(dbPath string) (*DuckDB, error) {
-	connStr := dbPath
-	database, err := sql.Open("duckdb", connStr)
+	database, err := sql.Open("duckdb", "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to open duckdb at %s: %w", dbPath, err)
+		return nil, fmt.Errorf("failed to open in-memory duckdb: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	if dbPath != "" && dbPath != ":memory:" {
+		log.Printf("🚀 Loading DuckDB dataset into RAM from %s...", dbPath)
+		start := time.Now()
+
+		attachSQL := fmt.Sprintf("ATTACH '%s' AS disk_db (READ_ONLY);", dbPath)
+		if _, err := database.Exec(attachSQL); err != nil {
+			database.Close()
+			return nil, fmt.Errorf("failed to attach disk database at %s: %w", dbPath, err)
+		}
+
+		loadSQL := `
+			CREATE TABLE IF NOT EXISTS voters AS SELECT * FROM disk_db.voters;
+			CREATE TABLE IF NOT EXISTS polling_stations AS SELECT * FROM disk_db.polling_stations;
+			DETACH disk_db;
+		`
+		if _, err := database.Exec(loadSQL); err != nil {
+			database.Close()
+			return nil, fmt.Errorf("failed to load dataset into RAM: %w", err)
+		}
+
+		log.Printf("✨ DuckDB dataset (1.04M voters) successfully loaded into RAM in %v", time.Since(start))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := database.PingContext(ctx); err != nil {
@@ -36,7 +58,6 @@ func NewDuckDB(dbPath string) (*DuckDB, error) {
 	database.SetMaxIdleConns(10)
 	database.SetConnMaxLifetime(30 * time.Minute)
 
-	log.Printf("Successfully connected to DuckDB database: %s", dbPath)
 	return &DuckDB{
 		DB:     database,
 		DBPath: dbPath,
