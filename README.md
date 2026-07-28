@@ -104,19 +104,46 @@ Access Dashboard at: `http://localhost:7860/`
 
 ---
 
-## 📡 API Reference
-
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/` | Interactive Glassmorphism Dashboard UI |
+| `GET` | `/` | Interactive API Documentation |
 | `GET` | `/api/v1/health` | Health check, DuckDB ping, Go runtime memory |
 | `GET` | `/api/v1/stats` | Electorate demographic statistics |
-| `GET` | `/api/v1/voters` | Paginated voters list with search/age/assembly filters |
+| `GET` | `/api/v1/voters` | Paginated voters list with search/age/assembly filters (`?use_ai=false` optional) |
 | `GET` | `/api/v1/voters/{epic_no}` | Specific voter profile by EPIC Card Number |
-| `POST` | `/api/v1/voters/search` | Advanced JSON multi-criteria voter query |
+| `POST` | `/api/v1/voters/search` | Advanced JSON multi-criteria voter query (`"use_ai": false` optional) |
+| `GET` | `/api/v1/searches` | List saved search history filtered by type (`name`, `epic_no`, `house_no`) |
+| `POST` | `/api/v1/searches/save` | Explicitly save a search result entry |
+| `GET` | `/api/v1/searches/{id}` | Inspect details of a saved search entry |
 | `GET` | `/api/v1/polling-stations` | Polling station booths listing |
 | `GET` | `/api/v1/constituencies` | Electorate breakdown by assembly constituency |
 | `GET` | `/api/v1/openapi.json` | OpenAPI 3.0 specification |
+
+---
+
+## ⚡ New Features & Capabilities
+
+### 1. On-Demand AI Transliteration Toggle (`use_ai`)
+By default, queries invoke Gemini 3.5 Flash Lite for English → Hindi transliteration. To achieve **sub-50ms ultra-fast searches**, pass `"use_ai": false` or `?use_ai=false`:
+
+- **JSON Body Search (`POST /api/v1/voters/search`)**:
+  ```json
+  {
+    "query": "sameer",
+    "use_ai": false,
+    "limit": 20
+  }
+  ```
+
+- **Query Param Search (`GET /api/v1/voters`)**:
+  ```http
+  GET /api/v1/voters?search=sameer&use_ai=false&limit=20
+  ```
+
+### 2. Automatic Search History & Query Persistence
+- Automatically categorizes incoming search terms into `epic_no`, `house_no`, `name`, or `general`.
+- Stores search metadata, match counts, top result snapshots, client IP, and timestamps into DuckDB `search_logs`.
+- Retrieve saved searches using `GET /api/v1/searches?type=name` or `GET /api/v1/searches?type=epic_no`.
 
 ---
 
