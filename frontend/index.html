@@ -896,7 +896,10 @@
         }
 
         @media (max-width: 768px) {
-            body { padding: 2rem 1rem; }
+            html {
+                zoom: 0.75;
+            }
+            body { padding: 1.5rem 0.75rem; }
             .grid-2col { grid-template-columns: 1fr; }
         }
     </style>
