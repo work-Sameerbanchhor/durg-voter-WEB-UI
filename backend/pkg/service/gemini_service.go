@@ -32,7 +32,7 @@ func NewGeminiService(apiKey, model string) GeminiService {
 	return &geminiService{
 		apiKey: apiKey,
 		model:  model,
-		client: &http.Client{Timeout: 3 * time.Second},
+		client: &http.Client{Timeout: 300 * time.Millisecond},
 	}
 }
 
@@ -81,8 +81,8 @@ func (s *geminiService) TransliterateEnglishToHindi(ctx context.Context, text st
 		return cachedVal.(string), nil
 	}
 
-	// Use context with 2.5s timeout for fast execution
-	reqCtx, cancel := context.WithTimeout(ctx, 2500*time.Millisecond)
+	// Use context with 250ms timeout for ultra-fast execution without blocking searches
+	reqCtx, cancel := context.WithTimeout(ctx, 250*time.Millisecond)
 	defer cancel()
 
 	prompt := fmt.Sprintf("Transliterate the Indian name or text '%s' into Devanagari Hindi script. Return ONLY the Hindi text without any quotes, punctuation, explanation or extra text.", trimmed)

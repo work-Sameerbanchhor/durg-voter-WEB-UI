@@ -119,6 +119,11 @@ func (s *voterService) ListVoters(ctx context.Context, filter models.SearchFilte
 		useAI = *filter.UseAI
 	}
 
+	searchType := classifySearchType(filter.Query)
+	if searchType == "epic_no" || searchType == "house_no" {
+		useAI = false
+	}
+
 	if useAI && s.geminiSvc != nil && filter.Query != "" && filter.HindiQuery == "" {
 		if hindiQuery, err := s.geminiSvc.TransliterateEnglishToHindi(ctx, filter.Query); err == nil && hindiQuery != "" {
 			filter.HindiQuery = hindiQuery
