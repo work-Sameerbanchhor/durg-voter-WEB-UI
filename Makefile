@@ -3,7 +3,7 @@
 APP_NAME = server
 PORT ?= 7860
 DB_PATH ?= backend/database/durg_voters.duckdb
-GCP_PROJECT ?= sameer-voter-analytics
+GCP_PROJECT ?= sameer-voter-analytics-v1
 GCP_REGION ?= asia-south1
 SERVICE_NAME ?= durg-voter-api
 GEMINI_API_KEY ?= $(shell grep GEMINI_API_KEY .env 2>/dev/null | cut -d '=' -f2 | tr -d ' "')
@@ -34,8 +34,9 @@ deploy-cloudrun:
 		--region $(GCP_REGION) \
 		--platform managed \
 		--allow-unauthenticated \
-		--memory 2Gi \
-		--cpu 1 \
+		--memory 8Gi \
+		--cpu 2 \
+		--min-instances 0 \
 		--set-env-vars "ENVIRONMENT=production,DB_PATH=/app/backend/database/durg_voters.duckdb,CORS_ALLOWED_ORIGINS=*,GEMINI_API_KEY=$(GEMINI_API_KEY),SECRET_HEADER=$(SECRET_HEADER)"
 
 clean:
