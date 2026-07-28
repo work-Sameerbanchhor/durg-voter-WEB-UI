@@ -122,6 +122,7 @@ type SearchFilter struct {
 	SortOrder            string `json:"sort_order"`
 	Page                 int    `json:"page"`
 	Limit                int    `json:"limit"`
+	UseAI                *bool  `json:"use_ai,omitempty"`
 }
 
 // StatsSummary details overall electorate statistics

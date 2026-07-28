@@ -114,7 +114,12 @@ func (s *voterService) ListVoters(ctx context.Context, filter models.SearchFilte
 		filter.Page = 1
 	}
 
-	if s.geminiSvc != nil && filter.Query != "" && filter.HindiQuery == "" {
+	useAI := true
+	if filter.UseAI != nil {
+		useAI = *filter.UseAI
+	}
+
+	if useAI && s.geminiSvc != nil && filter.Query != "" && filter.HindiQuery == "" {
 		if hindiQuery, err := s.geminiSvc.TransliterateEnglishToHindi(ctx, filter.Query); err == nil && hindiQuery != "" {
 			filter.HindiQuery = hindiQuery
 		}

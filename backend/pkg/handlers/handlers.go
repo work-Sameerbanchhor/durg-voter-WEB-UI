@@ -123,6 +123,11 @@ func (h *Handler) ListVotersHandler(w http.ResponseWriter, r *http.Request) {
 		filter.PartNumber = p
 	}
 
+	if useAIStr := r.URL.Query().Get("use_ai"); useAIStr != "" {
+		useAI := (strings.ToLower(useAIStr) == "true" || useAIStr == "1")
+		filter.UseAI = &useAI
+	}
+
 	filter.Page, _ = strconv.Atoi(r.URL.Query().Get("page"))
 	filter.Limit, _ = strconv.Atoi(r.URL.Query().Get("limit"))
 
