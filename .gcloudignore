@@ -1,0 +1,7 @@
+.git
+.gitignore
+server
+*.test
+*.out
+.DS_Store
+!backend/database/durg_voters.duckdb

@@ -43,6 +43,6 @@ ENV ENVIRONMENT=production
 ENV DB_PATH=/app/backend/database/durg_voters.duckdb
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:7860/api/v1/health || exit 1
+  CMD curl -f http://localhost:${PORT}/api/v1/health || exit 1
 
 CMD ["/app/server"]
