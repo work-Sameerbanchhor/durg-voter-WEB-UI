@@ -264,29 +264,39 @@
             user-select: none;
         }
 
+        .treemap-assembly-box {
+            position: absolute;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.02);
+            pointer-events: none;
+            z-index: 1;
+        }
+
         .treemap-node {
             box-sizing: border-box;
             position: absolute;
             overflow: hidden;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            border-radius: 0;
             cursor: pointer;
-            transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+            transition: filter 0.15s ease, outline 0.15s ease;
             font-size: 0.72rem;
-            padding: 6px 8px;
+            padding: 2px 4px;
             color: var(--text-main);
             font-weight: 500;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
+            z-index: 2;
         }
 
         .treemap-node:hover {
-            transform: scale(1.012);
             z-index: 20;
-            filter: brightness(1.15);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-            border-color: var(--border-dark);
+            filter: brightness(1.2);
+            outline: 2px solid #ffffff;
+            outline-offset: -1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         }
 
         .treemap-group-label {
@@ -295,15 +305,16 @@
             font-size: 0.72rem;
             font-weight: 700;
             letter-spacing: 0.05em;
-            color: var(--text-main);
-            background: var(--card-bg);
-            padding: 2px 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            padding: 3px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            z-index: 5;
+            z-index: 10;
             cursor: pointer;
         }
 
@@ -1761,16 +1772,28 @@
                 .sort((a, b) => b.value - a.value);
 
             d3.treemap()
+                .tile(d3.treemapSquarify)
                 .size([width, height])
                 .paddingOuter(4)
                 .paddingTop(26)
-                .paddingInner(3)
+                .paddingInner(1)
                 .round(true)(root);
 
             const tooltip = d3.select("#d3VizTooltip");
 
-            // Assembly Parent Header Labels
+            // Assembly Parent Header Labels & Bounding Containers
             const assemblyNodes = root.descendants().filter(d => d.depth === 1);
+
+            d3.select(chartDiv)
+                .selectAll(".treemap-assembly-box")
+                .data(assemblyNodes)
+                .enter()
+                .append("div")
+                .attr("class", "treemap-assembly-box")
+                .style("left", d => `${d.x0}px`)
+                .style("top", d => `${d.y0}px`)
+                .style("width", d => `${Math.max(0, d.x1 - d.x0)}px`)
+                .style("height", d => `${Math.max(0, d.y1 - d.y0)}px`);
 
             d3.select(chartDiv)
                 .selectAll(".treemap-group-label")
@@ -1803,7 +1826,7 @@
                     const color = getAssemblyColor(d.data.assembly, i);
                     return color;
                 })
-                .style("opacity", d => (d.x1 - d.x0 < 4 || d.y1 - d.y0 < 4) ? 0 : 0.85)
+                .style("opacity", d => (d.x1 - d.x0 < 2 || d.y1 - d.y0 < 2) ? 0 : 0.9)
                 .on("mouseover", (event, d) => {
                     tooltip.style("opacity", 1)
                         .html(`
