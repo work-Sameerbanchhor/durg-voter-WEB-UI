@@ -946,7 +946,7 @@
         <div class="tabs-bar">
             <button class="tab-btn active" onclick="openTab(this, 'tabOverview')">Overview</button>
             <button class="tab-btn" onclick="openTab(this, 'tabSearch')">Voter Search</button>
-            <button class="tab-btn" onclick="openTab(this, 'tabMap')">Assembly Hierarchy</button>
+            <button class="tab-btn" onclick="openTab(this, 'tabMap')">DB Architecture &amp; Schema</button>
         </div>
 
         <!-- TAB 1: OVERVIEW & DEMOGRAPHICS -->
@@ -1138,116 +1138,85 @@
             </div>
         </div>
 
-        <!-- TAB 3: ASSEMBLY TREEMAP / SUNBURST HIERARCHY -->
+        <!-- TAB 3: DUCKDB ARCHITECTURE & RELATIONAL SCHEMA EXPLORER -->
         <div id="tabMap" class="tab-content">
             <div class="panel-card">
                 <div class="panel-header">
-                    <span class="panel-title">Assembly Electorate Hierarchy</span>
+                    <span class="panel-title">DuckDB Architecture &amp; Relational Schema Explorer</span>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <div class="mode-segmented">
-                            <button class="mode-opt active" id="btnModeTreemap" onclick="setHierarchyMode('treemap')">Treemap</button>
-                            <button class="mode-opt" id="btnModeSunburst" onclick="setHierarchyMode('sunburst')">Sunburst</button>
-                            <button class="mode-opt" id="btnModeDual" onclick="setHierarchyMode('dual')">Dual View</button>
+                            <button class="mode-opt active" id="btnModeGraph" onclick="setSchemaVizMode('graph')">ERD Network Graph</button>
+                            <button class="mode-opt" id="btnModeFlow" onclick="setSchemaVizMode('flow')">Query Data Lineage</button>
+                            <button class="mode-opt" id="btnModeSpecs" onclick="setSchemaVizMode('specs')">Column Specs</button>
                         </div>
-                        <button class="preset-chip" onclick="resetHierarchyFocus()">Reset View</button>
+                        <button class="preset-chip" onclick="resetSchemaFocus()">Reset Architecture View</button>
                     </div>
                 </div>
 
-                <!-- Hierarchy Filters Grid -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 1.5rem;">
-                    <div>
-                        <label class="form-label">Assembly Constituency:</label>
-                        <select id="hierarchyAssemblyFilter" class="form-control" onchange="updateHierarchyViz()">
-                            <option value="">All Assemblies</option>
-                            <option value="durg-city">Durg City</option>
-                            <option value="durg-gramin">Durg Gramin</option>
-                            <option value="bhilai-nagar">Bhilai Nagar</option>
-                            <option value="vaishali-nagar">Vaishali Nagar</option>
-                            <option value="patan">Patan</option>
-                            <option value="Ahiwara">Ahiwara</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label">Metric:</label>
-                        <select id="hierarchyMetricSelect" class="form-control" onchange="updateHierarchyViz()">
-                            <option value="total_voters">Total Electors</option>
-                            <option value="male_voters">Male Electors</option>
-                            <option value="female_voters">Female Electors</option>
-                            <option value="booth_count">Booth Count</option>
-                            <option value="gender_ratio">Gender Ratio (F/M)</option>
-                        </select>
-                    </div>
-                    <div style="grid-column: span 2;">
-                        <label class="form-label">Search Hierarchy Nodes:</label>
-                        <input type="text" id="hierarchySearchInput" class="form-control" placeholder="Search school name, part number, building address, or locality..." onkeyup="filterHierarchyBySearch()">
-                    </div>
-                </div>
-
-                <!-- Hierarchy Summary Stats Bar -->
+                <!-- Database Metrics Grid -->
                 <div class="metrics-grid" style="margin-bottom: 1.5rem;">
-                    <div class="metric-card">
-                        <span class="metric-label">Constituencies</span>
-                        <span class="metric-value" id="hsAssembliesCount">6</span>
-                        <span class="metric-meta">Active Divisions</span>
+                    <div class="metric-card" onclick="inspectSchemaNode('duckdb_core')" style="cursor: pointer;" title="Click to inspect DuckDB Engine">
+                        <span class="metric-label">Execution Engine</span>
+                        <span class="metric-value" style="color: #f59e0b;">DuckDB 1.5</span>
+                        <span class="metric-meta">Vectorized SIMD Columnar SQL</span>
                     </div>
-                    <div class="metric-card">
-                        <span class="metric-label">Total Booths</span>
-                        <span class="metric-value" id="hsBoothsCount">1,513</span>
-                        <span class="metric-meta">Polling Stations</span>
+                    <div class="metric-card" onclick="inspectSchemaNode('tbl_voters')" style="cursor: pointer;" title="Click to inspect voters table">
+                        <span class="metric-label">Primary Entity</span>
+                        <span class="metric-value" style="color: #3b82f6;">voters</span>
+                        <span class="metric-meta">483,426 Rows &bull; 21 Columns</span>
                     </div>
-                    <div class="metric-card">
-                        <span class="metric-label">Total Electors</span>
-                        <span class="metric-value" id="hsElectorsCount">1,045,426</span>
-                        <span class="metric-meta">Registered Voters</span>
+                    <div class="metric-card" onclick="inspectSchemaNode('tbl_polling_stations')" style="cursor: pointer;" title="Click to inspect polling_stations table">
+                        <span class="metric-label">Booth Entity</span>
+                        <span class="metric-value" style="color: #10b981;">polling_stations</span>
+                        <span class="metric-meta">1,426 Booths &bull; 10 Columns</span>
                     </div>
-                    <div class="metric-card">
-                        <span class="metric-label">Gender Ratio</span>
-                        <span class="metric-value" id="hsGenderRatio">997</span>
-                        <span class="metric-meta">Females / 1000 Males</span>
-                    </div>
-                </div>
-
-                <!-- Breadcrumbs Navigation -->
-                <div id="hierarchyBreadcrumbs" class="breadcrumbs-bar">
-                    <span style="color: var(--text-muted); font-size: 0.75rem;">Path:</span>
-                    <span class="crumb-chip" onclick="resetHierarchyFocus()">Durg Electorate</span>
-                </div>
-
-                <!-- Visualizer Container -->
-                <div id="vizWrapper" class="viz-grid">
-                    <div id="treemapContainer" class="viz-box">
-                        <div class="viz-header">
-                            <span class="viz-title">Assembly &amp; Booth Treemap</span>
-                            <span id="treemapSubLabel" class="badge badge-info">Proportional Area Layout</span>
-                        </div>
-                        <div id="treemapChart" style="width: 100%; height: 520px; position: relative; background: var(--subtle-bg); border-radius: 6px; overflow: hidden;"></div>
-                    </div>
-
-                    <div id="sunburstContainer" class="viz-box" style="display: none;">
-                        <div class="viz-header">
-                            <span class="viz-title">Assembly Electorate Sunburst</span>
-                            <span id="sunburstSubLabel" class="badge badge-info">Concentric Radial Partition</span>
-                        </div>
-                        <svg id="sunburstSvg" class="viz-svg" style="background: var(--subtle-bg); border-radius: 6px;"></svg>
+                    <div class="metric-card" onclick="inspectSchemaNode('mod_gemini_ai')" style="cursor: pointer;" title="Click to inspect Gemini AI Module">
+                        <span class="metric-label">AI Transliteration</span>
+                        <span class="metric-value" style="color: #ec4899;">Gemini 3.5</span>
+                        <span class="metric-meta">English &harr; Devanagari Pipeline</span>
                     </div>
                 </div>
 
-                <!-- Assembly Color Legend -->
-                <div id="hierarchyLegend" style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.78rem;">
-                    <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem;">Constituencies:</span>
+                <!-- Visual Architecture Container -->
+                <div id="schemaVizWrapper" class="viz-box" style="position: relative; background: #0c0d0e; border: 1px solid var(--border-color); border-radius: 0; min-height: 540px; overflow: hidden;">
+                    <div class="viz-header" style="position: absolute; top: 14px; left: 18px; z-index: 10;">
+                        <span class="viz-title" id="schemaVizTitle" style="color: #f3f4f6; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Interactive Relational ERD &amp; Engine Pipeline</span>
+                        <span id="schemaVizSubLabel" class="badge badge-info">Click any node to inspect column schema &amp; execution details</span>
+                    </div>
+                    <svg id="dbSchemaSvg" style="width: 100%; height: 540px; user-select: none; background: transparent;"></svg>
                 </div>
 
                 <!-- Floating D3 Tooltip -->
                 <div id="d3VizTooltip" class="d3-viz-tooltip"></div>
 
-                <!-- Selected Node Inspector Card -->
-                <div id="hierarchyNodeDetail" class="metric-card" style="display: none; margin-top: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                        <h4 id="nodeDetailTitle" style="margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-main);">Selected Node Details</h4>
-                        <span id="nodeDetailBadge" class="badge badge-info">Assembly Node</span>
+                <!-- Selected Entity Schema Inspector Card -->
+                <div id="dbSchemaInspectorCard" class="panel-card" style="margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <div>
+                            <h4 id="inspectorTitle" style="margin: 0; font-size: 1rem; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.06em;">voters (Core Electorate Table)</h4>
+                            <div id="inspectorDesc" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Main voter database table containing demographics, EPIC card IDs, and location fields</div>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span id="inspectorTypeBadge" class="badge badge-info" style="font-size: 0.75rem;">TABLE</span>
+                            <span id="inspectorRowBadge" class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.75rem;">483,426 Rows</span>
+                        </div>
                     </div>
-                    <div id="nodeDetailContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;">
-                        <!-- Filled dynamically -->
+
+                    <!-- Column Specs Table -->
+                    <div class="responsive-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Column Name</th>
+                                    <th>Data Type</th>
+                                    <th>Key / Index</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inspectorColumnsTableBody">
+                                <!-- Dynamically filled -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1281,7 +1250,7 @@
             }
             setTimeout(() => {
                 if (typeof renderOverviewCharts === 'function') renderOverviewCharts();
-                if (typeof updateHierarchyViz === 'function') updateHierarchyViz();
+                if (typeof renderDatabaseSchemaViz === 'function') renderDatabaseSchemaViz();
             }, 50);
         }
 
@@ -1768,127 +1737,338 @@
             const height = 520;
 
             const root = d3.hierarchy(rootData)
-                .sum(d => (d.children ? 0 : (d[metricKey] || 1)))
-                .sort((a, b) => b.value - a.value);
+        /* DUCKDB ARCHITECTURE & RELATIONAL SCHEMA EXPLORER */
+        let currentSchemaMode = 'graph';
+        let selectedSchemaNodeKey = 'tbl_voters';
 
-            d3.treemap()
-                .tile(d3.treemapSquarify)
-                .size([width, height])
-                .paddingOuter(4)
-                .paddingTop(26)
-                .paddingInner(1)
-                .round(true)(root);
+        const SCHEMA_NODES = {
+            duckdb_core: {
+                id: "duckdb_core",
+                name: "DuckDB Core Vectorized Engine",
+                type: "ENGINE",
+                badge: "Vectorized SIMD",
+                color: "#f59e0b",
+                x: 440, y: 75,
+                rows: "DuckDB 1.5 C++ Engine",
+                desc: "In-memory columnar query engine with SIMD vectorized processing, parallel filter pushdown, and CGO bindings for Go REST backend.",
+                columns: [
+                    { name: "columnar_buffer_pool", type: "MEMORY", key: "SYS", desc: "Columnar Vector Data Buffer Pool" },
+                    { name: "vector_executor", type: "ENGINE", key: "SIMD", desc: "SIMD-accelerated Vectorized SQL Query Processor" },
+                    { name: "filter_pushdown", type: "OPTIMIZER", key: "OPT", desc: "Automatic Selection & Filter Projection Pushdown" },
+                    { name: "duckcli_driver", type: "CGO/C++", key: "DRIVER", desc: "Go database/sql DuckDB CGO Driver Bridge" }
+                ]
+            },
+            tbl_voters: {
+                id: "tbl_voters",
+                name: "voters (Main Electorate Table)",
+                type: "TABLE",
+                badge: "483,426 Rows",
+                color: "#3b82f6",
+                x: 190, y: 270,
+                rows: "483,426 Registered Voters",
+                desc: "Primary electorate table containing individual voter demographics, EPIC card numbers, house addresses, booth part numbers, and coordinates.",
+                columns: [
+                    { name: "voter_id", type: "VARCHAR", key: "PK", desc: "Unique EPIC Voter Card Identifier" },
+                    { name: "voter_name_english", type: "VARCHAR", key: "IDX", desc: "Voter Full Name (English ASCII)" },
+                    { name: "voter_name_hindi", type: "VARCHAR", key: "IDX", desc: "Voter Full Name (Devanagari Script)" },
+                    { name: "relative_name_english", type: "VARCHAR", key: "NONE", desc: "Father/Husband Relative Name (English)" },
+                    { name: "relative_name_hindi", type: "VARCHAR", key: "NONE", desc: "Father/Husband Relative Name (Hindi)" },
+                    { name: "gender_english", type: "VARCHAR", key: "NONE", desc: "Voter Gender (Male / Female / Other)" },
+                    { name: "age", type: "INTEGER", key: "NONE", desc: "Voter Age in Years" },
+                    { name: "house_number", type: "VARCHAR", key: "NONE", desc: "House or Building Number" },
+                    { name: "part_number", type: "BIGINT", key: "FK", desc: "Polling Station Booth Part Number (1..300)" },
+                    { name: "assembly_constituency", type: "VARCHAR", key: "FK", desc: "Assembly Constituency Name (e.g. Durg City)" },
+                    { name: "town_village", type: "VARCHAR", key: "IDX", desc: "Town / Village / Locality / Ward" },
+                    { name: "section_number_and_name", type: "VARCHAR", key: "NONE", desc: "Neighborhood Section Details" },
+                    { name: "latitude", type: "DOUBLE", key: "GEO", desc: "WGS84 Latitude Coordinate" },
+                    { name: "longitude", type: "DOUBLE", key: "GEO", desc: "WGS84 Longitude Coordinate" }
+                ]
+            },
+            tbl_polling_stations: {
+                id: "tbl_polling_stations",
+                name: "polling_stations (Booth Summary Table)",
+                type: "TABLE",
+                badge: "1,426 Booths",
+                color: "#10b981",
+                x: 690, y: 270,
+                rows: "1,426 Polling Stations",
+                desc: "Polling station booth metadata, building addresses, geographic coordinates, and pre-computed male/female elector counts.",
+                columns: [
+                    { name: "assembly_constituency", type: "VARCHAR", key: "PK/FK", desc: "Assembly Constituency Code" },
+                    { name: "part_number", type: "BIGINT", key: "PK/FK", desc: "Booth Part Number (1..300)" },
+                    { name: "polling_station_name", type: "VARCHAR", key: "IDX", desc: "Polling Building Name (School/Panchayat)" },
+                    { name: "polling_station_address", type: "VARCHAR", key: "NONE", desc: "Full Building Street Address" },
+                    { name: "town_village", type: "VARCHAR", key: "NONE", desc: "Town / Village Name" },
+                    { name: "total_voters", type: "BIGINT", key: "AGG", desc: "Total Registered Electors" },
+                    { name: "total_male_voters", type: "BIGINT", key: "AGG", desc: "Total Male Electors" },
+                    { name: "total_female_voters", type: "BIGINT", key: "AGG", desc: "Total Female Electors" },
+                    { name: "latitude", type: "DOUBLE", key: "GEO", desc: "Booth Lat Coordinate" },
+                    { name: "longitude", type: "DOUBLE", key: "GEO", desc: "Booth Lng Coordinate" }
+                ]
+            },
+            view_constituencies: {
+                id: "view_constituencies",
+                name: "constituencies (Assembly Views)",
+                type: "VIEW",
+                badge: "6 Assemblies",
+                color: "#8b5cf6",
+                x: 690, y: 460,
+                rows: "6 Assembly Divisions",
+                desc: "Aggregated assembly constituency summary view for Durg City, Durg Gramin, Bhilai Nagar, Vaishali Nagar, Patan, and Ahiwara.",
+                columns: [
+                    { name: "assembly_constituency", type: "VARCHAR", key: "PK", desc: "Assembly Division Name" },
+                    { name: "total_voters", type: "BIGINT", key: "SUM", desc: "Total Aggregate Electors in Assembly" },
+                    { name: "total_booths", type: "BIGINT", key: "SUM", desc: "Total Polling Booths in Assembly" },
+                    { name: "male_voters", type: "BIGINT", key: "SUM", desc: "Total Male Voters in Assembly" },
+                    { name: "female_voters", type: "BIGINT", key: "SUM", desc: "Total Female Voters in Assembly" }
+                ]
+            },
+            mod_gemini_ai: {
+                id: "mod_gemini_ai",
+                name: "Gemini 3.5 AI Transliteration Module",
+                type: "AI PIPELINE",
+                badge: "Gemini 3.5 Flash",
+                color: "#ec4899",
+                x: 190, y: 460,
+                rows: "AI English <-> Hindi Pipeline",
+                desc: "Real-time AI transliteration engine converting English search queries into Devanagari Hindi before searching DuckDB columns.",
+                columns: [
+                    { name: "english_query", type: "STRING", key: "IN", desc: "Input English Name Query (e.g. Ramesh)" },
+                    { name: "devanagari_query", type: "STRING", key: "OUT", desc: "Gemini Transliterated Hindi Query (रमेश)" },
+                    { name: "cache_store", type: "SYNC_MAP", key: "CACHE", desc: "Sub-millisecond In-Memory Cache" }
+                ]
+            },
+            mod_geospatial: {
+                id: "mod_geospatial",
+                name: "GeoSpatial Proximity Index",
+                type: "SPATIAL INDEX",
+                badge: "Haversine Radius",
+                color: "#06b6d4",
+                x: 440, y: 360,
+                rows: "WGS84 Lat/Lng Grid",
+                desc: "Spatial indexing and Haversine formula calculation module for nearby voter and booth geolocation queries.",
+                columns: [
+                    { name: "lat_lng_grid", type: "INDEX", key: "SPATIAL", desc: "Spatial Grid Coordinate Index" },
+                    { name: "distance_km", type: "DOUBLE", key: "CALC", desc: "Calculated Distance in Kilometers" }
+                ]
+            }
+        };
 
-            const tooltip = d3.select("#d3VizTooltip");
+        const SCHEMA_LINKS = [
+            { source: "duckdb_core", target: "tbl_voters", label: "Vectorized Column Stream" },
+            { source: "duckdb_core", target: "tbl_polling_stations", label: "Columnar Table Scan" },
+            { source: "tbl_voters", target: "tbl_polling_stations", label: "Foreign Key (part_number + assembly)" },
+            { source: "tbl_polling_stations", target: "view_constituencies", label: "Group-By Aggregation View" },
+            { source: "tbl_voters", target: "mod_gemini_ai", label: "Dual English / Hindi Search" },
+            { source: "tbl_voters", target: "mod_geospatial", label: "Spatial Coordinate Index" },
+            { source: "tbl_polling_stations", target: "mod_geospatial", label: "Booth Proximity Radius" }
+        ];
 
-            // Assembly Parent Header Labels & Bounding Containers
-            const assemblyNodes = root.descendants().filter(d => d.depth === 1);
-
-            d3.select(chartDiv)
-                .selectAll(".treemap-assembly-box")
-                .data(assemblyNodes)
-                .enter()
-                .append("div")
-                .attr("class", "treemap-assembly-box")
-                .style("left", d => `${d.x0}px`)
-                .style("top", d => `${d.y0}px`)
-                .style("width", d => `${Math.max(0, d.x1 - d.x0)}px`)
-                .style("height", d => `${Math.max(0, d.y1 - d.y0)}px`);
-
-            d3.select(chartDiv)
-                .selectAll(".treemap-group-label")
-                .data(assemblyNodes)
-                .enter()
-                .append("div")
-                .attr("class", "treemap-group-label")
-                .style("left", d => `${d.x0 + 4}px`)
-                .style("top", d => `${d.y0 + 2}px`)
-                .style("max-width", d => `${Math.max(0, d.x1 - d.x0 - 8)}px`)
-                .text(d => `${d.data.name.toUpperCase()} (${Number(d.value).toLocaleString()})`)
-                .on("click", (event, d) => {
-                    inspectHierarchyNode(d.data);
-                });
-
-            // Treemap Leaf Nodes (Booths)
-            const leafNodes = root.leaves();
-
-            const nodeDivs = d3.select(chartDiv)
-                .selectAll(".treemap-node")
-                .data(leafNodes)
-                .enter()
-                .append("div")
-                .attr("class", "treemap-node")
-                .style("left", d => `${d.x0}px`)
-                .style("top", d => `${d.y0}px`)
-                .style("width", d => `${Math.max(0, d.x1 - d.x0)}px`)
-                .style("height", d => `${Math.max(0, d.y1 - d.y0)}px`)
-                .style("background", (d, i) => {
-                    const color = getAssemblyColor(d.data.assembly, i);
-                    return color;
-                })
-                .style("opacity", d => (d.x1 - d.x0 < 2 || d.y1 - d.y0 < 2) ? 0 : 0.9)
-                .on("mouseover", (event, d) => {
-                    tooltip.style("opacity", 1)
-                        .html(`
-                            <strong style="color: var(--accent-info); font-size: 0.88rem;">${d.data.name}</strong><br/>
-                            <div style="margin-top: 6px; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">
-                                <b>Assembly:</b> ${d.data.assembly}<br/>
-                                <b>Town/Village:</b> ${d.data.town}<br/>
-                                <b>Total Electors:</b> ${Number(d.data.total_voters || 0).toLocaleString()}<br/>
-                                <b>Male:</b> ${Number(d.data.male_voters || 0).toLocaleString()} | <b>Female:</b> ${Number(d.data.female_voters || 0).toLocaleString()}<br/>
-                                <b>Gender Ratio:</b> ${d.data.gender_ratio || 0} F/1000M
-                            </div>
-                        `);
-                })
-                .on("mousemove", (event) => {
-                    tooltip.style("left", (event.clientX + 16) + "px")
-                        .style("top", (event.clientY - 16) + "px");
-                })
-                .on("mouseout", () => {
-                    tooltip.style("opacity", 0);
-                })
-                .on("click", (event, d) => {
-                    inspectHierarchyNode(d.data);
-                });
-
-            nodeDivs.each(function(d) {
-                const w = d.x1 - d.x0;
-                const h = d.y1 - d.y0;
-                if (w > 40 && h > 20) {
-                    d3.select(this).html(`
-                        <div style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #000; text-shadow: 0 1px 2px rgba(255,255,255,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">#${d.data.partNumber}</div>
-                        ${h > 34 ? `<div style="font-size: 0.65rem; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Number(d.value).toLocaleString()}</div>` : ''}
-                    `);
-                }
-            });
+        function initHierarchyViz() {
+            renderDatabaseSchemaViz();
+            inspectSchemaNode(selectedSchemaNodeKey);
         }
 
-        /* D3 SUNBURST RENDERER */
-        function renderSunburst(rootData, metricKey) {
-            const svg = d3.select('#sunburstSvg');
-            if (svg.empty()) return;
-            svg.html('');
+        function setSchemaVizMode(mode) {
+            currentSchemaMode = mode;
+            document.querySelectorAll('.mode-opt').forEach(btn => btn.classList.remove('active'));
+            if (mode === 'graph') document.getElementById('btnModeGraph')?.classList.add('active');
+            if (mode === 'flow') document.getElementById('btnModeFlow')?.classList.add('active');
+            if (mode === 'specs') document.getElementById('btnModeSpecs')?.classList.add('active');
+            renderDatabaseSchemaViz();
+        }
 
-            const container = document.getElementById('sunburstContainer');
-            const width = container ? container.clientWidth - 40 : 500;
-            const height = 520;
-            const radius = Math.min(width, height) / 2 - 20;
+        function resetSchemaFocus() {
+            selectedSchemaNodeKey = 'tbl_voters';
+            inspectSchemaNode('tbl_voters');
+            renderDatabaseSchemaViz();
+        }
+
+        function renderDatabaseSchemaViz() {
+            const svg = d3.select("#dbSchemaSvg");
+            if (svg.empty()) return;
+            svg.selectAll("*").remove();
+
+            const wrapper = document.getElementById("schemaVizWrapper");
+            const width = wrapper ? wrapper.clientWidth : 800;
+            const height = 540;
 
             svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-            const g = svg.append("g")
-                .attr("transform", `translate(${width / 2},${height / 2})`);
+            // Defs for arrows and gradients
+            const defs = svg.append("defs");
+            defs.append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 22)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "rgba(255, 255, 255, 0.4)");
 
-            const root = d3.hierarchy(rootData)
-                .sum(d => (d.children ? 0 : (d[metricKey] || 1)))
-                .sort((a, b) => b.value - a.value);
+            // Scale node positions to wrapper width
+            const scaleX = width / 880;
+            const nodeList = Object.values(SCHEMA_NODES).map(n => ({
+                ...n,
+                renderX: Math.max(120, Math.min(width - 120, n.x * scaleX))
+            }));
 
-            const partition = d3.partition()
-                .size([2 * Math.PI, radius]);
+            const nodeMap = new Map(nodeList.map(n => [n.id, n]));
 
-            partition(root);
+            // Draw Links
+            const linksG = svg.append("g").attr("class", "schema-links");
+            const particlesG = svg.append("g").attr("class", "schema-particles");
 
-            const arc = d3.arc()
+            SCHEMA_LINKS.forEach(link => {
+                const s = nodeMap.get(link.source);
+                const t = nodeMap.get(link.target);
+                if (!s || !t) return;
+
+                linksG.append("line")
+                    .attr("x1", s.renderX)
+                    .attr("y1", s.y)
+                    .attr("x2", t.renderX)
+                    .attr("y2", t.y)
+                    .attr("stroke", "rgba(255, 255, 255, 0.15)")
+                    .attr("stroke-width", currentSchemaMode === 'flow' ? 2.5 : 1.5)
+                    .attr("stroke-dasharray", currentSchemaMode === 'flow' ? "4 4" : "none")
+                    .attr("marker-end", "url(#arrow)");
+
+                // Flow mode animated particles
+                if (currentSchemaMode === 'flow') {
+                    for (let p = 0; p < 2; p++) {
+                        const circle = particlesG.append("circle")
+                            .attr("r", 3.5)
+                            .attr("fill", s.color)
+                            .attr("opacity", 0.9);
+
+                        function animateParticle() {
+                            circle.attr("cx", s.renderX).attr("cy", s.y)
+                                .transition()
+                                .duration(2400 + Math.random() * 800)
+                                .ease(d3.easeLinear)
+                                .attr("cx", t.renderX)
+                                .attr("cy", t.y)
+                                .on("end", animateParticle);
+                        }
+                        setTimeout(animateParticle, p * 1200);
+                    }
+                }
+            });
+
+            // Draw Nodes
+            const nodesG = svg.append("g").attr("class", "schema-nodes");
+            const tooltip = d3.select("#d3VizTooltip");
+
+            nodeList.forEach(n => {
+                const isSelected = n.id === selectedSchemaNodeKey;
+                const cardWidth = 220;
+                const cardHeight = 70;
+                const left = n.renderX - cardWidth / 2;
+                const top = n.y - cardHeight / 2;
+
+                const g = nodesG.append("g")
+                    .attr("transform", `translate(${left}, ${top})`)
+                    .style("cursor", "pointer")
+                    .on("click", () => {
+                        inspectSchemaNode(n.id);
+                    })
+                    .on("mouseover", (event) => {
+                        tooltip.style("opacity", 1)
+                            .html(`
+                                <strong style="color: ${n.color}; font-size: 0.9rem;">${n.name}</strong><br/>
+                                <div style="margin-top: 6px; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">
+                                    <b>Type:</b> ${n.type}<br/>
+                                    <b>Specs:</b> ${n.rows}<br/>
+                                    <b>Columns:</b> ${n.columns.length} Fields<br/>
+                                    <span style="color: var(--text-muted); font-size: 0.76rem;">${n.desc}</span>
+                                </div>
+                            `);
+                    })
+                    .on("mousemove", (event) => {
+                        tooltip.style("left", (event.clientX + 16) + "px")
+                            .style("top", (event.clientY - 16) + "px");
+                    })
+                    .on("mouseout", () => {
+                        tooltip.style("opacity", 0);
+                    });
+
+                // Node Card Background Box
+                g.append("rect")
+                    .attr("width", cardWidth)
+                    .attr("height", cardHeight)
+                    .attr("fill", isSelected ? "rgba(30, 41, 59, 0.95)" : "rgba(18, 18, 20, 0.9)")
+                    .attr("stroke", isSelected ? "#3b82f6" : n.color)
+                    .attr("stroke-width", isSelected ? 2.5 : 1.5)
+                    .attr("rx", 0)
+                    .style("filter", isSelected ? `drop-shadow(0 0 10px ${n.color}55)` : "none");
+
+                // Left Accent Stripe
+                g.append("rect")
+                    .attr("width", 5)
+                    .attr("height", cardHeight)
+                    .attr("fill", n.color);
+
+                // Node Title
+                g.append("text")
+                    .attr("x", 14)
+                    .attr("y", 26)
+                    .attr("fill", "#f3f4f6")
+                    .attr("font-size", "11px")
+                    .attr("font-weight", "700")
+                    .attr("font-family", "system-ui, sans-serif")
+                    .text(n.name.length > 26 ? n.name.substring(0, 24) + "..." : n.name);
+
+                // Node Badge / Row count
+                g.append("text")
+                    .attr("x", 14)
+                    .attr("y", 46)
+                    .attr("fill", n.color)
+                    .attr("font-size", "10px")
+                    .attr("font-weight", "600")
+                    .attr("font-family", "'JetBrains Mono', monospace")
+                    .text(`${n.badge} • ${n.columns.length} Cols`);
+            });
+        }
+
+        function inspectSchemaNode(nodeId) {
+            selectedSchemaNodeKey = nodeId;
+            const node = SCHEMA_NODES[nodeId];
+            if (!node) return;
+
+            document.getElementById('inspectorTitle').innerText = node.name;
+            document.getElementById('inspectorTitle').style.color = node.color;
+            document.getElementById('inspectorDesc').innerText = node.desc;
+            document.getElementById('inspectorTypeBadge').innerText = node.type;
+            document.getElementById('inspectorRowBadge').innerText = node.rows;
+
+            const tbody = document.getElementById('inspectorColumnsTableBody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                node.columns.forEach(col => {
+                    const tr = document.createElement('tr');
+                    let keyBadgeColor = '#6b7280';
+                    let keyBg = 'rgba(107, 114, 128, 0.15)';
+                    if (col.key.includes('PK')) { keyBadgeColor = '#ef4444'; keyBg = 'rgba(239, 68, 68, 0.15)'; }
+                    else if (col.key.includes('FK')) { keyBadgeColor = '#3b82f6'; keyBg = 'rgba(59, 130, 246, 0.15)'; }
+                    else if (col.key.includes('IDX')) { keyBadgeColor = '#10b981'; keyBg = 'rgba(16, 185, 129, 0.15)'; }
+                    else if (col.key.includes('GEO')) { keyBadgeColor = '#06b6d4'; keyBg = 'rgba(6, 182, 212, 0.15)'; }
+
+                    tr.innerHTML = `
+                        <td style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">${col.name}</td>
+                        <td style="font-family: 'JetBrains Mono', monospace; color: ${node.color}; font-weight: 600;">${col.type}</td>
+                        <td><span class="badge" style="background: ${keyBg}; color: ${keyBadgeColor}; border: 1px solid ${keyBadgeColor}44; font-size: 0.72rem;">${col.key}</span></td>
+                        <td style="color: var(--text-muted); font-size: 0.82rem;">${col.desc}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            renderDatabaseSchemaViz();
+        }
                 .startAngle(d => d.x0)
                 .endAngle(d => d.x1)
                 .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
@@ -2274,6 +2454,9 @@
 
         window.onload = function() {
             loadOverviewStats();
+            window.addEventListener('resize', () => {
+                if (typeof renderDatabaseSchemaViz === 'function') renderDatabaseSchemaViz();
+            });
         };
     </script>
 </body>
