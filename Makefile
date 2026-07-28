@@ -3,7 +3,7 @@
 APP_NAME = server
 PORT ?= 7860
 DB_PATH ?= backend/database/durg_voters.duckdb
-GCP_PROJECT ?= kalyan-db-backup
+GCP_PROJECT ?= sameer-voter-analytics
 GCP_REGION ?= asia-south1
 SERVICE_NAME ?= durg-voter-api
 GEMINI_API_KEY ?= $(shell grep GEMINI_API_KEY .env 2>/dev/null | cut -d '=' -f2 | tr -d ' "')
