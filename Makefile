@@ -2,15 +2,15 @@
 
 APP_NAME = server
 PORT ?= 7860
-DB_PATH ?= database/durg_voters.duckdb
+DB_PATH ?= backend/database/durg_voters.duckdb
 
 build:
 	@echo "Building production Go binary..."
-	go build -ldflags="-w -s" -o $(APP_NAME) main.go
+	cd backend && go build -ldflags="-w -s" -o ../$(APP_NAME) main.go
 
 test:
 	@echo "Running test suite..."
-	go test -v ./...
+	cd backend && go test -v ./...
 
 run: build
 	@echo "Starting Durg Voter REST API server..."

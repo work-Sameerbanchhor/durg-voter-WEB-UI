@@ -554,40 +554,44 @@
         /* Metric Cards Grid */
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 1.5rem;
         }
 
         .metric-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            padding: 1.5rem;
+            padding: 1rem 1.15rem;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
         }
 
         .metric-label {
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.1em;
             font-weight: 600;
         }
 
         .metric-value {
-            font-size: 1.8rem;
-            font-weight: 400;
+            font-size: 1.35rem;
+            font-weight: 500;
             font-family: 'JetBrains Mono', monospace;
             color: var(--text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .metric-meta {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--accent-success);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.04em;
+            line-height: 1.2;
         }
 
         /* Card Panels & Containers */
@@ -690,8 +694,8 @@
         }
 
         .form-control:focus, select.form-control:focus, .input-sm:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            border-color: var(--border-dark);
+            box-shadow: 0 0 0 2px var(--border-color);
         }
 
         .form-control:disabled, select:disabled, .input-sm:disabled {
@@ -750,10 +754,12 @@
             text-transform: uppercase;
             letter-spacing: 0.08em;
             border: 1px solid var(--border-color);
+            color: var(--text-main);
+            background: var(--subtle-bg);
         }
-        .badge-success { border-color: var(--accent-success); color: var(--accent-success); }
-        .badge-danger { border-color: var(--accent-err); color: var(--accent-err); }
-        .badge-info { border-color: var(--accent-info); color: var(--accent-info); }
+        .badge-success { border-color: var(--border-dark); color: var(--text-main); }
+        .badge-danger { border-color: var(--border-dark); color: var(--text-main); }
+        .badge-info { border-color: var(--border-dark); color: var(--text-main); }
 
         /* Responsive Minimalist Tables */
         .responsive-table {
@@ -870,8 +876,8 @@
             color: var(--text-main);
         }
         .booth-chip-area {
-            border: 1px solid var(--accent-info);
-            color: var(--accent-info);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
             padding: 2px 6px;
             font-size: 0.68rem;
         }
@@ -1099,7 +1105,7 @@
                     <button class="btn-action" onclick="executeVoterSearch(1)">Execute Search &rarr;</button>
                 </div>
 
-                <div id="geminiTransliterationBadge" style="display: none; margin-bottom: 1rem; padding: 10px 14px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0; color: #60a5fa; font-size: 0.85rem; font-weight: 500;"></div>
+                <div id="geminiTransliterationBadge" style="display: none; margin-bottom: 1rem; padding: 10px 14px; background: var(--subtle-bg); border: 1px solid var(--border-color); border-radius: 0; color: var(--text-main); font-size: 0.85rem; font-weight: 500;"></div>
 
                 <div class="responsive-table">
                     <table>
@@ -1154,34 +1160,34 @@
                 </div>
 
                 <!-- Database Metrics Grid -->
-                <div class="metrics-grid" style="margin-bottom: 1.5rem;">
-                    <div class="metric-card" onclick="inspectSchemaNode('duckdb_core')" style="cursor: pointer;" title="Click to inspect DuckDB Engine">
-                        <span class="metric-label">Execution Engine</span>
-                        <span class="metric-value" style="color: #f59e0b;">DuckDB 1.5</span>
-                        <span class="metric-meta">Vectorized SIMD Columnar SQL</span>
+                <div class="metrics-grid" style="margin-bottom: 1.25rem;">
+                    <div class="metric-card" onclick="inspectSchemaNode('duckdb_core')" style="cursor: pointer; padding: 0.85rem 1rem;" title="Click to inspect DuckDB Engine">
+                        <span class="metric-label" style="font-size: 0.65rem;">Execution Engine</span>
+                        <span class="metric-value" style="font-size: 1.25rem;">DuckDB 1.5</span>
+                        <span class="metric-meta" style="color: var(--text-muted); font-size: 0.68rem;">Vectorized SIMD Columnar SQL</span>
                     </div>
-                    <div class="metric-card" onclick="inspectSchemaNode('tbl_voters')" style="cursor: pointer;" title="Click to inspect voters table">
-                        <span class="metric-label">Primary Entity</span>
-                        <span class="metric-value" style="color: #3b82f6;">voters</span>
-                        <span class="metric-meta">483,426 Rows &bull; 21 Columns</span>
+                    <div class="metric-card" onclick="inspectSchemaNode('tbl_voters')" style="cursor: pointer; padding: 0.85rem 1rem;" title="Click to inspect voters table">
+                        <span class="metric-label" style="font-size: 0.65rem;">Primary Entity</span>
+                        <span class="metric-value" style="font-size: 1.25rem;">voters</span>
+                        <span class="metric-meta" style="color: var(--text-muted); font-size: 0.68rem;">483,426 Rows &bull; 21 Columns</span>
                     </div>
-                    <div class="metric-card" onclick="inspectSchemaNode('tbl_polling_stations')" style="cursor: pointer;" title="Click to inspect polling_stations table">
-                        <span class="metric-label">Booth Entity</span>
-                        <span class="metric-value" style="color: #10b981;">polling_stations</span>
-                        <span class="metric-meta">1,426 Booths &bull; 10 Columns</span>
+                    <div class="metric-card" onclick="inspectSchemaNode('tbl_polling_stations')" style="cursor: pointer; padding: 0.85rem 1rem;" title="Click to inspect polling_stations table">
+                        <span class="metric-label" style="font-size: 0.65rem;">Booth Entity</span>
+                        <span class="metric-value" style="font-size: 1.05rem; letter-spacing: -0.01em;">polling_stations</span>
+                        <span class="metric-meta" style="color: var(--text-muted); font-size: 0.68rem;">1,426 Booths &bull; 10 Columns</span>
                     </div>
-                    <div class="metric-card" onclick="inspectSchemaNode('mod_gemini_ai')" style="cursor: pointer;" title="Click to inspect Gemini AI Module">
-                        <span class="metric-label">AI Transliteration</span>
-                        <span class="metric-value" style="color: #ec4899;">Gemini 3.5</span>
-                        <span class="metric-meta">English &harr; Devanagari Pipeline</span>
+                    <div class="metric-card" onclick="inspectSchemaNode('mod_gemini_ai')" style="cursor: pointer; padding: 0.85rem 1rem;" title="Click to inspect Gemini AI Module">
+                        <span class="metric-label" style="font-size: 0.65rem;">AI Transliteration</span>
+                        <span class="metric-value" style="font-size: 1.25rem;">Gemini 3.5</span>
+                        <span class="metric-meta" style="color: var(--text-muted); font-size: 0.68rem;">English &harr; Devanagari Pipeline</span>
                     </div>
                 </div>
 
                 <!-- Visual Architecture Container -->
-                <div id="schemaVizWrapper" class="viz-box" style="position: relative; background: #0c0d0e; border: 1px solid var(--border-color); border-radius: 0; min-height: 540px; overflow: hidden;">
+                <div id="schemaVizWrapper" class="viz-box" style="position: relative; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0; min-height: 540px; overflow: hidden;">
                     <div class="viz-header" style="position: absolute; top: 14px; left: 18px; z-index: 10;">
-                        <span class="viz-title" id="schemaVizTitle" style="color: #f3f4f6; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Interactive Relational ERD &amp; Engine Pipeline</span>
-                        <span id="schemaVizSubLabel" class="badge badge-info">Click any node to inspect column schema &amp; execution details</span>
+                        <span class="viz-title" id="schemaVizTitle" style="color: var(--text-main); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Interactive Relational ERD &amp; Engine Pipeline</span>
+                        <span id="schemaVizSubLabel" class="badge">Click any node to inspect column schema &amp; execution details</span>
                     </div>
                     <svg id="dbSchemaSvg" style="width: 100%; height: 540px; user-select: none; background: transparent;"></svg>
                 </div>
@@ -1190,15 +1196,15 @@
                 <div id="d3VizTooltip" class="d3-viz-tooltip"></div>
 
                 <!-- Selected Entity Schema Inspector Card -->
-                <div id="dbSchemaInspectorCard" class="panel-card" style="margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.25rem;">
+                <div id="dbSchemaInspectorCard" class="panel-card" style="margin-top: 1.5rem; background: var(--subtle-bg); border: 1px solid var(--border-color); padding: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
                         <div>
-                            <h4 id="inspectorTitle" style="margin: 0; font-size: 1rem; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.06em;">voters (Core Electorate Table)</h4>
+                            <h4 id="inspectorTitle" style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.06em;">voters (Core Electorate Table)</h4>
                             <div id="inspectorDesc" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Main voter database table containing demographics, EPIC card IDs, and location fields</div>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <span id="inspectorTypeBadge" class="badge badge-info" style="font-size: 0.75rem;">TABLE</span>
-                            <span id="inspectorRowBadge" class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.75rem;">483,426 Rows</span>
+                            <span id="inspectorTypeBadge" class="badge" style="font-size: 0.75rem;">TABLE</span>
+                            <span id="inspectorRowBadge" class="badge" style="font-size: 0.75rem;">483,426 Rows</span>
                         </div>
                     </div>
 
@@ -1423,31 +1429,11 @@
 
         /* D3 ASSEMBLY TREEMAP & SUNBURST HIERARCHY ENGINE */
         let rawHierarchyData = null;
-        let currentHierarchyMode = 'treemap';
-        let currentHierarchyFocusNode = null;
-        let hierarchySearchDebounce = null;
-
-        const ASSEMBLY_COLORS = {
-            'durg city': '#38bdf8',
-            'durg gramin': '#34d399',
-            'bhilai nagar': '#a78bfa',
-            'vaishali nagar': '#fbbf24',
-            'patan': '#f472b6',
-            'ahiwara': '#22d3ee'
-        };
-
-        function getAssemblyColor(assemblyName, fallbackIndex = 0) {
-            if (!assemblyName) return 'var(--text-muted)';
-            const key = assemblyName.toLowerCase().trim();
-            if (ASSEMBLY_COLORS[key]) return ASSEMBLY_COLORS[key];
-            const palette = ['#38bdf8', '#34d399', '#a78bfa', '#fbbf24', '#f472b6', '#22d3ee', '#fb923c', '#2dd4bf'];
-            return palette[fallbackIndex % palette.length];
-        }
 
         async function initHierarchyViz() {
             if (rawHierarchyData) {
-                renderHierarchyLegend();
-                updateHierarchyViz();
+                renderDatabaseSchemaViz();
+                inspectSchemaNode(selectedSchemaNodeKey);
                 return;
             }
 
@@ -1455,11 +1441,13 @@
                 const res = await fetchAPI('/api/v1/polling-stations?limit=2000');
                 if (res.data && res.data.success && Array.isArray(res.data.data)) {
                     buildHierarchyTree(res.data.data);
-                    renderHierarchyLegend();
-                    updateHierarchyViz();
+                    renderDatabaseSchemaViz();
+                    inspectSchemaNode(selectedSchemaNodeKey);
                 }
             } catch (err) {
                 console.error('Hierarchy fetch error:', err);
+                renderDatabaseSchemaViz();
+                inspectSchemaNode(selectedSchemaNodeKey);
             }
         }
 
@@ -1546,7 +1534,6 @@
                 name: "DuckDB Core Vectorized Engine",
                 type: "ENGINE",
                 badge: "Vectorized SIMD",
-                color: "#f59e0b",
                 x: 440, y: 75,
                 rows: "DuckDB 1.5 C++ Engine",
                 desc: "In-memory columnar query engine with SIMD vectorized processing, parallel filter pushdown, and CGO bindings for Go REST backend.",
@@ -1562,7 +1549,6 @@
                 name: "voters (Main Electorate Table)",
                 type: "TABLE",
                 badge: "483,426 Rows",
-                color: "#3b82f6",
                 x: 190, y: 270,
                 rows: "483,426 Registered Voters",
                 desc: "Primary electorate table containing individual voter demographics, EPIC card numbers, house addresses, booth part numbers, and coordinates.",
@@ -1588,7 +1574,6 @@
                 name: "polling_stations (Booth Summary Table)",
                 type: "TABLE",
                 badge: "1,426 Booths",
-                color: "#10b981",
                 x: 690, y: 270,
                 rows: "1,426 Polling Stations",
                 desc: "Polling station booth metadata, building addresses, geographic coordinates, and pre-computed male/female elector counts.",
@@ -1610,7 +1595,6 @@
                 name: "constituencies (Assembly Views)",
                 type: "VIEW",
                 badge: "6 Assemblies",
-                color: "#8b5cf6",
                 x: 690, y: 460,
                 rows: "6 Assembly Divisions",
                 desc: "Aggregated assembly constituency summary view for Durg City, Durg Gramin, Bhilai Nagar, Vaishali Nagar, Patan, and Ahiwara.",
@@ -1627,7 +1611,6 @@
                 name: "Gemini 3.5 AI Transliteration Module",
                 type: "AI PIPELINE",
                 badge: "Gemini 3.5 Flash",
-                color: "#ec4899",
                 x: 190, y: 460,
                 rows: "AI English <-> Hindi Pipeline",
                 desc: "Real-time AI transliteration engine converting English search queries into Devanagari Hindi before searching DuckDB columns.",
@@ -1642,7 +1625,6 @@
                 name: "GeoSpatial Proximity Index",
                 type: "SPATIAL INDEX",
                 badge: "Haversine Radius",
-                color: "#06b6d4",
                 x: 440, y: 360,
                 rows: "WGS84 Lat/Lng Grid",
                 desc: "Spatial indexing and Haversine formula calculation module for nearby voter and booth geolocation queries.",
@@ -1662,11 +1644,6 @@
             { source: "tbl_voters", target: "mod_geospatial", label: "Spatial Coordinate Index" },
             { source: "tbl_polling_stations", target: "mod_geospatial", label: "Booth Proximity Radius" }
         ];
-
-        function initHierarchyViz() {
-            renderDatabaseSchemaViz();
-            inspectSchemaNode(selectedSchemaNodeKey);
-        }
 
         function setSchemaVizMode(mode) {
             currentSchemaMode = mode;
@@ -1694,6 +1671,18 @@
 
             svg.attr("viewBox", `0 0 ${width} ${height}`);
 
+            const mode = document.documentElement.getAttribute('data-color-mode');
+            const isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+            const linkColor = isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)";
+            const particleColor = isDark ? "#ffffff" : "#111111";
+            const cardBgSelected = isDark ? "#1f1f1f" : "#f0f0f0";
+            const cardBgNormal = isDark ? "#121212" : "#ffffff";
+            const cardBorderSelected = isDark ? "#ffffff" : "#000000";
+            const cardBorderNormal = isDark ? "#333333" : "#cccccc";
+            const nodeTextColor = isDark ? "#ffffff" : "#111111";
+            const nodeSubTextColor = isDark ? "#aaaaaa" : "#666666";
+
             // Defs for arrows and gradients
             const defs = svg.append("defs");
             defs.append("marker")
@@ -1706,7 +1695,7 @@
                 .attr("orient", "auto")
                 .append("path")
                 .attr("d", "M0,-5L10,0L0,5")
-                .attr("fill", "rgba(255, 255, 255, 0.4)");
+                .attr("fill", linkColor);
 
             // Scale node positions to wrapper width
             const scaleX = width / 880;
@@ -1731,7 +1720,7 @@
                     .attr("y1", s.y)
                     .attr("x2", t.renderX)
                     .attr("y2", t.y)
-                    .attr("stroke", "rgba(255, 255, 255, 0.15)")
+                    .attr("stroke", linkColor)
                     .attr("stroke-width", currentSchemaMode === 'flow' ? 2.5 : 1.5)
                     .attr("stroke-dasharray", currentSchemaMode === 'flow' ? "4 4" : "none")
                     .attr("marker-end", "url(#arrow)");
@@ -1741,7 +1730,7 @@
                     for (let p = 0; p < 2; p++) {
                         const circle = particlesG.append("circle")
                             .attr("r", 3.5)
-                            .attr("fill", s.color)
+                            .attr("fill", particleColor)
                             .attr("opacity", 0.9);
 
                         function animateParticle() {
@@ -1778,7 +1767,7 @@
                     .on("mouseover", (event) => {
                         tooltip.style("opacity", 1)
                             .html(`
-                                <strong style="color: ${n.color}; font-size: 0.9rem;">${n.name}</strong><br/>
+                                <strong style="color: ${nodeTextColor}; font-size: 0.9rem;">${n.name}</strong><br/>
                                 <div style="margin-top: 6px; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">
                                     <b>Type:</b> ${n.type}<br/>
                                     <b>Specs:</b> ${n.rows}<br/>
@@ -1799,33 +1788,37 @@
                 g.append("rect")
                     .attr("width", cardWidth)
                     .attr("height", cardHeight)
-                    .attr("fill", isSelected ? "rgba(30, 41, 59, 0.95)" : "rgba(18, 18, 20, 0.9)")
-                    .attr("stroke", isSelected ? "#3b82f6" : n.color)
-                    .attr("stroke-width", isSelected ? 2.5 : 1.5)
-                    .attr("rx", 0)
-                    .style("filter", isSelected ? `drop-shadow(0 0 10px ${n.color}55)` : "none");
+                    .attr("fill", isSelected ? cardBgSelected : cardBgNormal)
+                    .attr("stroke", isSelected ? cardBorderSelected : cardBorderNormal)
+                    .attr("stroke-width", isSelected ? 2 : 1)
+                    .attr("rx", 0);
 
                 // Left Accent Stripe
                 g.append("rect")
-                    .attr("width", 5)
+                    .attr("width", 4)
                     .attr("height", cardHeight)
-                    .attr("fill", n.color);
+                    .attr("fill", isSelected ? cardBorderSelected : nodeSubTextColor);
 
-                // Node Title
+                // Node Title with precise SVG truncation & title tooltip
+                const maxChars = 22;
+                const displayTitle = n.name.length > maxChars ? n.name.substring(0, maxChars - 2) + "…" : n.name;
+
                 g.append("text")
                     .attr("x", 14)
                     .attr("y", 26)
-                    .attr("fill", "#f3f4f6")
+                    .attr("fill", nodeTextColor)
                     .attr("font-size", "11px")
                     .attr("font-weight", "700")
                     .attr("font-family", "system-ui, sans-serif")
-                    .text(n.name.length > 26 ? n.name.substring(0, 24) + "..." : n.name);
+                    .text(displayTitle)
+                    .append("title")
+                    .text(n.name);
 
                 // Node Badge / Row count
                 g.append("text")
                     .attr("x", 14)
                     .attr("y", 46)
-                    .attr("fill", n.color)
+                    .attr("fill", nodeSubTextColor)
                     .attr("font-size", "10px")
                     .attr("font-weight", "600")
                     .attr("font-family", "'JetBrains Mono', monospace")
@@ -1839,7 +1832,7 @@
             if (!node) return;
 
             document.getElementById('inspectorTitle').innerText = node.name;
-            document.getElementById('inspectorTitle').style.color = node.color;
+            document.getElementById('inspectorTitle').style.color = 'var(--text-main)';
             document.getElementById('inspectorDesc').innerText = node.desc;
             document.getElementById('inspectorTypeBadge').innerText = node.type;
             document.getElementById('inspectorRowBadge').innerText = node.rows;
@@ -1849,17 +1842,10 @@
                 tbody.innerHTML = '';
                 node.columns.forEach(col => {
                     const tr = document.createElement('tr');
-                    let keyBadgeColor = '#6b7280';
-                    let keyBg = 'rgba(107, 114, 128, 0.15)';
-                    if (col.key.includes('PK')) { keyBadgeColor = '#ef4444'; keyBg = 'rgba(239, 68, 68, 0.15)'; }
-                    else if (col.key.includes('FK')) { keyBadgeColor = '#3b82f6'; keyBg = 'rgba(59, 130, 246, 0.15)'; }
-                    else if (col.key.includes('IDX')) { keyBadgeColor = '#10b981'; keyBg = 'rgba(16, 185, 129, 0.15)'; }
-                    else if (col.key.includes('GEO')) { keyBadgeColor = '#06b6d4'; keyBg = 'rgba(6, 182, 212, 0.15)'; }
-
                     tr.innerHTML = `
                         <td style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">${col.name}</td>
-                        <td style="font-family: 'JetBrains Mono', monospace; color: ${node.color}; font-weight: 600;">${col.type}</td>
-                        <td><span class="badge" style="background: ${keyBg}; color: ${keyBadgeColor}; border: 1px solid ${keyBadgeColor}44; font-size: 0.72rem;">${col.key}</span></td>
+                        <td style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-weight: 600;">${col.type}</td>
+                        <td><span class="badge" style="font-size: 0.72rem;">${col.key}</span></td>
                         <td style="color: var(--text-muted); font-size: 0.82rem;">${col.desc}</td>
                     `;
                     tbody.appendChild(tr);

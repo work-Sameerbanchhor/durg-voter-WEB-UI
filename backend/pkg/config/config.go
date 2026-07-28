@@ -32,7 +32,11 @@ func LoadConfig() *Config {
 
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = "database/durg_voters.duckdb"
+		if _, err := os.Stat("backend/database/durg_voters.duckdb"); err == nil {
+			dbPath = "backend/database/durg_voters.duckdb"
+		} else {
+			dbPath = "database/durg_voters.duckdb"
+		}
 	}
 
 	env := os.Getenv("ENVIRONMENT")
