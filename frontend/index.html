@@ -920,7 +920,7 @@
 
             <div class="setting-group">
                 <label for="apiEndpoint">API Endpoint Base</label>
-                <input type="text" id="apiEndpoint" class="input-sm" value="http://localhost:7860">
+                <input type="text" id="apiEndpoint" class="input-sm" value="" placeholder="Auto (window.location.origin)">
             </div>
 
             <div class="setting-group">
@@ -1238,8 +1238,19 @@
         let activeRole = "admin";
 
         function getBaseURL() {
-            return document.getElementById('apiEndpoint').value.replace(/\/+$/, '');
+            const input = document.getElementById('apiEndpoint');
+            if (input && input.value && input.value.trim() !== '') {
+                return input.value.trim().replace(/\/+$/, '');
+            }
+            return window.location.origin;
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('apiEndpoint');
+            if (input && (!input.value || input.value.includes('localhost'))) {
+                input.value = window.location.origin;
+            }
+        });
 
         function setTheme(mode) {
             const root = document.documentElement;
