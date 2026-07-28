@@ -10,6 +10,11 @@ import (
 
 const UserContextKey contextKey = "authenticated_user"
 
+const (
+	SecretHeaderKey   = "X-Secret-App-Key"
+	SecretHeaderValue = "durg-voter-secret-key-987654321"
+)
+
 // Valid tokens mapping
 var ValidTokens = map[string]models.User{
 	"admin-token": {
@@ -37,6 +42,32 @@ var ValidTokens = map[string]models.User{
 // Authenticate extracts authentication token and attaches user context
 func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 1. Allow CORS preflight requests
+		if r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// 2. Allow static root frontend page
+		if r.URL.Path == "/" || r.URL.Path == "/index.html" || r.URL.Path == "/favicon.ico" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// 3. Enforce secret application header key
+		reqSecret := r.Header.Get(SecretHeaderKey)
+		if reqSecret == "" {
+			reqSecret = r.Header.Get("X-App-Secret-Key")
+		}
+
+		if reqSecret != SecretHeaderValue {
+			reqID := GetRequestID(r.Context())
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"success":false,"error":"Unauthorized: Missing or invalid application secret header","request_id":"` + reqID + `"}`))
+			return
+		}
+
 		token := extractToken(r)
 
 		var user models.User

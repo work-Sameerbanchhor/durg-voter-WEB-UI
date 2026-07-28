@@ -21,6 +21,7 @@ func TestAuthMiddlewareAdminRole(t *testing.T) {
 	})
 
 	req := httptest.NewRequest("GET", "/api/v1/admin/sql", nil)
+	req.Header.Set(SecretHeaderKey, SecretHeaderValue)
 	req.Header.Set("Authorization", "Bearer admin-token-secret-key-12345")
 	rr := httptest.NewRecorder()
 
@@ -45,6 +46,7 @@ func TestAuthMiddlewareGuestRole(t *testing.T) {
 	})
 
 	req := httptest.NewRequest("GET", "/api/v1/voters", nil)
+	req.Header.Set(SecretHeaderKey, SecretHeaderValue)
 	req.Header.Set("Authorization", "Bearer guest-token-secret-key-67890")
 	rr := httptest.NewRecorder()
 
@@ -62,6 +64,7 @@ func TestRequireRoleAdminDeniedForGuest(t *testing.T) {
 	})
 
 	req := httptest.NewRequest("GET", "/api/v1/admin/sql", nil)
+	req.Header.Set(SecretHeaderKey, SecretHeaderValue)
 	req.Header.Set("Authorization", "Bearer guest-token-secret-key-67890")
 	rr := httptest.NewRecorder()
 
@@ -70,5 +73,22 @@ func TestRequireRoleAdminDeniedForGuest(t *testing.T) {
 
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("expected status 403 Forbidden for guest user on admin route, got %d", rr.Code)
+	}
+}
+
+func TestSecretHeaderRejection(t *testing.T) {
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest("GET", "/api/v1/voters", nil)
+	// Secret header omitted
+	rr := httptest.NewRecorder()
+
+	handler := Authenticate(nextHandler)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401 Unauthorized for missing secret header, got %d", rr.Code)
 	}
 }

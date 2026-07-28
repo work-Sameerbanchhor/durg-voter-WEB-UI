@@ -1295,6 +1295,8 @@
             }
         }
 
+        const SECRET_APP_KEY = "durg-voter-secret-key-987654321";
+
         async function fetchAPI(path, options = {}) {
             const baseUrl = getBaseURL();
             const url = baseUrl + path;
@@ -1303,6 +1305,7 @@
             const headers = {
                 'Authorization': 'Bearer ' + activeToken,
                 'Content-Type': 'application/json',
+                'X-Secret-App-Key': SECRET_APP_KEY,
                 ...(options.headers || {})
             };
 
