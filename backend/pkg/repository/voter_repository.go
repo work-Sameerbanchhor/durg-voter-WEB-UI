@@ -92,19 +92,51 @@ func (r *duckDBVoterRepository) GetStats(ctx context.Context) (*models.StatsSumm
 	return &stats, nil
 }
 
+func isEPICQuery(q string) bool {
+	clean := strings.TrimSpace(q)
+	if len(clean) >= 7 && len(clean) <= 12 {
+		letters, digits := 0, 0
+		for _, r := range clean {
+			if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+				letters++
+			} else if r >= '0' && r <= '9' {
+				digits++
+			}
+		}
+		return letters >= 2 && digits >= 3
+	}
+	return false
+}
+
+func isHouseQuery(q string) bool {
+	clean := strings.TrimSpace(q)
+	lower := strings.ToLower(clean)
+	return strings.Contains(clean, "/") || strings.HasPrefix(lower, "h.") || strings.HasPrefix(lower, "house")
+}
+
 func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.SearchFilter) ([]models.Voter, *models.Pagination, error) {
 	var conditions []string
 	var args []interface{}
 
 	if filter.Query != "" {
-		q := "%" + strings.ToLower(filter.Query) + "%"
-		if filter.HindiQuery != "" && filter.HindiQuery != filter.Query {
-			hq := "%" + strings.ToLower(filter.HindiQuery) + "%"
-			conditions = append(conditions, "(LOWER(voter_id) LIKE ? OR LOWER(voter_name_english) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_english) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(house_number) LIKE ? OR LOWER(town_village) LIKE ? OR LOWER(assembly_constituency) LIKE ? OR LOWER(section_number_and_name) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(town_village) LIKE ? OR LOWER(section_number_and_name) LIKE ?)")
-			args = append(args, q, q, q, q, q, q, q, q, q, hq, hq, hq, hq)
+		qStr := strings.TrimSpace(filter.Query)
+		qLike := "%" + strings.ToLower(qStr) + "%"
+
+		if isEPICQuery(qStr) {
+			conditions = append(conditions, "(voter_id = ? OR LOWER(voter_id) LIKE ?)")
+			args = append(args, qStr, qLike)
+		} else if isHouseQuery(qStr) {
+			conditions = append(conditions, "(house_number = ? OR LOWER(house_number) LIKE ?)")
+			args = append(args, qStr, qLike)
 		} else {
-			conditions = append(conditions, "(LOWER(voter_id) LIKE ? OR LOWER(voter_name_english) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_english) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(house_number) LIKE ? OR LOWER(town_village) LIKE ? OR LOWER(assembly_constituency) LIKE ? OR LOWER(section_number_and_name) LIKE ?)")
-			args = append(args, q, q, q, q, q, q, q, q, q)
+			if filter.HindiQuery != "" && filter.HindiQuery != filter.Query {
+				hqLike := "%" + strings.ToLower(filter.HindiQuery) + "%"
+				conditions = append(conditions, "(LOWER(voter_name_english) LIKE ? OR LOWER(relative_name_english) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_hindi) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_hindi) LIKE ?)")
+				args = append(args, qLike, qLike, qLike, qLike, hqLike, hqLike)
+			} else {
+				conditions = append(conditions, "(LOWER(voter_name_english) LIKE ? OR LOWER(relative_name_english) LIKE ? OR LOWER(voter_name_hindi) LIKE ? OR LOWER(relative_name_hindi) LIKE ?)")
+				args = append(args, qLike, qLike, qLike, qLike)
+			}
 		}
 	}
 
@@ -148,13 +180,6 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 		whereClause = " WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	countQuery := "SELECT COUNT(*) FROM voters" + whereClause
-	var totalItems int64
-	err := r.duckDB.DB.QueryRowContext(ctx, countQuery, args...).Scan(&totalItems)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to count voters: %w", err)
-	}
-
 	page := filter.Page
 	if page <= 0 {
 		page = 1
@@ -163,8 +188,6 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
-
-	totalPages := int(math.Ceil(float64(totalItems) / float64(limit)))
 	offset := (page - 1) * limit
 
 	orderBy := "voter_name_english ASC"
@@ -212,7 +235,8 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 			COALESCE(post_office, ''),
 			COALESCE(police_station, ''),
 			COALESCE(latitude, 0.0),
-			COALESCE(longitude, 0.0)
+			COALESCE(longitude, 0.0),
+			COUNT(*) OVER() AS total_count
 		FROM voters %s
 		ORDER BY %s
 		LIMIT ? OFFSET ?;
@@ -225,9 +249,11 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 	}
 	defer rows.Close()
 
+	var totalItems int64 = 0
 	voters := make([]models.Voter, 0)
 	for rows.Next() {
 		var v models.Voter
+		var rowTotal int64
 		err := rows.Scan(
 			&v.EPICNo,
 			&v.FullName,
@@ -253,11 +279,18 @@ func (r *duckDBVoterRepository) ListVoters(ctx context.Context, filter models.Se
 			&v.PoliceStation,
 			&v.Latitude,
 			&v.Longitude,
+			&rowTotal,
 		)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to scan voter row: %w", err)
 		}
+		totalItems = rowTotal
 		voters = append(voters, v)
+	}
+
+	totalPages := int(math.Ceil(float64(totalItems) / float64(limit)))
+	if totalPages < 1 {
+		totalPages = 1
 	}
 
 	pagination := &models.Pagination{
@@ -944,6 +977,16 @@ func (r *duckDBVoterRepository) InitSchema(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create search_logs table: %w", err)
 	}
+
+	indexes := []string{
+		"CREATE INDEX IF NOT EXISTS idx_voters_id ON voters (voter_id);",
+		"CREATE INDEX IF NOT EXISTS idx_voters_name_eng ON voters (voter_name_english);",
+		"CREATE INDEX IF NOT EXISTS idx_voters_house ON voters (house_number);",
+	}
+	for _, idx := range indexes {
+		_, _ = r.duckDB.DB.ExecContext(ctx, idx)
+	}
+
 	return nil
 }
 
