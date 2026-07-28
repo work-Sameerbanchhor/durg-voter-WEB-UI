@@ -17,6 +17,7 @@ type Config struct {
 	CORSAllowedOrigins string
 	GeminiAPIKey       string
 	GeminiModel        string
+	SecretHeader       string
 	ReadTimeout        time.Duration
 	WriteTimeout       time.Duration
 	IdleTimeout        time.Duration
@@ -57,6 +58,14 @@ func LoadConfig() *Config {
 		geminiModel = "gemini-3.5-flash-lite"
 	}
 
+	secretHeader := os.Getenv("SECRET_HEADER")
+	if secretHeader == "" {
+		secretHeader = os.Getenv("SECRET_HEADER_VALUE")
+	}
+	if secretHeader == "" {
+		secretHeader = "Sam2002@ABCD1234"
+	}
+
 	return &Config{
 		Port:               port,
 		DBPath:             dbPath,
@@ -66,6 +75,7 @@ func LoadConfig() *Config {
 		CORSAllowedOrigins: origins,
 		GeminiAPIKey:       geminiKey,
 		GeminiModel:        geminiModel,
+		SecretHeader:       secretHeader,
 		ReadTimeout:        15 * time.Second,
 		WriteTimeout:       15 * time.Second,
 		IdleTimeout:        60 * time.Second,

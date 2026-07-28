@@ -7,6 +7,7 @@ GCP_PROJECT ?= kalyan-db-backup
 GCP_REGION ?= asia-south1
 SERVICE_NAME ?= durg-voter-api
 GEMINI_API_KEY ?= $(shell grep GEMINI_API_KEY .env 2>/dev/null | cut -d '=' -f2 | tr -d ' "')
+SECRET_HEADER ?= $(shell grep SECRET_HEADER .env 2>/dev/null | cut -d '=' -f2 | tr -d ' "')
 
 build:
 	@echo "Building production Go binary..."
@@ -33,9 +34,9 @@ deploy-cloudrun:
 		--region $(GCP_REGION) \
 		--platform managed \
 		--allow-unauthenticated \
-		--memory 1Gi \
+		--memory 2Gi \
 		--cpu 1 \
-		--set-env-vars "ENVIRONMENT=production,DB_PATH=/app/backend/database/durg_voters.duckdb,CORS_ALLOWED_ORIGINS=*,GEMINI_API_KEY=$(GEMINI_API_KEY)"
+		--set-env-vars "ENVIRONMENT=production,DB_PATH=/app/backend/database/durg_voters.duckdb,CORS_ALLOWED_ORIGINS=*,GEMINI_API_KEY=$(GEMINI_API_KEY),SECRET_HEADER=$(SECRET_HEADER)"
 
 clean:
 	@echo "Cleaning build artifacts..."

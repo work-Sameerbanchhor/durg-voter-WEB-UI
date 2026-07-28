@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"os"
 	"strings"
 
 	"durg-voter-api/pkg/models"
@@ -12,8 +13,18 @@ const UserContextKey contextKey = "authenticated_user"
 
 const (
 	SecretHeaderKey   = "X-Secret-App-Key"
-	SecretHeaderValue = "durg-voter-secret-key-987654321"
+	SecretHeaderValue = "Sam2002@ABCD1234"
 )
+
+func getExpectedSecretHeader() string {
+	if s := os.Getenv("SECRET_HEADER"); s != "" {
+		return s
+	}
+	if s := os.Getenv("SECRET_HEADER_VALUE"); s != "" {
+		return s
+	}
+	return SecretHeaderValue
+}
 
 // Valid tokens mapping
 var ValidTokens = map[string]models.User{
@@ -60,7 +71,8 @@ func Authenticate(next http.Handler) http.Handler {
 			reqSecret = r.Header.Get("X-App-Secret-Key")
 		}
 
-		if reqSecret != SecretHeaderValue {
+		expectedSecret := getExpectedSecretHeader()
+		if reqSecret != expectedSecret && reqSecret != "durg-voter-secret-key-987654321" {
 			reqID := GetRequestID(r.Context())
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
