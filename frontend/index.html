@@ -1239,13 +1239,16 @@
             if (input && input.value && input.value.trim() !== '') {
                 return input.value.trim().replace(/\/+$/, '');
             }
+            if (!window.location.origin || window.location.origin === 'null' || window.location.protocol === 'file:') {
+                return 'http://localhost:7860';
+            }
             return window.location.origin;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             const input = document.getElementById('apiEndpoint');
-            if (input && (!input.value || input.value.includes('localhost'))) {
-                input.value = window.location.origin;
+            if (input) {
+                input.value = getBaseURL();
             }
         });
 
