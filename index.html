@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Durg Voter Production Analytics Studio & API Dashboard</title>
-    <!-- Google Fonts, Chart.js & Leaflet (OpenStreetMap) -->
+    <!-- Google Fonts, Chart.js & D3.js -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -158,15 +158,17 @@
         }
 
         .mode-opt {
-            padding: 5px 12px;
+            padding: 6px 14px;
             font-size: 0.78rem;
-            font-weight: 500;
+            font-weight: 600;
             border-radius: 6px;
             border: none;
             background: transparent;
             color: var(--text-muted);
             cursor: pointer;
             transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .mode-opt.active {
@@ -180,11 +182,11 @@
             align-items: center;
             gap: 6px;
             flex-wrap: wrap;
-            padding: 8px 12px;
+            padding: 10px 14px;
             background: var(--subtle-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             font-size: 0.8rem;
         }
 
@@ -192,19 +194,21 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 3px 10px;
+            padding: 4px 12px;
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 20px;
             color: var(--text-main);
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.15s ease;
         }
 
         .crumb-chip:hover {
-            border-color: var(--accent-info);
-            color: var(--accent-info);
+            border-color: var(--border-dark);
+            color: var(--text-main);
+            transform: translateY(-1px);
         }
 
         .viz-grid {
@@ -229,7 +233,7 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 1rem;
+            padding: 1.25rem;
             position: relative;
             overflow: hidden;
             display: flex;
@@ -241,8 +245,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.5rem;
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.6rem;
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -250,7 +254,7 @@
             font-size: 0.85rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.08em;
             color: var(--text-muted);
         }
 
@@ -264,25 +268,43 @@
             box-sizing: border-box;
             position: absolute;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
             cursor: pointer;
-            transition: transform 0.15s ease, filter 0.15s ease;
+            transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
             font-size: 0.72rem;
-            padding: 4px 6px;
-            color: #ffffff;
+            padding: 6px 8px;
+            color: var(--text-main);
             font-weight: 500;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
         }
 
         .treemap-node:hover {
-            transform: scale(1.01);
-            z-index: 10;
+            transform: scale(1.012);
+            z-index: 20;
             filter: brightness(1.15);
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            border-color: var(--border-dark);
+        }
+
+        .treemap-group-label {
+            position: absolute;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--text-main);
+            background: var(--card-bg);
+            padding: 2px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            z-index: 5;
+            cursor: pointer;
         }
 
         .sunburst-arc {
@@ -293,25 +315,26 @@
         }
 
         .sunburst-arc:hover {
-            opacity: 0.85;
+            opacity: 0.9;
             filter: brightness(1.2);
         }
 
         .d3-viz-tooltip {
             position: fixed;
             pointer-events: none;
-            background: rgba(15, 23, 42, 0.94);
-            color: #f8fafc;
-            padding: 10px 14px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            padding: 12px 16px;
             border-radius: 8px;
-            font-size: 0.78rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px);
+            font-size: 0.8rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
             z-index: 9999;
             opacity: 0;
             transition: opacity 0.12s ease;
-            max-width: 300px;
+            max-width: 320px;
+            font-family: 'Outfit', sans-serif;
         }
 
         /* Navigation Controls & Drawer Modal */
@@ -1058,71 +1081,71 @@
 
         <!-- TAB 3: ASSEMBLY TREEMAP / SUNBURST HIERARCHY -->
         <div id="tabMap" class="tab-content">
-            <div class="panel-card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1rem;">
-                    <span class="panel-title" style="margin: 0; font-size: 1.1rem; font-weight: 600;">Assembly Electorate Hierarchy</span>
-
+            <div class="panel-card">
+                <div class="panel-header">
+                    <span class="panel-title">Assembly Electorate Hierarchy</span>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <!-- Mode Switcher -->
                         <div class="mode-segmented">
                             <button class="mode-opt active" id="btnModeTreemap" onclick="setHierarchyMode('treemap')">Treemap</button>
                             <button class="mode-opt" id="btnModeSunburst" onclick="setHierarchyMode('sunburst')">Sunburst</button>
                             <button class="mode-opt" id="btnModeDual" onclick="setHierarchyMode('dual')">Dual View</button>
                         </div>
-
-                        <!-- Assembly Filter -->
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <label class="form-label" style="margin: 0; font-size: 0.78rem;">Assembly:</label>
-                            <select id="hierarchyAssemblyFilter" class="form-control" style="width: auto; min-width: 140px; padding: 5px 10px; font-size: 0.8rem;" onchange="updateHierarchyViz()">
-                                <option value="">All Assemblies</option>
-                                <option value="durg-city">Durg City</option>
-                                <option value="durg-gramin">Durg Gramin</option>
-                                <option value="bhilai-nagar">Bhilai Nagar</option>
-                                <option value="vaishali-nagar">Vaishali Nagar</option>
-                                <option value="patan">Patan</option>
-                                <option value="Ahiwara">Ahiwara</option>
-                            </select>
-                        </div>
-
-                        <!-- Metric Selector -->
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <label class="form-label" style="margin: 0; font-size: 0.78rem;">Metric:</label>
-                            <select id="hierarchyMetricSelect" class="form-control" style="width: auto; min-width: 140px; padding: 5px 10px; font-size: 0.8rem;" onchange="updateHierarchyViz()">
-                                <option value="total_voters">Total Electors</option>
-                                <option value="male_voters">Male Electors</option>
-                                <option value="female_voters">Female Electors</option>
-                                <option value="booth_count">Booth Count</option>
-                                <option value="gender_ratio">Gender Ratio (F/M)</option>
-                            </select>
-                        </div>
-
                         <button class="preset-chip" onclick="resetHierarchyFocus()">Reset View</button>
                     </div>
                 </div>
 
-                <!-- Hierarchy Summary Stats Bar -->
-                <div id="hierarchyStatsBanner" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 1rem; padding: 10px 14px; background: var(--subtle-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+                <!-- Hierarchy Filters Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 1.5rem;">
                     <div>
-                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Assemblies</div>
-                        <div id="hsAssembliesCount" style="font-size: 1.05rem; font-weight: 700; color: var(--text-main);">6 Constituencies</div>
+                        <label class="form-label">Assembly Constituency:</label>
+                        <select id="hierarchyAssemblyFilter" class="form-control" onchange="updateHierarchyViz()">
+                            <option value="">All Assemblies</option>
+                            <option value="durg-city">Durg City</option>
+                            <option value="durg-gramin">Durg Gramin</option>
+                            <option value="bhilai-nagar">Bhilai Nagar</option>
+                            <option value="vaishali-nagar">Vaishali Nagar</option>
+                            <option value="patan">Patan</option>
+                            <option value="Ahiwara">Ahiwara</option>
+                        </select>
                     </div>
                     <div>
-                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Total Booths</div>
-                        <div id="hsBoothsCount" style="font-size: 1.05rem; font-weight: 700; color: var(--accent-info);">1,513 Booths</div>
+                        <label class="form-label">Metric:</label>
+                        <select id="hierarchyMetricSelect" class="form-control" onchange="updateHierarchyViz()">
+                            <option value="total_voters">Total Electors</option>
+                            <option value="male_voters">Male Electors</option>
+                            <option value="female_voters">Female Electors</option>
+                            <option value="booth_count">Booth Count</option>
+                            <option value="gender_ratio">Gender Ratio (F/M)</option>
+                        </select>
                     </div>
-                    <div>
-                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Total Electors</div>
-                        <div id="hsElectorsCount" style="font-size: 1.05rem; font-weight: 700; color: var(--accent-success);">1,045,426</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Overall Gender Ratio</div>
-                        <div id="hsGenderRatio" style="font-size: 1.05rem; font-weight: 700; color: var(--text-main);">997 F / 1000 M</div>
+                    <div style="grid-column: span 2;">
+                        <label class="form-label">Search Hierarchy Nodes:</label>
+                        <input type="text" id="hierarchySearchInput" class="form-control" placeholder="Search school name, part number, building address, or locality..." onkeyup="filterHierarchyBySearch()">
                     </div>
                 </div>
 
-                <!-- Search Input -->
-                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
-                    <input type="text" id="hierarchySearchInput" class="form-control" style="flex: 1; min-width: 250px;" placeholder="Search school name, part number, building address, or locality..." onkeyup="filterHierarchyBySearch()">
+                <!-- Hierarchy Summary Stats Bar -->
+                <div class="metrics-grid" style="margin-bottom: 1.5rem;">
+                    <div class="metric-card">
+                        <span class="metric-label">Constituencies</span>
+                        <span class="metric-value" id="hsAssembliesCount">6</span>
+                        <span class="metric-meta">Active Divisions</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Total Booths</span>
+                        <span class="metric-value" id="hsBoothsCount">1,513</span>
+                        <span class="metric-meta">Polling Stations</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Total Electors</span>
+                        <span class="metric-value" id="hsElectorsCount">1,045,426</span>
+                        <span class="metric-meta">Registered Voters</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Gender Ratio</span>
+                        <span class="metric-value" id="hsGenderRatio">997</span>
+                        <span class="metric-meta">Females / 1000 Males</span>
+                    </div>
                 </div>
 
                 <!-- Breadcrumbs Navigation -->
@@ -1136,41 +1159,35 @@
                     <div id="treemapContainer" class="viz-box">
                         <div class="viz-header">
                             <span class="viz-title">Assembly &amp; Booth Treemap</span>
-                            <span id="treemapSubLabel" class="badge" style="font-size: 0.7rem; background: var(--subtle-bg); color: var(--text-muted);">Proportional Area Layout</span>
+                            <span id="treemapSubLabel" class="badge badge-info">Proportional Area Layout</span>
                         </div>
-                        <div id="treemapChart" style="width: 100%; height: 520px; position: relative;"></div>
+                        <div id="treemapChart" style="width: 100%; height: 520px; position: relative; background: var(--subtle-bg); border-radius: 6px; overflow: hidden;"></div>
                     </div>
 
                     <div id="sunburstContainer" class="viz-box" style="display: none;">
                         <div class="viz-header">
                             <span class="viz-title">Assembly Electorate Sunburst</span>
-                            <span id="sunburstSubLabel" class="badge" style="font-size: 0.7rem; background: var(--subtle-bg); color: var(--text-muted);">Concentric Radial Partition</span>
+                            <span id="sunburstSubLabel" class="badge badge-info">Concentric Radial Partition</span>
                         </div>
-                        <svg id="sunburstSvg" class="viz-svg"></svg>
+                        <svg id="sunburstSvg" class="viz-svg" style="background: var(--subtle-bg); border-radius: 6px;"></svg>
                     </div>
                 </div>
 
                 <!-- Assembly Color Legend -->
-                <div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 16px; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); font-size: 0.78rem;">
-                    <span style="color: var(--text-muted); font-weight: 600;">Constituencies:</span>
-                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; border-radius: 2px; background: #3b82f6;"></span> Durg City</span>
-                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; border-radius: 2px; background: #10b981;"></span> Durg Gramin</span>
-                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; border-radius: 2px; background: #8b5cf6;"></span> Bhilai Nagar</span>
-                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; border-radius: 2px; background: #f59e0b;"></span> Vaishali Nagar</span>
-                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; border-radius: 2px; background: #ec4899;"></span> Patan</span>
-                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; border-radius: 2px; background: #06b6d4;"></span> Ahiwara</span>
+                <div id="hierarchyLegend" style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.78rem;">
+                    <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem;">Constituencies:</span>
                 </div>
 
                 <!-- Floating D3 Tooltip -->
                 <div id="d3VizTooltip" class="d3-viz-tooltip"></div>
 
                 <!-- Selected Node Inspector Card -->
-                <div id="hierarchyNodeDetail" class="panel-card" style="display: none; margin-top: 1.25rem; padding: 1.25rem; border-left: 4px solid var(--accent-info);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                        <h4 id="nodeDetailTitle" style="margin: 0; font-size: 1rem; color: var(--text-main);">Selected Node Details</h4>
+                <div id="hierarchyNodeDetail" class="metric-card" style="display: none; margin-top: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        <h4 id="nodeDetailTitle" style="margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-main);">Selected Node Details</h4>
                         <span id="nodeDetailBadge" class="badge badge-info">Assembly Node</span>
                     </div>
-                    <div id="nodeDetailContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 0.85rem;">
+                    <div id="nodeDetailContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;">
                         <!-- Filled dynamically -->
                     </div>
                 </div>
@@ -1203,7 +1220,10 @@
                 document.getElementById(`theme-${mode}`)?.classList.add('active');
                 localStorage.setItem('sc-theme-choice', mode);
             }
-            setTimeout(() => { if (typeof renderOverviewCharts === 'function') renderOverviewCharts(); }, 50);
+            setTimeout(() => {
+                if (typeof renderOverviewCharts === 'function') renderOverviewCharts();
+                if (typeof updateHierarchyViz === 'function') updateHierarchyViz();
+            }, 50);
         }
 
         function toggleDrawer(open) {
@@ -1377,24 +1397,25 @@
         let hierarchySearchDebounce = null;
 
         const ASSEMBLY_COLORS = {
-            'durg city': '#3b82f6',
-            'durg gramin': '#10b981',
-            'bhilai nagar': '#8b5cf6',
-            'vaishali nagar': '#f59e0b',
-            'patan': '#ec4899',
-            'ahiwara': '#06b6d4'
+            'durg city': '#38bdf8',
+            'durg gramin': '#34d399',
+            'bhilai nagar': '#a78bfa',
+            'vaishali nagar': '#fbbf24',
+            'patan': '#f472b6',
+            'ahiwara': '#22d3ee'
         };
 
         function getAssemblyColor(assemblyName, fallbackIndex = 0) {
-            if (!assemblyName) return '#64748b';
+            if (!assemblyName) return 'var(--text-muted)';
             const key = assemblyName.toLowerCase().trim();
             if (ASSEMBLY_COLORS[key]) return ASSEMBLY_COLORS[key];
-            const palette = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#f97316', '#14b8a6'];
+            const palette = ['#38bdf8', '#34d399', '#a78bfa', '#fbbf24', '#f472b6', '#22d3ee', '#fb923c', '#2dd4bf'];
             return palette[fallbackIndex % palette.length];
         }
 
         async function initHierarchyViz() {
             if (rawHierarchyData) {
+                renderHierarchyLegend();
                 updateHierarchyViz();
                 return;
             }
@@ -1403,6 +1424,7 @@
                 const res = await fetchAPI('/api/v1/polling-stations?limit=2000');
                 if (res.data && res.data.success && Array.isArray(res.data.data)) {
                     buildHierarchyTree(res.data.data);
+                    renderHierarchyLegend();
                     updateHierarchyViz();
                 }
             } catch (err) {
@@ -1483,6 +1505,22 @@
             rawHierarchyData = root;
         }
 
+        function renderHierarchyLegend() {
+            const container = document.getElementById('hierarchyLegend');
+            if (!container || !rawHierarchyData || !rawHierarchyData.children) return;
+
+            container.innerHTML = `<span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem;">Constituencies:</span>`;
+
+            rawHierarchyData.children.forEach((ass, idx) => {
+                const color = getAssemblyColor(ass.name, idx);
+                const chip = document.createElement('span');
+                chip.className = 'crumb-chip';
+                chip.innerHTML = `<span style="width: 10px; height: 10px; border-radius: 50%; background: ${color}; display: inline-block;"></span> ${ass.name}`;
+                chip.onclick = () => focusHierarchyNode(ass.name);
+                container.appendChild(chip);
+            });
+        }
+
         function setHierarchyMode(mode) {
             currentHierarchyMode = mode;
             document.querySelectorAll('.mode-opt').forEach(btn => btn.classList.remove('active'));
@@ -1521,11 +1559,10 @@
             const searchQuery = document.getElementById('hierarchySearchInput')?.value?.trim()?.toLowerCase() || "";
             const selectedMetric = document.getElementById('hierarchyMetricSelect')?.value || "total_voters";
 
-            // Filter hierarchy tree
             let filteredTree = JSON.parse(JSON.stringify(rawHierarchyData));
 
             if (selectedAssembly) {
-                filteredTree.children = filteredTree.children.filter(a => a.assembly.toLowerCase() === selectedAssembly);
+                filteredTree.children = filteredTree.children.filter(a => a.assembly.toLowerCase().replace(/\s+/g, '-') === selectedAssembly || a.assembly.toLowerCase() === selectedAssembly);
             }
 
             if (searchQuery) {
@@ -1545,7 +1582,6 @@
 
             updateHierarchySummaryBanner(filteredTree);
 
-            // Focus on single node if active
             let activeTreeRoot = filteredTree;
             if (currentHierarchyFocusNode) {
                 const targetName = currentHierarchyFocusNode.name;
@@ -1605,10 +1641,10 @@
             const elEle = document.getElementById('hsElectorsCount');
             const elRat = document.getElementById('hsGenderRatio');
 
-            if (elAss) elAss.innerText = `${assemblySet.size} Constituencies`;
-            if (elBth) elBth.innerText = `${totalBooths.toLocaleString()} Booths`;
+            if (elAss) elAss.innerText = `${assemblySet.size}`;
+            if (elBth) elBth.innerText = `${totalBooths.toLocaleString()}`;
             if (elEle) elEle.innerText = totalElectors.toLocaleString();
-            if (elRat) elRat.innerText = `${ratio} F / 1000 M`;
+            if (elRat) elRat.innerText = `${ratio}`;
         }
 
         function renderBreadcrumbs(currentNode) {
@@ -1647,6 +1683,16 @@
 
         function focusHierarchyNode(assemblyName) {
             currentHierarchyFocusNode = { name: assemblyName, type: 'assembly', assembly: assemblyName };
+            const assSelect = document.getElementById('hierarchyAssemblyFilter');
+            if (assSelect) {
+                const matchVal = assemblyName.toLowerCase().replace(/\s+/g, '-');
+                for (let opt of assSelect.options) {
+                    if (opt.value.toLowerCase() === matchVal || opt.text.toLowerCase() === assemblyName.toLowerCase()) {
+                        assSelect.value = opt.value;
+                        break;
+                    }
+                }
+            }
             updateHierarchyViz();
         }
 
@@ -1666,13 +1712,13 @@
             d3.treemap()
                 .size([width, height])
                 .paddingOuter(4)
-                .paddingTop(24)
+                .paddingTop(26)
                 .paddingInner(3)
                 .round(true)(root);
 
             const tooltip = d3.select("#d3VizTooltip");
 
-            // Render Assembly parent group header boxes
+            // Assembly Parent Header Labels
             const assemblyNodes = root.descendants().filter(d => d.depth === 1);
 
             d3.select(chartDiv)
@@ -1681,25 +1727,15 @@
                 .enter()
                 .append("div")
                 .attr("class", "treemap-group-label")
-                .style("position", "absolute")
                 .style("left", d => `${d.x0 + 4}px`)
                 .style("top", d => `${d.y0 + 2}px`)
-                .style("width", d => `${Math.max(0, d.x1 - d.x0 - 8)}px`)
-                .style("height", "20px")
-                .style("font-size", "0.74rem")
-                .style("font-weight", "700")
-                .style("color", "var(--text-main)")
-                .style("white-space", "nowrap")
-                .style("overflow", "hidden")
-                .style("text-overflow", "ellipsis")
-                .style("pointer-events", "auto")
-                .style("cursor", "pointer")
+                .style("max-width", d => `${Math.max(0, d.x1 - d.x0 - 8)}px`)
                 .text(d => `${d.data.name.toUpperCase()} (${Number(d.value).toLocaleString()})`)
                 .on("click", (event, d) => {
                     inspectHierarchyNode(d.data);
                 });
 
-            // Render Treemap Leaf Divs (Booths)
+            // Treemap Leaf Nodes (Booths)
             const leafNodes = root.leaves();
 
             const nodeDivs = d3.select(chartDiv)
@@ -1713,15 +1749,15 @@
                 .style("width", d => `${Math.max(0, d.x1 - d.x0)}px`)
                 .style("height", d => `${Math.max(0, d.y1 - d.y0)}px`)
                 .style("background", (d, i) => {
-                    const baseColor = getAssemblyColor(d.data.assembly, i);
-                    return baseColor;
+                    const color = getAssemblyColor(d.data.assembly, i);
+                    return color;
                 })
-                .style("opacity", d => (d.x1 - d.x0 < 4 || d.y1 - d.y0 < 4) ? 0 : 0.9)
+                .style("opacity", d => (d.x1 - d.x0 < 4 || d.y1 - d.y0 < 4) ? 0 : 0.85)
                 .on("mouseover", (event, d) => {
                     tooltip.style("opacity", 1)
                         .html(`
-                            <strong style="color: #38bdf8; font-size: 0.88rem;">${d.data.name}</strong><br/>
-                            <div style="margin-top: 4px; line-height: 1.4;">
+                            <strong style="color: var(--accent-info); font-size: 0.88rem;">${d.data.name}</strong><br/>
+                            <div style="margin-top: 6px; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">
                                 <b>Assembly:</b> ${d.data.assembly}<br/>
                                 <b>Town/Village:</b> ${d.data.town}<br/>
                                 <b>Total Electors:</b> ${Number(d.data.total_voters || 0).toLocaleString()}<br/>
@@ -1731,8 +1767,8 @@
                         `);
                 })
                 .on("mousemove", (event) => {
-                    tooltip.style("left", (event.clientX + 14) + "px")
-                        .style("top", (event.clientY - 14) + "px");
+                    tooltip.style("left", (event.clientX + 16) + "px")
+                        .style("top", (event.clientY - 16) + "px");
                 })
                 .on("mouseout", () => {
                     tooltip.style("opacity", 0);
@@ -1741,14 +1777,13 @@
                     inspectHierarchyNode(d.data);
                 });
 
-            // Inner label content
             nodeDivs.each(function(d) {
                 const w = d.x1 - d.x0;
                 const h = d.y1 - d.y0;
-                if (w > 42 && h > 20) {
+                if (w > 40 && h > 20) {
                     d3.select(this).html(`
-                        <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Part #${d.data.partNumber}</div>
-                        ${h > 34 ? `<div style="font-size: 0.65rem; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Number(d.value).toLocaleString()}</div>` : ''}
+                        <div style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #000; text-shadow: 0 1px 2px rgba(255,255,255,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">#${d.data.partNumber}</div>
+                        ${h > 34 ? `<div style="font-size: 0.65rem; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Number(d.value).toLocaleString()}</div>` : ''}
                     `);
                 }
             });
@@ -1761,7 +1796,7 @@
             svg.html('');
 
             const container = document.getElementById('sunburstContainer');
-            const width = container ? container.clientWidth - 32 : 500;
+            const width = container ? container.clientWidth - 40 : 500;
             const height = 520;
             const radius = Math.min(width, height) / 2 - 20;
 
@@ -1789,7 +1824,7 @@
 
             const tooltip = d3.select("#d3VizTooltip");
 
-            const paths = g.append("g")
+            g.append("g")
                 .selectAll("path")
                 .data(root.descendants().filter(d => d.depth > 0))
                 .enter()
@@ -1805,17 +1840,17 @@
                 .on("mouseover", (event, d) => {
                     tooltip.style("opacity", 1)
                         .html(`
-                            <strong style="color: #38bdf8; font-size: 0.88rem;">${d.data.name}</strong><br/>
-                            <div style="margin-top: 4px; line-height: 1.4;">
+                            <strong style="color: var(--accent-info); font-size: 0.88rem;">${d.data.name}</strong><br/>
+                            <div style="margin-top: 6px; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">
                                 <b>Type:</b> ${d.data.type.toUpperCase()}<br/>
-                                <b>Aggregated Value:</b> ${Number(d.value).toLocaleString()}<br/>
+                                <b>Value:</b> ${Number(d.value).toLocaleString()}<br/>
                                 ${d.data.assembly ? `<b>Assembly:</b> ${d.data.assembly}<br/>` : ''}
                             </div>
                         `);
                 })
                 .on("mousemove", (event) => {
-                    tooltip.style("left", (event.clientX + 14) + "px")
-                        .style("top", (event.clientY - 14) + "px");
+                    tooltip.style("left", (event.clientX + 16) + "px")
+                        .style("top", (event.clientY - 16) + "px");
                 })
                 .on("mouseout", () => {
                     tooltip.style("opacity", 0);
@@ -1824,7 +1859,7 @@
                     inspectHierarchyNode(d.data);
                 });
 
-            // Center Ring Label
+            // Center Ring Container
             const centerG = g.append("g").attr("class", "center-label");
             centerG.append("circle")
                 .attr("r", root.y1 || radius / 4)
@@ -1836,14 +1871,16 @@
                 .attr("text-anchor", "middle")
                 .attr("dy", "-0.2em")
                 .style("fill", "var(--text-main)")
+                .style("font-family", "Outfit, sans-serif")
                 .style("font-weight", "700")
                 .style("font-size", "0.85rem")
                 .text(root.data.name);
 
             centerG.append("text")
                 .attr("text-anchor", "middle")
-                .attr("dy", "1.2em")
+                .attr("dy", "1.3em")
                 .style("fill", "var(--accent-info)")
+                .style("font-family", "JetBrains Mono, monospace")
                 .style("font-weight", "600")
                 .style("font-size", "0.78rem")
                 .text(`${Number(root.value).toLocaleString()} Total`);
@@ -1859,19 +1896,19 @@
             const content = document.getElementById('nodeDetailContent');
 
             if (!detailPanel) return;
-            detailPanel.style.display = 'block';
+            detailPanel.style.display = 'flex';
 
             if (nodeData.type === 'booth') {
                 title.innerText = nodeData.name;
                 badge.innerText = `Part #${nodeData.partNumber}`;
                 content.innerHTML = `
-                    <div><b>Assembly Constituency:</b> ${nodeData.assembly}</div>
-                    <div><b>Town / Village:</b> ${nodeData.town || 'N/A'}</div>
-                    <div><b>Building Address:</b> ${nodeData.address || 'N/A'}</div>
-                    <div><b>Total Electorate:</b> ${Number(nodeData.total_voters || 0).toLocaleString()}</div>
-                    <div><b>Male Electors:</b> ${Number(nodeData.male_voters || 0).toLocaleString()}</div>
-                    <div><b>Female Electors:</b> ${Number(nodeData.female_voters || 0).toLocaleString()}</div>
-                    <div><b>Gender Ratio:</b> ${nodeData.gender_ratio || 0} Female / 1000 Male</div>
+                    <div><span class="metric-label">Assembly:</span> <div><b>${nodeData.assembly}</b></div></div>
+                    <div><span class="metric-label">Town / Area:</span> <div>${nodeData.town || 'N/A'}</div></div>
+                    <div><span class="metric-label">Polling Building:</span> <div>${nodeData.address || 'N/A'}</div></div>
+                    <div><span class="metric-label">Total Electors:</span> <div><b>${Number(nodeData.total_voters || 0).toLocaleString()}</b></div></div>
+                    <div><span class="metric-label">Male Electors:</span> <div>${Number(nodeData.male_voters || 0).toLocaleString()}</div></div>
+                    <div><span class="metric-label">Female Electors:</span> <div>${Number(nodeData.female_voters || 0).toLocaleString()}</div></div>
+                    <div><span class="metric-label">Gender Ratio:</span> <div>${nodeData.gender_ratio || 0} F / 1000 M</div></div>
                 `;
             } else if (nodeData.type === 'assembly') {
                 title.innerText = `${nodeData.name} Constituency`;
@@ -1893,12 +1930,12 @@
                 const ratio = maleV > 0 ? Math.round((femaleV / maleV) * 1000) : 0;
 
                 content.innerHTML = `
-                    <div><b>Constituency:</b> ${nodeData.name}</div>
-                    <div><b>Total Polling Stations:</b> ${boothCnt} Booths</div>
-                    <div><b>Total Electors:</b> ${Number(totalV).toLocaleString()}</div>
-                    <div><b>Male Electors:</b> ${Number(maleV).toLocaleString()}</div>
-                    <div><b>Female Electors:</b> ${Number(femaleV).toLocaleString()}</div>
-                    <div><b>Constituency Ratio:</b> ${ratio} Female / 1000 Male</div>
+                    <div><span class="metric-label">Constituency:</span> <div><b>${nodeData.name}</b></div></div>
+                    <div><span class="metric-label">Polling Stations:</span> <div><b>${boothCnt} Booths</b></div></div>
+                    <div><span class="metric-label">Total Electors:</span> <div><b>${Number(totalV).toLocaleString()}</b></div></div>
+                    <div><span class="metric-label">Male Electors:</span> <div>${Number(maleV).toLocaleString()}</div></div>
+                    <div><span class="metric-label">Female Electors:</span> <div>${Number(femaleV).toLocaleString()}</div></div>
+                    <div><span class="metric-label">Constituency Ratio:</span> <div>${ratio} F / 1000 M</div></div>
                 `;
             } else {
                 title.innerText = nodeData.name;
