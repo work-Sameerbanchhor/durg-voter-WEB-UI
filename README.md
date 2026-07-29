@@ -15,6 +15,16 @@ A high-performance, production-grade **Go RESTful API Backend** powered by **Go 
 
 ---
 
+## 🌐 Live Deployments
+
+| Service | Host / Platform | URL |
+| :--- | :--- | :--- |
+| **Frontend Web App** | Custom Domain | [voter.sameerbanchhor.com](https://voter.sameerbanchhor.com) |
+| **Backend API (Primary)** | Google Cloud Run | [durg-voter-api-23241707890.asia-south1.run.app](https://durg-voter-api-23241707890.asia-south1.run.app) |
+| **Backend API (Mirror)** | Hugging Face Space | [sameerbanchhor-work-durg-voter-api.hf.space](https://sameerbanchhor-work-durg-voter-api.hf.space) |
+
+---
+
 ## 🌟 Key Features
 
 1. **Vectorized Analytics Engine (DuckDB 1.5)**:
